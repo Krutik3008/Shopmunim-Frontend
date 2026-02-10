@@ -23,6 +23,14 @@ const CustomerDashboardScreen = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+    const [expandedItems, setExpandedItems] = useState({});
+
+    const toggleExpand = (index) => {
+        setExpandedItems(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
 
     useEffect(() => {
         loadLedger();
@@ -60,9 +68,39 @@ const CustomerDashboardScreen = () => {
         }
     };
 
-    const formatCurrency = (amount) => {
-        return '₹' + Math.abs(amount || 0).toLocaleString('en-IN');
+    const formatCurrency = (amount, type) => {
+        const value = Math.abs(amount || 0).toFixed(2);
+        const prefix = type === 'debit' ? '-' : '+';
+        return `${prefix}₹${value}`;
     };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        const day = date.getDate();
+        const month = date.toLocaleString('default', { month: 'short' });
+        const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+        return `${day} ${month}, ${time}`;
+    };
+
+    // Calculate summary stats
+    const getSummaryStats = () => {
+        const totalShops = ledgerData.length;
+        let totalOwed = 0;
+        let netBalance = 0;
+
+        ledgerData.forEach(item => {
+            const balance = item.customer?.balance || 0;
+            if (balance < 0) {
+                totalOwed += Math.abs(balance);
+            }
+            netBalance += balance;
+        });
+
+        return { totalShops, totalOwed, netBalance };
+    };
+
+    const stats = getSummaryStats();
 
     // Header Component
     const Header = () => (
@@ -122,8 +160,31 @@ const CustomerDashboardScreen = () => {
         </View>
     );
 
-    // Empty State Component
-    const EmptyState = () => (
+    // Summary Stats Cards for Ledger Tab
+    const SummaryStatsCards = () => (
+        <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+                <Text style={styles.statEmoji}>🏪</Text>
+                <Text style={styles.statValue}>{stats.totalShops}</Text>
+                <Text style={styles.statLabel}>Shops</Text>
+            </View>
+            <View style={styles.statCard}>
+                <Text style={styles.statEmoji}>💰</Text>
+                <Text style={[styles.statValue, styles.statValueRed]}>₹{Math.abs(stats.totalOwed || 0).toFixed(2)}</Text>
+                <Text style={styles.statLabel}>Total Owed</Text>
+            </View>
+            <View style={styles.statCard}>
+                <Text style={styles.statEmoji}>📊</Text>
+                <Text style={styles.statValue}>
+                    {stats.netBalance < 0 ? '-' : ''}₹{Math.abs(stats.netBalance || 0).toFixed(2)}
+                </Text>
+                <Text style={styles.statLabel}>Net Balance</Text>
+            </View>
+        </View>
+    );
+
+    // Empty State Component for Ledger
+    const LedgerEmptyState = () => (
         <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Welcome to ShopMunim!</Text>
             <Text style={styles.emptyDescription}>
@@ -146,47 +207,275 @@ const CustomerDashboardScreen = () => {
     const LedgerContent = () => (
         <ScrollView
             style={styles.tabContent}
+            contentContainerStyle={{ paddingBottom: 30 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
             {loading ? (
                 <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />
             ) : ledgerData.length === 0 ? (
-                <EmptyState />
+                <LedgerEmptyState />
             ) : (
-                <View style={styles.ledgerList}>
-                    {ledgerData.map((item, index) => (
-                        <View key={index} style={styles.ledgerItem}>
-                            <View style={styles.ledgerInfo}>
-                                <Text style={styles.shopName}>{item.shop?.name}</Text>
-                                <Text style={styles.shopLocation}>{item.shop?.location}</Text>
+                <>
+                    <SummaryStatsCards />
+                    <View style={styles.ledgerList}>
+                        {ledgerData.map((item, index) => (
+                            <View key={index} style={styles.ledgerItemContainer}>
+                                <View style={styles.ledgerItemHeader}>
+                                    <View style={styles.ledgerInfo}>
+                                        <Text style={styles.shopName}>{item.shop?.name}</Text>
+                                        <Text style={styles.shopLocation}>{item.shop?.location}</Text>
+                                    </View>
+
+                                    {(() => {
+                                        const balance = item.customer?.balance || 0;
+                                        let badgeStyle = styles.badgeClear;
+                                        let textStyle = styles.badgeClearText;
+                                        let iconColor = "#666";
+                                        let label = "Clear";
+
+                                        if (balance < 0) {
+                                            badgeStyle = styles.badgeOwe;
+                                            textStyle = styles.badgeOweText;
+                                            iconColor = "#fff";
+                                            label = "Owe";
+                                        } else if (balance > 0) {
+                                            badgeStyle = styles.badgeCredit;
+                                            textStyle = styles.badgeCreditText;
+                                            iconColor = "#fff";
+                                            label = "Credit";
+                                        }
+
+                                        return (
+                                            <TouchableOpacity
+                                                style={[styles.ledgerBadge, badgeStyle]}
+                                                onPress={() => toggleExpand(index)}
+                                            >
+                                                <Text style={[styles.ledgerBadgeText, textStyle]}>
+                                                    {label} ₹{Math.abs(balance).toFixed(2)}
+                                                </Text>
+                                                <Ionicons
+                                                    name={expandedItems[index] ? "chevron-up" : "chevron-down"}
+                                                    size={16}
+                                                    color={iconColor}
+                                                />
+                                            </TouchableOpacity>
+                                        );
+                                    })()}
+                                </View>
+
+                                {expandedItems[index] && (
+                                    <View style={styles.transactionsSection}>
+                                        {/* Pending Amount Card - Only show if balance is negative (Owe) */}
+                                        {(item.customer?.balance || 0) < 0 && (
+                                            <View style={styles.pendingCard}>
+                                                <View>
+                                                    <Text style={styles.pendingTitle}>Pending Payment</Text>
+                                                    <Text style={styles.pendingSubtitle}>
+                                                        You owe ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}
+                                                    </Text>
+                                                </View>
+                                                <TouchableOpacity style={styles.payNowButton}>
+                                                    <Text style={styles.payNowButtonText}>Pay Now</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
+
+                                        <Text style={styles.transactionsTitle}>Recent Transactions</Text>
+                                        {item.transactions && item.transactions.length > 0 ? (
+                                            item.transactions.map((tx, i) => (
+                                                <View key={i} style={styles.transactionRowContainer}>
+                                                    <View style={styles.transactionRowTop}>
+                                                        <View style={styles.badgeContainer}>
+                                                            <View style={[styles.typeBadge, tx.type === 'debit' ? styles.badgeBlack : styles.badgeRed]}>
+                                                                <Text style={styles.badgeText}>
+                                                                    {tx.type === 'debit' ? 'Payment' : 'Credit'}
+                                                                </Text>
+                                                            </View>
+                                                            <Text style={styles.transactionDate}>{formatDate(tx.date)}</Text>
+                                                        </View>
+                                                        <Text style={[
+                                                            styles.transactionAmount,
+                                                            tx.type === 'debit' ? styles.textGreen : styles.textRed
+                                                        ]}>
+                                                            {formatCurrency(tx.amount, tx.type)}
+                                                        </Text>
+                                                    </View>
+
+                                                    {tx.products && tx.products.length > 0 && (
+                                                        <Text style={styles.transactionItems}>
+                                                            {tx.products.map(p => `${p.product?.name || p.name || 'Item'} x${p.quantity}`).join(', ')}
+                                                        </Text>
+                                                    )}
+                                                </View>
+                                            ))
+                                        ) : (
+                                            <Text style={styles.noTransactionsText}>No transactions yet</Text>
+                                        )}
+                                    </View>
+                                )}
                             </View>
-                            <Text style={[
-                                styles.balanceAmount,
-                                { color: item.customer?.balance < 0 ? '#EF4444' : '#10B981' }
-                            ]}>
-                                {item.customer?.balance < 0 ? '-' : item.customer?.balance > 0 ? '+' : ''}
-                                {formatCurrency(item.customer?.balance)}
-                            </Text>
-                        </View>
-                    ))}
-                </View>
+                        ))}
+                    </View>
+                </>
             )}
         </ScrollView>
     );
 
-    // Payments Tab Content
-    const PaymentsContent = () => (
-        <ScrollView style={styles.tabContent}>
-            <EmptyState />
-        </ScrollView>
-    );
+    // Payments Tab Content - Matching reference design
+    const PaymentsContent = () => {
+        if (loading) {
+            return <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />;
+        }
 
-    // History Tab Content
-    const HistoryContent = () => (
-        <ScrollView style={styles.tabContent}>
-            <EmptyState />
-        </ScrollView>
-    );
+        if (ledgerData.length === 0) {
+            return (
+                <View style={styles.tabContent}>
+                    <LedgerEmptyState />
+                </View>
+            );
+        }
+
+        const pendingPayments = ledgerData.filter(item => (item.customer?.balance || 0) < 0);
+
+        return (
+            <ScrollView style={styles.tabContent}>
+                <Text style={styles.sectionTitle}>Payment Center</Text>
+                <Text style={styles.sectionSubtitle}>Pending Payments</Text>
+
+                {pendingPayments.length > 0 ? (
+                    <View style={styles.pendingList}>
+                        {pendingPayments.map((item, index) => (
+                            <View key={index} style={styles.paymentCard}>
+                                <View style={styles.paymentCardContent}>
+                                    <View style={styles.paymentInfo}>
+                                        <Text style={styles.paymentShopName}>{item.shop?.name}</Text>
+                                        <Text style={styles.paymentShopLocation}>{item.shop?.location}</Text>
+                                        <Text style={styles.paymentOweText}>Owe: ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}</Text>
+                                    </View>
+                                    <TouchableOpacity style={styles.paymentPayBtn}>
+                                        <Text style={styles.paymentPayBtnText}>Pay Now</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                ) : (
+                    <View style={styles.pendingPaymentsCard}>
+                        <View style={styles.checkmarkCircle}>
+                            <Ionicons name="checkmark" size={40} color="#fff" />
+                        </View>
+                        <Text style={styles.pendingPaymentsText}>No pending payments</Text>
+                        <Text style={styles.pendingPaymentsSubtext}>All dues are cleared!</Text>
+                    </View>
+                )}
+
+                {/* Quick Actions Section */}
+                <View style={styles.quickActionsOuterCard}>
+                    <Text style={styles.quickActionsTitle}>Quick Actions</Text>
+                    <View style={styles.quickActionsContainer}>
+                        <TouchableOpacity style={styles.quickActionCard}>
+                            <Text style={styles.quickActionEmoji}>🔔</Text>
+                            <Text style={styles.quickActionText}>Payment Reminders</Text>
+                        </TouchableOpacity>
+                        <View style={{ width: 12 }} />
+                        <TouchableOpacity style={styles.quickActionCard}>
+                            <Text style={styles.quickActionEmoji}>📊</Text>
+                            <Text style={styles.quickActionText}>Download Report</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </ScrollView>
+        );
+    };
+
+    // History Tab Content - Matching reference design
+    const HistoryContent = () => {
+
+        if (loading) {
+            return <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />;
+        }
+
+        if (ledgerData.length === 0) {
+            return (
+                <View style={styles.tabContent}>
+                    <LedgerEmptyState />
+                </View>
+            );
+        }
+
+        // Flatten and sort transactions
+        const allTransactions = ledgerData.reduce((acc, shop) => {
+            if (shop.transactions) {
+                const shopTx = shop.transactions.map(tx => ({ ...tx, shopName: shop.shop?.name }));
+                return [...acc, ...shopTx];
+            }
+            return acc;
+        }, []).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        if (allTransactions.length === 0) {
+            return (
+                <View style={styles.tabContent}>
+                    <View style={styles.historyEmptyCard}>
+                        <Text style={styles.historyEmoji}>📋</Text>
+                        <Text style={styles.historyEmptyTitle}>No transaction history</Text>
+                        <Text style={styles.historyEmptySubtext}>Your transactions will appear here</Text>
+                    </View>
+                </View>
+            );
+        }
+
+        return (
+            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 20 }}>
+                <Text style={styles.sectionTitle}>Transaction History</Text>
+                <View style={styles.historyList}>
+                    {allTransactions.map((tx, index) => (
+                        <View key={index} style={styles.historyCard}>
+                            <View style={styles.historyTopRow}>
+                                {/* Left Column: Name and Date */}
+                                <View style={styles.historyLeftCol}>
+                                    <Text style={styles.historyShopName}>{tx.shopName}</Text>
+                                    <Text style={styles.historyDate}>{formatDate(tx.date)}</Text>
+                                </View>
+
+                                {/* Right Column: Amount and Badge */}
+                                <View style={styles.historyRightCol}>
+                                    <Text style={[
+                                        styles.historyAmount,
+                                        tx.type === 'debit' ? styles.textGreen : styles.textRed
+                                    ]}>
+                                        {formatCurrency(tx.amount, tx.type)}
+                                    </Text>
+                                    <View style={[styles.historyBadge, tx.type === 'debit' ? styles.badgeBlack : styles.badgeRed]}>
+                                        <Text style={styles.historyBadgeText}>
+                                            {tx.type === 'debit' ? 'Payment Made' : 'Credit Taken'}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            {/* Items Section (Gray Box) */}
+                            {tx.products && tx.products.length > 0 && (
+                                <View style={styles.historyItemsContainer}>
+                                    <Text style={styles.historyLabel}>Items: </Text>
+                                    <Text style={styles.historyValue}>
+                                        {tx.products.map(p => `${p.product?.name || p.name || 'Item'} x${p.quantity} (₹${p.price || 0})`).join(', ')}
+                                    </Text>
+                                </View>
+                            )}
+
+                            {/* Note Section (Text on Card) */}
+                            {tx.note ? (
+                                <View style={styles.historyNoteRow}>
+                                    <Text style={styles.historyLabel}>Note: </Text>
+                                    <Text style={styles.historyValue}>{tx.note}</Text>
+                                </View>
+                            ) : null}
+                        </View>
+                    ))}
+                </View>
+            </ScrollView>
+        );
+    };
 
     // Account Tab Content - Matching reference exactly
     const AccountContent = () => (
@@ -279,6 +568,8 @@ const CustomerDashboardScreen = () => {
         </TouchableOpacity>
     );
 
+    console.log('Rendering CustomerDashboard', { activeTab, ledgerDataLength: ledgerData.length });
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <Header />
@@ -294,8 +585,8 @@ const CustomerDashboardScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F5F5F5' },
-    content: { flex: 1 },
+    container: { flex: 1, backgroundColor: '#fff' }, // Changed background to white as per screenshot often implies cleaner look, but let's keep it clean
+    content: { flex: 1, backgroundColor: '#F9FAFB' }, // Content background
 
     // Header
     header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E5E5' },
@@ -309,7 +600,7 @@ const styles = StyleSheet.create({
     welcomeText: { fontSize: 14, color: '#666' },
     userName: { fontWeight: 'bold', color: '#333' },
     phoneContainer: { backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
-    phoneText: { fontSize: 12, color: '#00000' },
+    phoneText: { fontSize: 12, color: '#000' },
 
     // Role Dropdown
     roleDropdown: { position: 'absolute', top: 45, right: 60, backgroundColor: '#fff', borderRadius: 8, elevation: 5, padding: 8, zIndex: 100, minWidth: 160 },
@@ -319,6 +610,14 @@ const styles = StyleSheet.create({
 
     // Tab Content
     tabContent: { flex: 1, padding: 16 },
+
+    // Summary Stats Cards
+    statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, gap: 8 },
+    statCard: { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: '#E5E5E5' },
+    statEmoji: { fontSize: 24, marginBottom: 4 },
+    statValue: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+    statValueRed: { color: '#EF4444' },
+    statLabel: { fontSize: 12, color: '#666', marginTop: 2 },
 
     // Empty State
     emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', marginTop: 8 },
@@ -331,11 +630,112 @@ const styles = StyleSheet.create({
 
     // Ledger List
     ledgerList: { gap: 12 },
-    ledgerItem: { backgroundColor: '#fff', borderRadius: 12, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    ledgerItemContainer: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E5E5E5', overflow: 'hidden' },
+    ledgerItemHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
     ledgerInfo: { flex: 1 },
     shopName: { fontSize: 16, fontWeight: '600', color: '#333' },
     shopLocation: { fontSize: 13, color: '#666', marginTop: 2 },
-    balanceAmount: { fontSize: 16, fontWeight: 'bold' },
+
+    // Ledger Badges
+    ledgerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+    ledgerBadgeText: { fontSize: 13, fontWeight: '600' },
+
+    badgeClear: { backgroundColor: '#F3F4F6' },
+    badgeClearText: { color: '#374151' },
+
+    badgeCredit: { backgroundColor: '#111827' },
+    badgeCreditText: { color: '#fff' },
+
+    badgeOwe: { backgroundColor: '#EF4444' },
+    badgeOweText: { color: '#fff' },
+
+    // Transactions Section
+    transactionsSection: { padding: 16, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F3F4F6', backgroundColor: '#fff' },
+
+    // Pending Payment Card
+    pendingCard: { backgroundColor: '#FFF5F5', borderRadius: 8, padding: 12, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#FECACA' },
+    pendingTitle: { fontSize: 13, fontWeight: '700', color: '#7F1D1D', marginBottom: 2 },
+    pendingSubtitle: { fontSize: 12, color: '#EF4444' },
+    payNowButton: { backgroundColor: '#2563EB', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+    payNowButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+
+    transactionsTitle: { fontSize: 13, fontWeight: '600', color: '#666', marginBottom: 12 },
+    noTransactionsText: { fontSize: 13, color: '#999', fontStyle: 'italic', marginBottom: 12 },
+
+    transactionRowContainer: { marginBottom: 12, backgroundColor: '#F9FAFB', borderRadius: 8, padding: 12 },
+    transactionRowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+    badgeContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    typeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+    badgeRed: { backgroundColor: '#EF4444' },
+    badgeBlack: { backgroundColor: '#111827' },
+    badgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase' },
+    transactionDate: { fontSize: 12, color: '#6B7280' },
+    transactionAmount: { fontSize: 14, fontWeight: '700' },
+    transactionItems: { fontSize: 13, color: '#374151', marginLeft: 2 },
+    textRed: { color: '#EF4444' },
+    textGreen: { color: '#10B981' },
+
+    // History List
+    historyList: { gap: 16, paddingBottom: 20 },
+    historyCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E5E5E5', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
+
+    // History Top Row
+    historyTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+    historyLeftCol: { flex: 1 },
+    historyRightCol: { alignItems: 'flex-end' },
+
+    // History Text Styles
+    historyShopName: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginBottom: 4 },
+    historyDate: { fontSize: 13, color: '#6B7280' },
+    historyAmount: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+
+    // History Badge
+    historyBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 },
+    historyBadgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+
+    // History Items Box
+    historyItemsContainer: { flexDirection: 'row', backgroundColor: '#F9FAFB', borderRadius: 8, padding: 12, marginTop: 12 },
+
+    // History Note Row
+    historyNoteRow: { flexDirection: 'row', marginTop: 12, paddingHorizontal: 4 },
+
+    historyLabel: { fontSize: 13, fontWeight: '700', color: '#6B7280' },
+    historyValue: { fontSize: 13, color: '#4B5563', flex: 1 },
+
+    // Section Titles
+    sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 16 }, // Added generic margin
+    sectionSubtitle: { fontSize: 14, color: '#666', marginBottom: 16 },
+
+    // Pending Payments Card
+    pendingPaymentsCard: { backgroundColor: '#fff', borderRadius: 12, padding: 32, alignItems: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#E5E5E5' },
+    checkmarkCircle: { width: 64, height: 64, borderRadius: 12, backgroundColor: '#10B981', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    pendingPaymentsText: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
+    pendingPaymentsSubtext: { fontSize: 14, color: '#666' },
+
+    // Payment Card (New)
+    pendingList: { marginBottom: 20 },
+    paymentCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E5E5E5' },
+    paymentCardContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    paymentInfo: { flex: 1 },
+    paymentShopName: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 2 },
+    paymentShopLocation: { fontSize: 13, color: '#666', marginBottom: 8 },
+    paymentOweText: { fontSize: 14, fontWeight: '700', color: '#EF4444' },
+    paymentPayBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
+    paymentPayBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+
+    // Quick Actions
+    quickActionsOuterCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E5E5E5', marginBottom: 20 },
+    quickActionsTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 },
+    quickActionsContainer: { flexDirection: 'row' },
+    quickActionCard: { flex: 1, alignItems: 'center', padding: 12, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E5E5E5' },
+    quickActionEmoji: { fontSize: 20, marginBottom: 8 },
+    quickActionText: { fontSize: 12, color: '#333', textAlign: 'center', fontWeight: '500' },
+
+    // History Empty State
+    historyEmptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 48, alignItems: 'center', marginTop: 24 },
+    historyEmoji: { fontSize: 48, marginBottom: 16 },
+    historyEmptyTitle: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
+    historyEmptySubtext: { fontSize: 14, color: '#666' },
 
     // Profile Card
     profileCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', marginBottom: 16 },

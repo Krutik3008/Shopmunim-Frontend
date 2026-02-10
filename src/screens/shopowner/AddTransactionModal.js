@@ -267,27 +267,38 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                                     { label: 'Debit (Take Payment)', value: 'debit' }
                                 ]}
                                 value={transactionType}
-                                onValueChange={setTransactionType}
+                                onValueChange={(value) => {
+                                    setTransactionType(value);
+                                    if (value === 'debit') {
+                                        setMethod('manual');
+                                    } else {
+                                        setMethod('products');
+                                    }
+                                }}
                             />
 
                             {/* Method Switcher */}
-                            <Text style={styles.sectionLabel}>Transaction Method</Text>
-                            <View style={styles.methodToggle}>
-                                <TouchableOpacity
-                                    style={[styles.methodOption, method === 'products' && styles.methodActive]}
-                                    onPress={() => setMethod('products')}
-                                >
-                                    <Ionicons name="cube-outline" size={18} color={method === 'products' ? colors.primary.blue : colors.gray[600]} />
-                                    <Text style={[styles.methodText, method === 'products' && styles.methodTextActive]}>Products</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    style={[styles.methodOption, method === 'manual' && styles.methodActive]}
-                                    onPress={() => setMethod('manual')}
-                                >
-                                    <Ionicons name="calculator-outline" size={18} color={method === 'manual' ? colors.primary.blue : colors.gray[600]} />
-                                    <Text style={[styles.methodText, method === 'manual' && styles.methodTextActive]}>Manual</Text>
-                                </TouchableOpacity>
-                            </View>
+                            {transactionType === 'credit' && (
+                                <>
+                                    <Text style={styles.sectionLabel}>Transaction Method</Text>
+                                    <View style={styles.methodToggle}>
+                                        <TouchableOpacity
+                                            style={[styles.methodOption, method === 'products' && styles.methodActive]}
+                                            onPress={() => setMethod('products')}
+                                        >
+                                            <Ionicons name="cube-outline" size={18} color={method === 'products' ? colors.primary.blue : colors.gray[600]} />
+                                            <Text style={[styles.methodText, method === 'products' && styles.methodTextActive]}>Products</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={[styles.methodOption, method === 'manual' && styles.methodActive]}
+                                            onPress={() => setMethod('manual')}
+                                        >
+                                            <Ionicons name="calculator-outline" size={18} color={method === 'manual' ? colors.primary.blue : colors.gray[600]} />
+                                            <Text style={[styles.methodText, method === 'manual' && styles.methodTextActive]}>Manual</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </>
+                            )}
 
                             {/* Content based on method */}
                             {method === 'manual' ? (
