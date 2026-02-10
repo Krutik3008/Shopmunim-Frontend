@@ -25,7 +25,7 @@ A mobile application for shop owners to manage customers, transactions, and busi
 ```bash
 # Clone the repository
 git clone https://github.com/your-username/ShopMunimApp.git
-cd ShopMunimApp
+cd Shopmunim-Frontend
 
 # Install dependencies
 npm install
