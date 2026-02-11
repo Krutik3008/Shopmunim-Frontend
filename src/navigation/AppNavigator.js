@@ -15,6 +15,7 @@ import QRCodeScreen from '../screens/shopowner/QRCodeScreen';
 import QRShareScreen from '../screens/shopowner/QRShareScreen';
 import CustomerDashboardScreen from '../screens/customer/DashboardScreen';
 import AdminPanelScreen from '../screens/admin/AdminPanelScreen';
+import AdminCustomerDetailScreen from '../screens/admin/AdminCustomerDetailScreen';
 import CreateShopScreen from '../screens/CreateShopScreen';
 
 const Stack = createNativeStackNavigator();
@@ -55,6 +56,7 @@ const MainNavigator = ({ initialRoute }) => (
 
         {/* Admin Screens */}
         <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />
+        <Stack.Screen name="AdminCustomerDetail" component={AdminCustomerDetailScreen} />
     </Stack.Navigator>
 );
 

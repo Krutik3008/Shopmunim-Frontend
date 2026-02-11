@@ -1,513 +1,523 @@
-// Admin Panel Screen - Aligned with backend API
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-    View,
-    Text,
-    StyleSheet,
-    ScrollView,
-    RefreshControl,
-    TouchableOpacity,
-    Alert,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
-import { Card, Badge, Button, Tabs } from '../../components/ui';
-import RoleSwitcher from '../../components/RoleSwitcher';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { adminAPI } from '../../api';
-import { formatCurrency, formatDateTime } from '../../utils/helpers';
-import { colors, spacing, fontSize, borderRadius } from '../../theme';
+import AdminDashboard from './AdminDashboard';
+import AdminUserManagement from './AdminUserManagement';
+import AdminShopManagement from './AdminShopManagement';
+import AdminCustomerManagement from './AdminCustomerManagement';
+import AdminRoleManagement from './AdminRoleManagement';
+
+const { width } = Dimensions.get('window');
 
 const AdminPanelScreen = () => {
-    const [dashboard, setDashboard] = useState(null);
-    const [users, setUsers] = useState([]);
-    const [shops, setShops] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [activeView, setActiveView] = useState('dashboard');
+    const { user, logout, switchRole } = useAuth();
+    const navigation = useNavigation();
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+    const [stats, setStats] = useState({ total_users: 0 });
 
-    const tabs = [
-        { key: 'overview', label: 'Overview' },
-        { key: 'users', label: 'Users' },
-        { key: 'shops', label: 'Shops' },
+    const fetchStats = async () => {
+        try {
+            const response = await adminAPI.getDashboard();
+            if (response.data) {
+                setStats(response.data);
+            }
+        } catch (error) {
+            console.log('Failed to fetch admin stats:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchStats();
+
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardVisible(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardVisible(false);
+            }
+        );
+
+        return () => {
+            keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+        };
+    }, []);
+
+    const navigationItems = [
+        {
+            id: 'dashboard',
+            name: 'Home',
+            icon: 'grid-outline',
+            component: AdminDashboard,
+            Lib: Ionicons
+        },
+        {
+            id: 'users',
+            name: 'Users',
+            icon: 'people-outline',
+            component: AdminUserManagement,
+            Lib: Ionicons
+        },
+        {
+            id: 'shops',
+            name: 'Shops',
+            icon: 'storefront-outline',
+            component: AdminShopManagement,
+            Lib: Ionicons
+        },
+        {
+            id: 'customers',
+            name: 'Customers',
+            icon: 'cart-outline', // Web uses ShoppingCart
+            component: AdminCustomerManagement,
+            Lib: Ionicons
+        },
+        {
+            id: 'roles',
+            name: 'Roles',
+            icon: 'account-cog-outline', // Web uses UserCog
+            component: AdminRoleManagement,
+            Lib: MaterialCommunityIcons
+        }
     ];
 
-    useFocusEffect(
-        useCallback(() => {
-            loadData();
-        }, [])
-    );
+    const activeItem = navigationItems.find(item => item.id === activeView);
+    const ActiveComponent = activeItem?.component || AdminDashboard;
 
-    const loadData = async () => {
-        try {
-            const [dashboardRes, usersRes, shopsRes] = await Promise.all([
-                adminAPI.getDashboard(),
-                adminAPI.getUsers(),
-                adminAPI.getShops(),
-            ]);
-            setDashboard(dashboardRes.data);
-            setUsers(usersRes.data.users || []);
-            setShops(shopsRes.data.shops || []);
-        } catch (error) {
-            console.log('Load admin data error:', error.response?.data || error.message);
-            Alert.alert('Error', 'Failed to load admin data. Make sure you have admin access.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadData();
-        setRefreshing(false);
-    };
-
-    const handleFlagUser = async (user) => {
+    const handleLogout = () => {
         Alert.alert(
-            user.flagged ? 'Unflag User' : 'Flag User',
-            `Are you sure you want to ${user.flagged ? 'unflag' : 'flag'} ${user.name || user.phone}?`,
+            'Logout',
+            'Are you sure you want to logout?',
             [
                 { text: 'Cancel', style: 'cancel' },
-                {
-                    text: user.flagged ? 'Unflag' : 'Flag',
-                    style: user.flagged ? 'default' : 'destructive',
-                    onPress: async () => {
-                        try {
-                            await adminAPI.updateUserStatus(user.id, { flagged: !user.flagged });
-                            loadData();
-                        } catch (error) {
-                            Alert.alert('Error', 'Failed to update user');
-                        }
-                    },
-                },
+                { text: 'Logout', style: 'destructive', onPress: logout }
             ]
         );
     };
 
-    const handleVerifyUser = async (user) => {
-        try {
-            await adminAPI.updateUserStatus(user.id, { verified: !user.verified });
-            loadData();
-        } catch (error) {
-            Alert.alert('Error', 'Failed to update user');
+    const handleRoleSwitch = async (role) => {
+        setShowRoleDropdown(false);
+        if (role !== user?.active_role) {
+            const success = await switchRole(role);
+            if (success) {
+                if (role === 'customer') {
+                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard' }] });
+                } else if (role === 'shop_owner') {
+                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard' }] });
+                }
+            }
         }
     };
-
-    const handleAssignAdmin = async (user) => {
-        const isAdmin = user.admin_roles?.includes('admin');
-        Alert.alert(
-            isAdmin ? 'Remove Admin' : 'Make Admin',
-            `Are you sure you want to ${isAdmin ? 'remove admin role from' : 'make'} ${user.name || user.phone} ${isAdmin ? '' : 'an admin'}?`,
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: isAdmin ? 'Remove' : 'Make Admin',
-                    onPress: async () => {
-                        try {
-                            await adminAPI.assignRole(
-                                user.id,
-                                ['admin'],
-                                isAdmin ? 'revoke' : 'grant'
-                            );
-                            loadData();
-                        } catch (error) {
-                            Alert.alert('Error', error.response?.data?.detail || 'Failed to update user role');
-                        }
-                    },
-                },
-            ]
-        );
-    };
-
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <Text>Loading...</Text>
-            </View>
-        );
-    }
 
     return (
-        <View style={styles.container}>
-            <RoleSwitcher />
-
+        <SafeAreaView style={styles.container}>
+            {/* Header - Matching Web Mobile Header */}
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Admin Panel</Text>
-                <Badge variant="error">Admin</Badge>
-            </View>
+                <View style={styles.headerTop}>
+                    <View style={styles.headerTitleContainer}>
+                        {activeView !== 'dashboard' && (
+                            <TouchableOpacity onPress={() => setActiveView('dashboard')} style={styles.backButton}>
+                                <Ionicons name="arrow-back" size={20} color="#374151" />
+                            </TouchableOpacity>
+                        )}
+                        <LinearGradient
+                            colors={['#7C3AED', '#2563EB']}
+                            style={styles.logoIcon}
+                        >
+                            <Ionicons name="settings" size={12} color="#fff" />
+                        </LinearGradient>
+                        <Text style={styles.headerTitle}>ShopMunim Admin</Text>
+                    </View>
 
-            <ScrollView
-                style={styles.scrollView}
-                refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-                }
-                showsVerticalScrollIndicator={false}
-            >
-                {/* Tabs */}
-                <Tabs
-                    tabs={tabs}
-                    activeTab={activeTab}
-                    onTabChange={setActiveTab}
-                    style={styles.tabs}
-                />
-
-                {/* Tab Content */}
-                <View style={styles.tabContent}>
-                    {activeTab === 'overview' && dashboard && (
-                        <View>
-                            <View style={styles.statsGrid}>
-                                <Card style={styles.statCard}>
-                                    <Text style={styles.statIcon}>👥</Text>
-                                    <Text style={styles.statValue}>{dashboard.total_users}</Text>
-                                    <Text style={styles.statLabel}>Total Users</Text>
-                                </Card>
-                                <Card style={styles.statCard}>
-                                    <Text style={styles.statIcon}>🏪</Text>
-                                    <Text style={styles.statValue}>{dashboard.total_shops}</Text>
-                                    <Text style={styles.statLabel}>Total Shops</Text>
-                                </Card>
-                                <Card style={styles.statCard}>
-                                    <Text style={styles.statIcon}>🟢</Text>
-                                    <Text style={styles.statValue}>{dashboard.active_shops}</Text>
-                                    <Text style={styles.statLabel}>Active Shops</Text>
-                                </Card>
-                                <Card style={styles.statCard}>
-                                    <Text style={styles.statIcon}>👤</Text>
-                                    <Text style={styles.statValue}>{dashboard.total_customers}</Text>
-                                    <Text style={styles.statLabel}>Customers</Text>
-                                </Card>
-                            </View>
-
-                            {/* Daily Transactions */}
-                            <Card style={styles.dailyCard}>
-                                <Text style={styles.dailyTitle}>Today's Activity</Text>
-                                <View style={styles.dailyStats}>
-                                    <View style={styles.dailyStat}>
-                                        <Text style={styles.dailyValue}>{dashboard.daily_transactions?.count || 0}</Text>
-                                        <Text style={styles.dailyLabel}>Transactions</Text>
-                                    </View>
-                                    <View style={styles.dailyStat}>
-                                        <Text style={styles.dailyValue}>
-                                            {formatCurrency(dashboard.daily_transactions?.amount || 0)}
-                                        </Text>
-                                        <Text style={styles.dailyLabel}>Amount</Text>
-                                    </View>
-                                </View>
-                            </Card>
-
-                            {/* Summary */}
-                            <Card style={styles.infoCard}>
-                                <Ionicons name="shield-checkmark" size={32} color={colors.success} />
-                                <Text style={styles.infoTitle}>Platform Summary</Text>
-                                <Text style={styles.infoText}>
-                                    Total transaction volume: {formatCurrency(dashboard.total_amount || 0)}
-                                </Text>
-                                <Text style={styles.infoText}>
-                                    New users this week: {dashboard.new_users_this_week || 0}
-                                </Text>
-                            </Card>
-                        </View>
-                    )}
-
-                    {activeTab === 'users' && (
-                        <View>
-                            <Text style={styles.sectionTitle}>
-                                All Users ({users.length})
+                    <View style={styles.headerRight}>
+                        <View style={styles.roleBadge}>
+                            <Text style={styles.roleBadgeText}>
+                                {user?.active_role === 'admin' ? '👑' :
+                                    user?.active_role === 'shop_owner' ? '🏪' : '👤'}
                             </Text>
-                            {users.map((user) => (
-                                <Card key={user.id} style={styles.userCard}>
-                                    <View style={styles.userInfo}>
-                                        <View style={styles.avatar}>
-                                            <Text style={styles.avatarText}>
-                                                {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                                            </Text>
-                                        </View>
-                                        <View style={styles.userDetails}>
-                                            <Text style={styles.userName}>{user.name || 'Unknown'}</Text>
-                                            <Text style={styles.userPhone}>+91 {user.phone}</Text>
-                                            <View style={styles.userBadges}>
-                                                {user.admin_roles?.includes('super_admin') && (
-                                                    <Badge variant="error" size="sm">Super Admin</Badge>
-                                                )}
-                                                {user.admin_roles?.includes('admin') && !user.admin_roles?.includes('super_admin') && (
-                                                    <Badge variant="warning" size="sm">Admin</Badge>
-                                                )}
-                                                {user.flagged && (
-                                                    <Badge variant="error" size="sm">Flagged</Badge>
-                                                )}
-                                                {user.verified && (
-                                                    <Badge variant="success" size="sm">Verified</Badge>
-                                                )}
-                                            </View>
-                                        </View>
-                                    </View>
-                                    <View style={styles.userActions}>
-                                        <TouchableOpacity
-                                            style={styles.actionButton}
-                                            onPress={() => handleVerifyUser(user)}
-                                        >
-                                            <Ionicons
-                                                name={user.verified ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                                                size={20}
-                                                color={user.verified ? colors.success : colors.gray[400]}
-                                            />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={styles.actionButton}
-                                            onPress={() => handleFlagUser(user)}
-                                        >
-                                            <Ionicons
-                                                name={user.flagged ? 'flag' : 'flag-outline'}
-                                                size={20}
-                                                color={user.flagged ? colors.error : colors.gray[400]}
-                                            />
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={styles.actionButton}
-                                            onPress={() => handleAssignAdmin(user)}
-                                        >
-                                            <Ionicons
-                                                name={user.admin_roles?.includes('admin') ? 'shield' : 'shield-outline'}
-                                                size={20}
-                                                color={user.admin_roles?.includes('admin') ? colors.primary.blue : colors.gray[400]}
-                                            />
-                                        </TouchableOpacity>
-                                    </View>
-                                </Card>
-                            ))}
                         </View>
-                    )}
 
-                    {activeTab === 'shops' && (
-                        <View>
-                            <Text style={styles.sectionTitle}>
-                                All Shops ({shops.length})
+                        <TouchableOpacity
+                            style={styles.profileContainer}
+                            onPress={() => setShowRoleDropdown(!showRoleDropdown)}
+                        >
+                            <LinearGradient
+                                colors={['#7C3AED', '#2563EB']}
+                                style={styles.avatarGradient}
+                            >
+                                <Text style={styles.avatarText}>
+                                    {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                                </Text>
+                            </LinearGradient>
+                            <Text style={styles.headerUserName} numberOfLines={1}>
+                                {user?.name ? user.name.split(' ')[0] : 'Admin'}
                             </Text>
-                            {shops.map((shop) => (
-                                <Card key={shop.id} style={styles.shopCard}>
-                                    <View style={styles.shopInfo}>
-                                        <Text style={styles.shopName}>{shop.name}</Text>
-                                        <Text style={styles.shopCategory}>{shop.category}</Text>
-                                        <Text style={styles.shopLocation}>{shop.location}</Text>
-                                        <Text style={styles.shopCode}>Code: {shop.shop_code}</Text>
-                                    </View>
-                                    {shop.owner && (
-                                        <Text style={styles.shopOwner}>
-                                            Owner: {shop.owner.name || shop.owner.phone}
-                                        </Text>
-                                    )}
-                                    <Text style={styles.shopDate}>
-                                        Created: {formatDateTime(shop.created_at)}
-                                    </Text>
-                                </Card>
-                            ))}
-                        </View>
-                    )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
-                <View style={{ height: spacing.xxxl }} />
-            </ScrollView>
-        </View>
+                {/* Status Bar */}
+                <View style={styles.statusBar}>
+                    <View style={styles.statusGroup}>
+                        <View style={styles.statusItem}>
+                            <Text style={styles.statusLabel}>Status: </Text>
+                            <Text style={styles.statusValue}>Active</Text>
+                        </View>
+                        <View style={styles.statusItem}>
+                            <Text style={styles.statusLabel}>Users: </Text>
+                            <Text style={styles.statusValueBlack}>{stats.total_users}</Text>
+                        </View>
+                    </View>
+                    <Text style={styles.dateText}>
+                        {new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                    </Text>
+                </View>
+            </View>
+
+            {/* Role Dropdown - Positioned Absolutely over content */}
+            {showRoleDropdown && (
+                <View style={styles.roleDropdown}>
+                    <View style={styles.dropdownHeader}>
+                        <Text style={styles.dropdownUserName}>{user?.name}</Text>
+                        <Text style={styles.dropdownUserRole}>Super Administrator</Text>
+                    </View>
+                    <View style={styles.dropdownDivider} />
+                    <TouchableOpacity
+                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
+                        onPress={() => handleRoleSwitch('customer')}
+                    >
+                        <Ionicons name="person-outline" size={18} color="#3B82F6" />
+                        <Text style={styles.roleOptionText}>Customer View</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
+                        onPress={() => handleRoleSwitch('shop_owner')}
+                    >
+                        <Ionicons name="storefront-outline" size={18} color="#8B5CF6" />
+                        <Text style={styles.roleOptionText}>Shop Owner View</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {/* Content Area with Dark Gradient Background */}
+            <LinearGradient
+                colors={['#581c87', '#1e3a8a', '#312e81']} // Purple-900 to Indigo-900 approximation
+                style={[styles.content, isKeyboardVisible && { marginBottom: 0 }]}
+            >
+                <ActiveComponent />
+            </LinearGradient>
+
+            {/* Bottom Navigation - Fixed - Matches Web Mobile */}
+            {!isKeyboardVisible && (
+                <View style={styles.bottomNav}>
+                    <View style={styles.navContainer}>
+                        {navigationItems.map((item) => {
+                            const isActive = activeView === item.id;
+                            const IconLib = item.Lib || Ionicons;
+                            return (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    style={styles.navItemWrapper}
+                                    onPress={() => setActiveView(item.id)}
+                                >
+                                    {isActive ? (
+                                        <LinearGradient
+                                            colors={['#F3E8FF', '#EFF6FF']} // purple-50 to blue-50
+                                            style={styles.navItemActiveGradient}
+                                        >
+                                            <IconLib
+                                                name={item.icon}
+                                                size={20}
+                                                color="#7C3AED"
+                                            />
+                                            <Text style={styles.navTextActive}>
+                                                {item.name}
+                                            </Text>
+                                        </LinearGradient>
+                                    ) : (
+                                        <View style={styles.navItem}>
+                                            <IconLib
+                                                name={item.icon}
+                                                size={20}
+                                                color="#6B7280"
+                                            />
+                                            <Text style={styles.navText}>
+                                                {item.name}
+                                            </Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            );
+                        })}
+
+                        {/* Logout Button in Navbar */}
+                        <TouchableOpacity
+                            style={styles.navItemWrapper}
+                            onPress={handleLogout}
+                        >
+                            <View style={styles.navItem}>
+                                <Ionicons
+                                    name="log-out-outline"
+                                    size={20}
+                                    color="#EF4444"
+                                />
+                                <Text style={[styles.navText, { color: '#EF4444' }]}>
+                                    Logout
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
+
+                    </View>
+                </View>
+            )}
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.gray[50],
-    },
-    loadingContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: '#FFFFFF', // Header part is white, active content is gradient
+        paddingTop: Platform.OS === 'android' ? 25 : 0,
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: spacing.lg,
-        backgroundColor: colors.white,
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: colors.gray[100],
+        borderBottomColor: '#E5E7EB',
+        zIndex: 10,
+        paddingBottom: 4,
     },
-    headerTitle: {
-        fontSize: fontSize.xxl,
-        fontWeight: '600',
-        color: colors.gray[800],
-    },
-    scrollView: {
-        flex: 1,
-    },
-    tabs: {
-        margin: spacing.md,
-    },
-    tabContent: {
-        padding: spacing.md,
-    },
-    statsGrid: {
+    headerTop: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    statCard: {
-        width: '48%',
-        margin: '1%',
         alignItems: 'center',
-        padding: spacing.lg,
-    },
-    statIcon: {
-        fontSize: 32,
-        marginBottom: spacing.sm,
-    },
-    statValue: {
-        fontSize: fontSize.xxl,
-        fontWeight: 'bold',
-        color: colors.gray[800],
-    },
-    statLabel: {
-        fontSize: fontSize.sm,
-        color: colors.gray[500],
-        marginTop: spacing.xs,
-    },
-    dailyCard: {
-        marginTop: spacing.md,
-        padding: spacing.lg,
-    },
-    dailyTitle: {
-        fontSize: fontSize.lg,
-        fontWeight: '600',
-        color: colors.gray[800],
-        marginBottom: spacing.md,
-        textAlign: 'center',
-    },
-    dailyStats: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-    },
-    dailyStat: {
-        alignItems: 'center',
-    },
-    dailyValue: {
-        fontSize: fontSize.xl,
-        fontWeight: 'bold',
-        color: colors.primary.blue,
-    },
-    dailyLabel: {
-        fontSize: fontSize.sm,
-        color: colors.gray[500],
-        marginTop: spacing.xs,
-    },
-    infoCard: {
-        alignItems: 'center',
-        padding: spacing.xl,
-        marginTop: spacing.md,
-    },
-    infoTitle: {
-        fontSize: fontSize.lg,
-        fontWeight: '600',
-        color: colors.gray[800],
-        marginTop: spacing.md,
-    },
-    infoText: {
-        fontSize: fontSize.sm,
-        color: colors.gray[500],
-        textAlign: 'center',
-        marginTop: spacing.sm,
-    },
-    sectionTitle: {
-        fontSize: fontSize.lg,
-        fontWeight: '600',
-        color: colors.gray[800],
-        marginBottom: spacing.md,
-    },
-    userCard: {
-        flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing.sm,
-        padding: spacing.md,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
     },
-    userInfo: {
+    headerTitleContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        flex: 1,
     },
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: colors.primary.blue,
+    backButton: {
+        padding: 4,
+        marginRight: 8,
+    },
+    logoIcon: {
+        width: 24,
+        height: 24,
+        borderRadius: 6,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: spacing.md,
+        marginRight: 8,
+    },
+    headerTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#7C3AED',
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    roleBadge: {
+        backgroundColor: '#F3E8FF',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 4,
+        marginRight: 8,
+    },
+    roleBadgeText: {
+        fontSize: 12,
+        color: '#7E22CE',
+    },
+    profileContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    avatarGradient: {
+        width: 24, // Matching web w-6 (24px)
+        height: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     avatarText: {
-        fontSize: fontSize.lg,
+        color: '#fff',
+        fontSize: 10,
         fontWeight: 'bold',
-        color: colors.white,
     },
-    userDetails: {
-        flex: 1,
-    },
-    userName: {
-        fontSize: fontSize.md,
+    headerUserName: {
+        fontSize: 12,
         fontWeight: '500',
-        color: colors.gray[800],
+        color: '#374151',
+        maxWidth: 60,
     },
-    userPhone: {
-        fontSize: fontSize.sm,
-        color: colors.gray[500],
-        marginTop: spacing.xs,
-    },
-    userBadges: {
+    statusBar: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
-        marginTop: spacing.xs,
-        gap: spacing.xs,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingBottom: 8,
     },
-    userActions: {
+    statusGroup: {
         flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
     },
-    actionButton: {
-        padding: spacing.sm,
-        marginLeft: spacing.xs,
+    statusItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
-    shopCard: {
-        marginBottom: spacing.sm,
-        padding: spacing.md,
+    statusLabel: {
+        fontSize: 12,
+        color: '#6B7280',
     },
-    shopInfo: {
-        marginBottom: spacing.sm,
-    },
-    shopName: {
-        fontSize: fontSize.md,
+    statusValue: {
+        fontSize: 12,
         fontWeight: '600',
-        color: colors.gray[800],
+        color: '#059669', // Green
     },
-    shopCategory: {
-        fontSize: fontSize.sm,
-        color: colors.primary.blue,
-        textTransform: 'capitalize',
-        marginTop: spacing.xs,
+    statusValueBlack: {
+        fontSize: 12,
+        fontWeight: '500',
+        color: '#1F2937',
     },
-    shopLocation: {
-        fontSize: fontSize.sm,
-        color: colors.gray[500],
-        marginTop: spacing.xs,
+    dateText: {
+        fontSize: 12,
+        color: '#6B7280',
     },
-    shopCode: {
-        fontSize: fontSize.sm,
-        color: colors.gray[400],
-        marginTop: spacing.xs,
+    content: {
+        flex: 1,
+        marginBottom: 65, // Match nav height to prevent overlap
     },
-    shopOwner: {
-        fontSize: fontSize.sm,
-        color: colors.gray[600],
-        marginTop: spacing.sm,
+    bottomNav: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#FFFFFF',
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+        paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+        elevation: 8,
+        height: 65, // Slightly taller for better touch targets
+        zIndex: 1000, // Ensure it stays on top
     },
-    shopDate: {
-        fontSize: fontSize.xs,
-        color: colors.gray[400],
-        marginTop: spacing.sm,
+    navContainer: {
+        flexDirection: 'row',
+        height: '100%',
+        alignItems: 'center',
     },
+    navItemWrapper: {
+        flex: 1,
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navItemActiveGradient: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navText: {
+        fontSize: 10,
+        fontWeight: '500',
+        color: '#6B7280',
+    },
+    navTextActive: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#7C3AED',
+    },
+
+    // Role Dropdown Styles
+    roleDropdown: {
+        position: 'absolute',
+        top: 60,
+        right: 16,
+        width: 200,
+        backgroundColor: 'white',
+        borderRadius: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 10,
+        zIndex: 100,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    dropdownHeader: {
+        padding: 12,
+        backgroundColor: '#F9FAFB',
+        borderTopLeftRadius: 12,
+        borderTopRightRadius: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E7EB',
+    },
+    dropdownUserName: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#111827',
+    },
+    dropdownUserRole: {
+        fontSize: 12,
+        color: '#6B7280',
+        marginTop: 2,
+    },
+    dropdownDivider: {
+        height: 1,
+        backgroundColor: '#E5E7EB',
+    },
+    roleOption: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+    },
+    roleOptionActive: {
+        backgroundColor: '#EFF6FF',
+    },
+    roleOptionText: {
+        fontSize: 14,
+        color: '#374151',
+        marginLeft: 12,
+    },
+    // Logout button in dropdown removed since it's now in bottom nav
+    // But keeping style in case needed or for partial reuse
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#E5E7EB',
+    },
+    logoutText: {
+        fontSize: 14,
+        color: '#EF4444',
+        marginLeft: 12,
+        fontWeight: '600',
+    }
 });
 
 export default AdminPanelScreen;

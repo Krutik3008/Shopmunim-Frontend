@@ -20,6 +20,7 @@ import {
     Platform,
     Share,
     Switch,
+    Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -98,6 +99,27 @@ const ShopOwnerDashboardScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            () => {
+                setKeyboardVisible(true);
+            }
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => {
+                setKeyboardVisible(false);
+            }
+        );
+
+        return () => {
+            keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+        };
+    }, []);
     const [shopName, setShopName] = useState('');
     const [shopCategory, setShopCategory] = useState('');
     const [shopLocation, setShopLocation] = useState('');
@@ -1592,14 +1614,16 @@ const ShopOwnerDashboardScreen = () => {
         <SafeAreaView style={styles.container} edges={['top']}>
             <Header />
             <View style={styles.content}>{renderContent()}</View>
-            <View style={styles.bottomNav}>
-                <TabButton name="home" icon="home-outline" label="Home" />
-                <TabButton name="products" icon="cube-outline" label="Products" />
-                <TabButton name="customers" icon="people-outline" label="Customers" />
-                <TabButton name="transactions" icon="receipt-outline" label="Transactions" />
+            {!isKeyboardVisible && (
+                <View style={styles.bottomNav}>
+                    <TabButton name="home" icon="home-outline" label="Home" />
+                    <TabButton name="products" icon="cube-outline" label="Products" />
+                    <TabButton name="customers" icon="people-outline" label="Customers" />
+                    <TabButton name="transactions" icon="receipt-outline" label="Transactions" />
 
-                <TabButton name="account" icon="person-outline" label="Account" />
-            </View>
+                    <TabButton name="account" icon="person-outline" label="Account" />
+                </View>
+            )}
 
             {/* Create Shop Modal */}
             <Modal
