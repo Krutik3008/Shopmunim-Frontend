@@ -18,11 +18,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { customerAPI, transactionAPI, productAPI } from '../../api';
+import { customerAPI, transactionAPI, productAPI, shopAPI } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AddTransactionModal from './AddTransactionModal';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Print from 'expo-print';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as XLSX from 'xlsx';
 
 const CustomerDetailScreen = ({ route, navigation }) => {
     const { customer: initialCustomer, shopId } = route.params;
@@ -33,6 +37,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [shopDetails, setShopDetails] = useState(null);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
     // Modal
@@ -63,6 +68,13 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             const transactionsRes = await customerAPI.getTransactions(shopId, customer.id);
             const sorted = (transactionsRes.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
             setTransactions(sorted);
+
+            try {
+                const shopRes = await shopAPI.getDashboard(shopId);
+                setShopDetails(shopRes.data?.shop);
+            } catch (e) {
+                console.log('Could not load shop details:', e);
+            }
 
             const productsRes = await productAPI.getAll(shopId);
             setProducts(productsRes.data?.filter(p => p.active) || []);
@@ -97,10 +109,150 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             filtered = filtered.filter(t => new Date(t.date) <= toEnd);
         }
         if (transactionType !== 'all') {
-            filtered = filtered.filter(t => t.type === transactionType);
+            if (transactionType === 'credit') {
+                filtered = filtered.filter(t => t.type === 'credit' || t.type === 'DEBIT');
+            } else if (transactionType === 'payment') {
+                filtered = filtered.filter(t => t.type === 'payment' || t.type === 'CREDIT' || t.type === 'debit');
+            }
         }
 
         setFilteredTransactions(filtered);
+        calculateStats(filtered);
+    };
+
+    const formatShortDate = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "Invalid Date";
+            return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
+        } catch (e) {
+            return dateString || "";
+        }
+    };
+
+    const formatDateDisplay = (date) => {
+        if (!date) return '';
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+    };
+
+    const exportToPDF = async () => {
+        try {
+            const now = new Date();
+            const generatedDate = `${now.toLocaleDateString('en-GB')} at ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+
+            const txRows = filteredTransactions.map(t => {
+                const isPay = t.type === 'debit' || t.type === 'payment' || t.type === 'CREDIT';
+                const items = t.products || t.items || [];
+                const itemNames = items.map(i => i.name || 'Item').join(', ') || '-';
+                const totalQty = items.reduce((s, i) => s + (i.quantity || 1), 0);
+                const typeColor = isPay ? '#10B981' : '#DC2626';
+                const typeLabel = isPay ? 'Payment Received' : 'Credit Given';
+                const amountColor = isPay ? '#10B981' : '#DC2626';
+                return `<tr>
+                    <td>${formatShortDate(t.date)}</td>
+                    <td style="color:${typeColor};font-weight:600">${typeLabel}</td>
+                    <td>${itemNames}</td>
+                    <td>${items.length > 0 ? totalQty : '-'}</td>
+                    <td style="color:${amountColor};font-weight:600">₹${parseFloat(t.amount || 0).toFixed(2)}</td>
+                    <td>${t.note || t.notes || '-'}</td>
+                </tr>`;
+            }).join('');
+
+            const html = `
+            <html><head><style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #111827; font-size: 12px; }
+                .header { text-align: center; margin-bottom: 24px; }
+                .header h1 { font-size: 20px; color: #111827; margin-bottom: 6px; }
+                .badge { display: inline-block; background: #DC2626; color: #fff; font-size: 9px; padding: 3px 10px; border-radius: 4px; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 4px; }
+                .generated { color: #6B7280; font-size: 11px; margin-top: 4px; }
+                .section { background: #F9FAFB; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .info-row { margin-bottom: 4px; font-size: 12px; color: #374151; }
+                .analytics { display: flex; gap: 12px; margin-bottom: 20px; }
+                .analytics-box { flex: 1; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px; text-align: center; background: #fff; }
+                .green { color: #10B981; }
+                .red { color: #DC2626; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th { background: #F9FAFB; color: #6B7280; padding: 10px 8px; text-align: left; font-size: 11px; font-weight: 600; border-bottom: 2px solid #E5E7EB; }
+                td { padding: 10px 8px; border-bottom: 1px solid #F3F4F6; font-size: 11px; }
+            </style></head><body>
+                <div class="header">
+                    <h1>Customer Transaction Report</h1>
+                    <div class="generated">${dateFrom || dateTo ? `Period: ${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}` : 'Full History'}</div>
+                    <div class="generated">Generated on: ${generatedDate}</div>
+                </div>
+                ${shopDetails ? `
+                <div class="section">
+                    <div style="font-weight: bold; margin-bottom: 6px; color: #D97706;">Shop Information</div>
+                    <div class="info-row"><b>Shop Name:</b> ${shopDetails.name}</div>
+                    <div class="info-row"><b>Location:</b> ${shopDetails.location || 'N/A'}</div>
+                </div>
+                ` : ''}
+                <div class="section">
+                    <div style="font-weight: bold; margin-bottom: 6px; color: #D97706;">Customer Information</div>
+                    <div class="info-row"><b>Customer Name:</b> ${customer.name}</div>
+                    <div class="info-row"><b>Phone:</b> +91 ${customer.phone}</div>
+                </div>
+                <table>
+                    <tr><th>Date</th><th>Type</th><th>Items</th><th>Qty</th><th>Amount</th><th>Note</th></tr>
+                    ${txRows}
+                </table>
+            </body></html>`;
+
+            const { uri } = await Print.printToFileAsync({ html });
+            const fileName = `${customer.name}_${shopDetails?.name || 'Shop'}.pdf`;
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.moveAsync({ from: uri, to: fileUri });
+            await Sharing.shareAsync(fileUri);
+        } catch (error) {
+            console.error('PDF export error:', error);
+            Alert.alert('Error', 'Failed to generate PDF');
+        }
+    };
+
+    const exportToExcel = async () => {
+        try {
+            const rows = [];
+
+            // Add Header Info
+            rows.push(['Customer Transaction Report']);
+            rows.push(['Shop:', shopDetails?.name || 'N/A']);
+            rows.push(['Customer:', customer.name]);
+            rows.push(['From Date:', dateFrom ? formatDateDisplay(dateFrom) : 'All Time']);
+            rows.push(['To Date:', dateTo ? formatDateDisplay(dateTo) : 'Present']);
+            rows.push([]); // Empty spacing row
+
+            // Add Table Headers
+            rows.push(['Date', 'Type', 'Items', 'Quantity', 'Amount', 'Note']);
+            filteredTransactions.forEach(t => {
+                const isPay = t.type === 'debit' || t.type === 'payment' || t.type === 'CREDIT';
+                const items = t.products || t.items || [];
+                rows.push([
+                    formatShortDate(t.date),
+                    isPay ? 'Payment' : 'Purchase',
+                    items.map(i => i.name).join(', '),
+                    items.reduce((s, i) => s + (i.quantity || 1), 0),
+                    parseFloat(t.amount || 0),
+                    t.note || t.notes || ''
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+            const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+
+            const fileName = `${customer.name}_${shopDetails?.name || 'Shop'}.xlsx`;
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
+            await Sharing.shareAsync(fileUri);
+        } catch (error) {
+            console.error('Excel export error:', error);
+            Alert.alert('Error', 'Failed to generate Excel');
+        }
     };
 
     const onRefresh = async () => {
@@ -142,10 +294,6 @@ const CustomerDetailScreen = ({ route, navigation }) => {
         return `₹${parseFloat(amount || 0).toFixed(2)}`;
     };
 
-    const formatShortDate = (dateString) => {
-        const date = new Date(dateString);
-        return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}`;
-    };
 
     const handleSendUPILink = async () => {
         if (!customer || (customer?.balance || 0) >= 0) {
@@ -369,18 +517,18 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                             </View>
 
                             {/* Filters & Export Section */}
-                            <View style={styles.sectionCard}>
+                            <View style={[styles.sectionCard, { zIndex: 10 }]}>
                                 <View style={styles.filterHeader}>
                                     <View style={styles.filterTitleRow}>
                                         <Ionicons name="filter-outline" size={18} color="#374151" />
                                         <Text style={styles.sectionTitle}>Filters & Export</Text>
                                     </View>
                                     <View style={styles.exportButtons}>
-                                        <TouchableOpacity style={styles.pdfBtn}>
+                                        <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
                                             <Ionicons name="document-text-outline" size={14} color="#EF4444" />
                                             <Text style={styles.pdfBtnText}>PDF</Text>
                                         </TouchableOpacity>
-                                        <TouchableOpacity style={styles.excelBtn}>
+                                        <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
                                             <Ionicons name="grid-outline" size={14} color="#10B981" />
                                             <Text style={styles.excelBtnText}>Excel</Text>
                                         </TouchableOpacity>
@@ -394,14 +542,9 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                             style={styles.dateInputContainer}
                                             onPress={() => setShowFromDatePicker(true)}
                                         >
-                                            <Text style={styles.dateInput}>
-                                                {dateFrom ? `${dateFrom.getDate().toString().padStart(2, '0')}-${(dateFrom.getMonth() + 1).toString().padStart(2, '0')}-${dateFrom.getFullYear()}` : 'dd-mm-yyyy'}
+                                            <Text style={[styles.dateInput, !dateFrom && { color: '#9CA3AF' }]}>
+                                                {dateFrom ? formatDateDisplay(dateFrom) : 'dd-mm-yyyy'}
                                             </Text>
-                                            {dateFrom && (
-                                                <TouchableOpacity onPress={() => setDateFrom(null)} style={{ marginRight: 8 }}>
-                                                    <Ionicons name="close-circle" size={16} color="#9CA3AF" />
-                                                </TouchableOpacity>
-                                            )}
                                             <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
                                         </TouchableOpacity>
                                     </View>
@@ -411,43 +554,15 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                             style={styles.dateInputContainer}
                                             onPress={() => setShowToDatePicker(true)}
                                         >
-                                            <Text style={styles.dateInput}>
-                                                {dateTo ? `${dateTo.getDate().toString().padStart(2, '0')}-${(dateTo.getMonth() + 1).toString().padStart(2, '0')}-${dateTo.getFullYear()}` : 'dd-mm-yyyy'}
+                                            <Text style={[styles.dateInput, !dateTo && { color: '#9CA3AF' }]}>
+                                                {dateTo ? formatDateDisplay(dateTo) : 'dd-mm-yyyy'}
                                             </Text>
-                                            {dateTo && (
-                                                <TouchableOpacity onPress={() => setDateTo(null)} style={{ marginRight: 8 }}>
-                                                    <Ionicons name="close-circle" size={16} color="#9CA3AF" />
-                                                </TouchableOpacity>
-                                            )}
                                             <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
                                         </TouchableOpacity>
                                     </View>
                                 </View>
 
-                                {showFromDatePicker && (
-                                    <DateTimePicker
-                                        value={dateFrom || new Date()}
-                                        mode="date"
-                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                        onChange={(event, selectedDate) => {
-                                            setShowFromDatePicker(Platform.OS === 'ios');
-                                            if (selectedDate) setDateFrom(selectedDate);
-                                        }}
-                                    />
-                                )}
-                                {showToDatePicker && (
-                                    <DateTimePicker
-                                        value={dateTo || new Date()}
-                                        mode="date"
-                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                        onChange={(event, selectedDate) => {
-                                            setShowToDatePicker(Platform.OS === 'ios');
-                                            if (selectedDate) setDateTo(selectedDate);
-                                        }}
-                                    />
-                                )}
-
-                                <View style={styles.typeFilterContainer}>
+                                <View style={[styles.typeFilterContainer, { zIndex: 20 }]}>
                                     <Text style={styles.filterLabel}>Transaction Type</Text>
                                     <TouchableOpacity
                                         style={styles.typeDropdown}
@@ -465,19 +580,22 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                                 style={[styles.customerDetailDropdownOption, transactionType === 'all' && styles.customerDetailDropdownOptionActive]}
                                                 onPress={() => { setTransactionType('all'); setShowTypeDropdown(false); }}
                                             >
-                                                <Text style={{ fontSize: 13, color: transactionType === 'all' ? '#2563EB' : '#374151' }}>All Transactions</Text>
+                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'all' && styles.customerDetailDropdownOptionTextActive]}>All Transactions</Text>
+                                                {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={[styles.customerDetailDropdownOption, transactionType === 'credit' && styles.customerDetailDropdownOptionActive]}
                                                 onPress={() => { setTransactionType('credit'); setShowTypeDropdown(false); }}
                                             >
-                                                <Text style={{ fontSize: 13, color: transactionType === 'credit' ? '#2563EB' : '#374151' }}>Credits Only</Text>
+                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'credit' && styles.customerDetailDropdownOptionTextActive]}>Credits Only</Text>
+                                                {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 style={[styles.customerDetailDropdownOption, transactionType === 'payment' && styles.customerDetailDropdownOptionActive]}
                                                 onPress={() => { setTransactionType('payment'); setShowTypeDropdown(false); }}
                                             >
-                                                <Text style={{ fontSize: 13, color: transactionType === 'payment' ? '#2563EB' : '#374151' }}>Payments Only</Text>
+                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'payment' && styles.customerDetailDropdownOptionTextActive]}>Payments Only</Text>
+                                                {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
                                             </TouchableOpacity>
                                         </View>
                                     )}
@@ -585,6 +703,41 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 customer={customer}
                 transactions={transactions}
             />
+            {/* DateTime Pickers */}
+            {showFromDatePicker && (
+                <DateTimePicker
+                    value={dateFrom || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                        setShowFromDatePicker(false);
+                        if (event.type === 'set' && selectedDate) {
+                            setDateFrom(selectedDate);
+                        } else if (event.type === 'dismissed') {
+                            setDateFrom(null);
+                        }
+                    }}
+                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                />
+            )}
+            {showToDatePicker && (
+                <DateTimePicker
+                    value={dateTo || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                        setShowToDatePicker(false);
+                        if (event.type === 'set' && selectedDate) {
+                            setDateTo(selectedDate);
+                        } else if (event.type === 'dismissed') {
+                            setDateTo(null);
+                        }
+                    }}
+                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                />
+            )}
         </SafeAreaView>
     );
 };
@@ -612,10 +765,6 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
 
     // Helper functions for formatting
     const formatCurrency = (amount) => `₹${parseFloat(amount || 0).toFixed(2)}`;
-    const formatShortDate = (dateString) => {
-        const date = new Date(dateString);
-        return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
-    };
 
     const timeAgo = (dateString) => {
         if (!dateString) return 'No transactions';
@@ -934,8 +1083,14 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                                                 display="default"
                                                 onChange={(event, selectedDate) => {
                                                     setShowScheduleDatePicker(false);
-                                                    if (selectedDate) setScheduleDate(selectedDate);
+                                                    if (event.type === 'set' && selectedDate) {
+                                                        setScheduleDate(selectedDate);
+                                                    } else if (event.type === 'dismissed') {
+                                                        setScheduleDate(null);
+                                                    }
                                                 }}
+                                                positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                                                negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
                                             />
                                         )}
 
@@ -946,8 +1101,14 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                                                 display="default"
                                                 onChange={(event, selectedTime) => {
                                                     setShowScheduleTimePicker(false);
-                                                    if (selectedTime) setScheduleTime(selectedTime);
+                                                    if (event.type === 'set' && selectedTime) {
+                                                        setScheduleTime(selectedTime);
+                                                    } else if (event.type === 'dismissed') {
+                                                        setScheduleTime(null);
+                                                    }
                                                 }}
+                                                positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                                                negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
                                             />
                                         )}
                                     </View>
@@ -1676,6 +1837,43 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#2563EB',
         fontWeight: '700',
+    },
+    // Filter & Export styles
+    customerDetailDropdownOptions: {
+        position: 'absolute',
+        top: '100%',
+        left: 0,
+        right: 0,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 8,
+        marginTop: 4,
+        zIndex: 100,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    customerDetailDropdownOption: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+    },
+    customerDetailDropdownOptionActive: {
+        backgroundColor: '#F9FAFB',
+    },
+    customerDetailDropdownOptionText: {
+        fontSize: 13,
+        color: '#374151',
+    },
+    customerDetailDropdownOptionTextActive: {
+        color: '#2563EB',
+        fontWeight: '600',
     },
 });
 
