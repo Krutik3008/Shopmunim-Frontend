@@ -33,6 +33,7 @@ const AdminUserManagement = () => {
     const [updatingUser, setUpdatingUser] = useState(null);
     const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
     const searchRef = useRef('');
+    const isFirstRender = useRef(true);
 
     const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30];
 
@@ -58,7 +59,10 @@ const AdminUserManagement = () => {
 
     // Page change
     useEffect(() => {
-        if (currentPage === 0) return;
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
         doSearch(searchRef.current, currentPage, pageSize);
     }, [currentPage]);
 
