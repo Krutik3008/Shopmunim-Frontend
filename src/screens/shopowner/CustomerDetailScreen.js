@@ -22,6 +22,7 @@ import { customerAPI, transactionAPI, productAPI } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import AddTransactionModal from './AddTransactionModal';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const CustomerDetailScreen = ({ route, navigation }) => {
     const { customer: initialCustomer, shopId } = route.params;
@@ -168,9 +169,9 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const getBalanceColor = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return '#EF4444';
-        if (balance > 0) return '#10B981';
-        return '#10B981';
+        if (balance < 0) return '#EF4444'; // Red for Owes
+        if (balance > 0) return '#10B981'; // Green for Credit
+        return '#374151'; // Dark gray for Clear
     };
 
     const getBalanceLabel = () => {
@@ -182,9 +183,15 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const getBalanceBgColor = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return '#FEE2E2';
-        if (balance > 0) return '#D1FAE5';
-        return '#D1FAE5';
+        if (balance < 0) return '#EF4444'; // Red background for Owes
+        if (balance > 0) return '#111827'; // Black background for Credit
+        return '#F3F4F6'; // Light gray for Clear
+    };
+
+    const getBalanceTextColor = () => {
+        const balance = customer?.balance || 0;
+        if (balance === 0) return '#374151';
+        return '#FFF';
     };
 
     // Header Component - Same as Dashboard
@@ -263,10 +270,10 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         </View>
                         <View style={styles.customerRight}>
                             <Text style={[styles.balanceAmount, { color: getBalanceColor() }]}>
-                                {(customer?.balance || 0) < 0 ? '-' : (customer?.balance || 0) > 0 ? '+' : ''}₹{Math.abs(customer?.balance || 0).toFixed(2)}
+                                {formatCurrency(Math.abs(customer?.balance || 0))}
                             </Text>
                             <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
-                                <Text style={[styles.balanceBadgeText, { color: getBalanceColor() }]}>
+                                <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
                                     {getBalanceLabel()}
                                 </Text>
                             </View>
@@ -275,23 +282,39 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
                     {/* Add Transaction Button */}
                     <TouchableOpacity
-                        style={styles.addTransactionBtn}
                         onPress={() => setShowAddTransactionModal(true)}
+                        onPressIn={() => { }} // For touch feedback
                     >
-                        <Ionicons name="add" size={20} color="#fff" />
-                        <Text style={styles.addTransactionText}>Add Transaction</Text>
+                        <LinearGradient
+                            colors={['#3B82F6', '#2563EB']}
+                            style={styles.addTransactionBtn}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Ionicons name="add" size={20} color="#fff" />
+                            <Text style={styles.addTransactionText}>Add Transaction</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
 
                     {/* Send UPI Link Button */}
                     <TouchableOpacity style={styles.sendUpiBtn} onPress={handleSendUPILink}>
-                        <Ionicons name="phone-portrait-outline" size={18} color="#374151" />
+                        <Ionicons name="phone-portrait-outline" size={18} color="#111827" />
                         <Text style={styles.sendUpiBtnText}>Send UPI Link</Text>
                     </TouchableOpacity>
 
                     {/* Payment Request Button */}
-                    <TouchableOpacity style={styles.paymentRequestBtn} onPress={handlePaymentRequest}>
-                        <Ionicons name="notifications-outline" size={18} color="#fff" />
-                        <Text style={styles.paymentRequestText}>Payment Request</Text>
+                    <TouchableOpacity
+                        onPress={handlePaymentRequest}
+                    >
+                        <LinearGradient
+                            colors={['#F97316', '#EF4444']}
+                            style={styles.paymentRequestBtn}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Ionicons name="time-outline" size={18} color="#fff" />
+                            <Text style={styles.paymentRequestText}>Payment Request</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
 
                     {/* Loading State */}
@@ -560,12 +583,13 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 visible={showPaymentRequestModal}
                 onClose={() => setShowPaymentRequestModal(false)}
                 customer={customer}
+                transactions={transactions}
             />
         </SafeAreaView>
     );
 };
 
-const PaymentRequestModal = ({ visible, onClose, customer }) => {
+const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
     const [paymentRequestTab, setPaymentRequestTab] = useState('sendNow');
     const [requestType, setRequestType] = useState('Payment Due Reminder');
     const [sendVia, setSendVia] = useState('Push Notification');
@@ -583,14 +607,28 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
     const [showAutoReminderFrequencyDropdown, setShowAutoReminderFrequencyDropdown] = useState(false);
     const [autoReminderMethod, setAutoReminderMethod] = useState('Push Notification');
     const [showAutoReminderMethodDropdown, setShowAutoReminderMethodDropdown] = useState(false);
-    const sortedTransactions = customer?.transactions ? customer.transactions.sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
+    const sortedTransactions = transactions ? [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
 
 
-    // Helper functions for formatting (if not already available in scope, define them here or pass as props)
+    // Helper functions for formatting
     const formatCurrency = (amount) => `₹${parseFloat(amount || 0).toFixed(2)}`;
     const formatShortDate = (dateString) => {
         const date = new Date(dateString);
         return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
+    };
+
+    const timeAgo = (dateString) => {
+        if (!dateString) return 'No transactions';
+        const now = new Date();
+        const past = new Date(dateString);
+        const diffInMs = now - past;
+        const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+        if (diffInDays === 0) return 'Today';
+        if (diffInDays === 1) return 'Yesterday';
+        if (diffInDays < 7) return `${diffInDays} days ago`;
+        if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+        return formatShortDate(dateString);
     };
 
     return (
@@ -620,44 +658,47 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                         {/* Customer Details Card */}
                         {customer && (
                             <View style={modalStyles.paymentCustomerCard}>
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                                     <Text style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>Customer Details</Text>
-                                    <View style={{ backgroundColor: '#111827', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
-                                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
-                                            {customer.balance === 0 ? 'No Dues' : customer.balance < 0 ? 'Dues Pending' : 'Credit Available'}
+                                    <View style={[
+                                        modalStyles.statusBadge,
+                                        { backgroundColor: customer.balance < 0 ? '#EF4444' : '#111827' }
+                                    ]}>
+                                        <Text style={modalStyles.statusBadgeText}>
+                                            {customer.balance === 0 ? 'No Dues' : customer.balance < 0 ? 'Pending Payment' : 'Credit Available'}
                                         </Text>
                                     </View>
                                 </View>
 
-                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-                                    <View style={{ flex: 1, marginRight: 8 }}>
-                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>Customer Name</Text>
-                                        <Text style={{ fontSize: 15, fontWeight: '600', color: '#111827', marginTop: 2 }}>{customer.name}</Text>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 }}>
+                                    <View style={{ flex: 1, marginRight: 10 }}>
+                                        <Text style={modalStyles.cardLabel}>Customer Name</Text>
+                                        <Text style={modalStyles.cardValue}>{customer.name}</Text>
                                     </View>
-                                    <View style={{ flex: 1, marginLeft: 8 }}>
-                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>Phone Number</Text>
-                                        <Text style={{ fontSize: 15, fontWeight: '600', color: '#111827', marginTop: 2 }}>{customer.phone}</Text>
+                                    <View style={{ flex: 1, marginLeft: 10 }}>
+                                        <Text style={modalStyles.cardLabel}>Phone Number</Text>
+                                        <Text style={modalStyles.cardValue}>{customer.phone}</Text>
                                     </View>
                                 </View>
 
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                                    <View style={{ flex: 1, marginRight: 20 }}>
-                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>Outstanding Amount</Text>
-                                        <Text style={{ fontSize: 15, fontWeight: '700', color: '#EF4444', marginTop: 2 }}>
+                                    <View style={{ flex: 1, marginRight: 10 }}>
+                                        <Text style={modalStyles.cardLabel}>Outstanding Amount</Text>
+                                        <Text style={[modalStyles.cardValue, { color: '#EF4444' }]}>
                                             {(customer.balance || 0) < 0 ? '-' : ''}₹{Math.abs(customer.balance || 0).toFixed(2)}
                                         </Text>
                                     </View>
-                                    <View style={{ flex: 1, marginLeft: 20 }}>
-                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>Last Transaction</Text>
-                                        <Text style={{ fontSize: 14, color: '#4B5563', marginTop: 2 }}>
-                                            {sortedTransactions.length > 0 ? formatShortDate(sortedTransactions[0].date) : 'No transactions'}
+                                    <View style={{ flex: 1, marginLeft: 10 }}>
+                                        <Text style={modalStyles.cardLabel}>Last Transaction</Text>
+                                        <Text style={[modalStyles.cardValue, { fontWeight: '500', color: '#6B7280' }]}>
+                                            {sortedTransactions.length > 0 ? timeAgo(sortedTransactions[0].date) : 'No transactions'}
                                         </Text>
                                     </View>
                                 </View>
                             </View>
                         )}
 
-                        {/* Tabs */}
+                        {/* Selection Card */}
                         <View style={modalStyles.paymentModalTabs}>
                             <TouchableOpacity
                                 style={[modalStyles.paymentModalTab, paymentRequestTab === 'sendNow' && modalStyles.paymentModalTabActive]}
@@ -675,11 +716,10 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Content based on Tab */}
-                        {paymentRequestTab === 'sendNow' ? (
-                            <>
-                                {/* Send Reminder Section */}
-                                <View style={modalStyles.paymentModalSection}>
+                        {/* Form Content Card */}
+                        <View style={modalStyles.paymentMainCard}>
+                            {paymentRequestTab === 'sendNow' ? (
+                                <View style={modalStyles.paymentTabContent}>
                                     <Text style={modalStyles.paymentModalSectionTitle}>Send Reminder</Text>
 
                                     {/* Request Type */}
@@ -691,7 +731,6 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                                         >
                                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
                                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                    {/* <Ionicons name="cash-outline" size={16} color="#374151" /> */}
                                                     <Text style={{ marginLeft: 0, color: '#111827' }}>{requestType}</Text>
                                                 </View>
 
@@ -709,7 +748,6 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
 
                                         {showRequestTypeDropdown && (
                                             <View style={modalStyles.paymentModalDropdownOptions}>
-                                                {/* Option 1: Payment Due Reminder */}
                                                 <TouchableOpacity
                                                     style={[
                                                         modalStyles.paymentModalDropdownOption,
@@ -728,7 +766,6 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                                                     </View>
                                                 </TouchableOpacity>
 
-                                                {/* Option 2: Advance Payment Request */}
                                                 <TouchableOpacity
                                                     style={[
                                                         modalStyles.paymentModalDropdownOption,
@@ -916,20 +953,26 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                                     </View>
 
                                     {/* Send Button */}
-                                    <TouchableOpacity style={modalStyles.paymentSendBtn} onPress={() => {
-                                        // TODO: Implement send logic
-                                        onClose();
-                                        Alert.alert('Success', 'Payment reminder sent successfully!');
-                                    }}>
-                                        <Text style={modalStyles.paymentSendBtnText}>Send Reminder</Text>
-                                        <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            // TODO: Implement send logic
+                                            onClose();
+                                            Alert.alert('Success', 'Payment reminder sent successfully!');
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={['#F97316', '#EF4444']}
+                                            style={modalStyles.paymentSendBtn}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                        >
+                                            <Text style={modalStyles.paymentSendBtnText}>Send Reminder</Text>
+                                            <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                        </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
-                            </>
-                        ) : (
-                            <>
-                                {/* Auto Setup Section */}
-                                <View style={[modalStyles.paymentModalSection, { minHeight: 250, paddingBottom: 20 }]}>
+                            ) : (
+                                <View style={modalStyles.paymentTabContent}>
                                     <Text style={modalStyles.paymentModalSectionTitle}>Automatic Reminders</Text>
 
                                     <View style={{ backgroundColor: '#F9FAFB', padding: 16, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -1061,17 +1104,25 @@ const PaymentRequestModal = ({ visible, onClose, customer }) => {
                                         </View>
                                     )}
 
-                                    <TouchableOpacity style={[modalStyles.paymentSendBtn, { backgroundColor: '#111827', marginTop: 'auto' }]} onPress={() => {
-                                        // TODO: Save logic
-                                        Alert.alert('Success', 'Auto reminder settings saved!');
-                                        onClose();
-                                    }}>
-                                        <Text style={modalStyles.paymentSendBtnText}>Save Auto Reminder Settings</Text>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            // TODO: Save logic
+                                            Alert.alert('Success', 'Auto reminder settings saved!');
+                                            onClose();
+                                        }}
+                                    >
+                                        <LinearGradient
+                                            colors={['#111827', '#374151']}
+                                            style={modalStyles.paymentSendBtn}
+                                            start={{ x: 0, y: 0 }}
+                                            end={{ x: 1, y: 0 }}
+                                        >
+                                            <Text style={modalStyles.paymentSendBtnText}>Save Auto Reminder Settings</Text>
+                                        </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
-                            </>
-                        )}
-
+                            )}
+                        </View>
                     </ScrollView>
                 </View>
             </KeyboardAvoidingView>
@@ -1251,29 +1302,28 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     balanceBadge: {
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-        marginTop: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 8,
+        marginTop: 6,
     },
     balanceBadgeText: {
-        fontSize: 11,
-        fontWeight: '600',
+        fontSize: 12,
+        fontWeight: '700',
     },
     addTransactionBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#2563EB',
-        padding: 14,
+        padding: 16,
         borderRadius: 10,
-        marginBottom: 8,
+        marginBottom: 10,
     },
     addTransactionText: {
         color: '#fff',
-        fontWeight: '600',
-        fontSize: 15,
-        marginLeft: 6,
+        fontWeight: '700',
+        fontSize: 16,
+        marginLeft: 8,
     },
     sendUpiBtn: {
         flexDirection: 'row',
@@ -1296,16 +1346,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#F97316',
-        padding: 14,
+        padding: 16,
         borderRadius: 10,
-        marginBottom: 16,
+        marginBottom: 20,
     },
     paymentRequestText: {
         color: '#fff',
-        fontWeight: '600',
-        fontSize: 15,
-        marginLeft: 6,
+        fontWeight: '700',
+        fontSize: 16,
+        marginLeft: 8,
     },
     sectionCard: {
         backgroundColor: '#fff',
@@ -1672,10 +1721,40 @@ const modalStyles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 2,
     },
+    avatarPlaceholder: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F3F4F6',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+    },
+    cardLabel: {
+        fontSize: 12,
+        color: '#6B7280',
+        fontWeight: '500',
+    },
+    cardValue: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#111827',
+        marginTop: 2,
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    statusBadgeText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '700',
+    },
     paymentModalTabs: {
         flexDirection: 'row',
         backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 4,
         marginBottom: 20,
         borderWidth: 1,
@@ -1708,13 +1787,16 @@ const modalStyles = StyleSheet.create({
     paymentModalTabTextActive: {
         color: '#111827',
     },
-    paymentModalSection: {
+    paymentMainCard: {
         backgroundColor: '#fff',
         borderRadius: 16,
-        padding: 16,
-        marginBottom: 20,
         borderWidth: 1,
         borderColor: '#E5E7EB',
+        marginBottom: 20,
+        overflow: 'hidden',
+    },
+    paymentTabContent: {
+        padding: 16,
     },
     paymentModalSectionTitle: {
         fontSize: 16,
@@ -1796,7 +1878,6 @@ const modalStyles = StyleSheet.create({
         height: 180,
     },
     paymentSendBtn: {
-        backgroundColor: '#EA580C',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -1943,7 +2024,6 @@ const modalStyles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#2563EB',
         paddingVertical: 14,
         borderRadius: 8,
         gap: 8,
