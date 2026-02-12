@@ -760,6 +760,8 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
     const [showAutoReminderFrequencyDropdown, setShowAutoReminderFrequencyDropdown] = useState(false);
     const [autoReminderMethod, setAutoReminderMethod] = useState('Push Notification');
     const [showAutoReminderMethodDropdown, setShowAutoReminderMethodDropdown] = useState(false);
+    const [advanceAmount, setAdvanceAmount] = useState('');
+    const [advanceReason, setAdvanceReason] = useState('');
     const sortedTransactions = transactions ? [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
 
 
@@ -936,20 +938,58 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                                         )}
                                     </View>
 
-                                    {/* Status Box */}
-                                    {customer?.balance < 0 ? (
-                                        <View style={[modalStyles.paymentStatusBox, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
-                                            <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
-                                            <Text style={[modalStyles.paymentStatusText, { color: '#DC2626' }]}>
-                                                Payment Pending of {formatCurrency(Math.abs(customer?.balance || 0))}
-                                            </Text>
-                                        </View>
-                                    ) : (
-                                        <View style={[modalStyles.paymentStatusBox, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
-                                            <Ionicons name="checkmark-circle-outline" size={20} color="#059669" />
-                                            <Text style={[modalStyles.paymentStatusText, { color: '#059669' }]}>
-                                                No pending dues - All payments up to date!
-                                            </Text>
+                                    {/* Status Box - Only show for Payment Due Reminder */}
+                                    {requestType === 'Payment Due Reminder' && (
+                                        customer?.balance < 0 ? (
+                                            <View style={[modalStyles.paymentStatusBox, { backgroundColor: '#FEF2F2', borderColor: '#FECACA' }]}>
+                                                <Ionicons name="alert-circle-outline" size={20} color="#DC2626" />
+                                                <Text style={[modalStyles.paymentStatusText, { color: '#DC2626' }]}>
+                                                    Payment Pending of {formatCurrency(Math.abs(customer?.balance || 0))}
+                                                </Text>
+                                            </View>
+                                        ) : (
+                                            <View style={[modalStyles.paymentStatusBox, { backgroundColor: '#ECFDF5', borderColor: '#A7F3D0' }]}>
+                                                <Ionicons name="checkmark-circle-outline" size={20} color="#059669" />
+                                                <Text style={[modalStyles.paymentStatusText, { color: '#059669' }]}>
+                                                    No pending dues - All payments up to date!
+                                                </Text>
+                                            </View>
+                                        )
+                                    )}
+
+                                    {/* Advance Payment Form */}
+                                    {requestType === 'Advance Payment Request' && (
+                                        <View style={modalStyles.advanceInfoCard}>
+                                            <View style={{ marginBottom: 16 }}>
+                                                <Text style={modalStyles.advanceInputLabel}>Advance Amount *</Text>
+                                                <View style={modalStyles.advanceInputWrapper}>
+                                                    <TextInput
+                                                        style={modalStyles.advanceTextInput}
+                                                        placeholder="Enter amount"
+                                                        placeholderTextColor="#9CA3AF"
+                                                        keyboardType="numeric"
+                                                        value={advanceAmount}
+                                                        onChangeText={setAdvanceAmount}
+                                                    />
+                                                </View>
+                                            </View>
+
+                                            <View style={{ marginBottom: 16 }}>
+                                                <Text style={modalStyles.advanceInputLabel}>Reason/Purpose</Text>
+                                                <View style={modalStyles.advanceInputWrapper}>
+                                                    <TextInput
+                                                        style={modalStyles.advanceTextInput}
+                                                        placeholder="e.g., New order"
+                                                        placeholderTextColor="#9CA3AF"
+                                                        value={advanceReason}
+                                                        onChangeText={setAdvanceReason}
+                                                    />
+                                                </View>
+                                            </View>
+
+                                            <View style={modalStyles.advanceTipRow}>
+                                                <Text style={modalStyles.advanceTipText}>💡 Advance payments help secure orders and improve cash flow</Text>
+                                            </View>
                                         </View>
                                     )}
 
@@ -2240,7 +2280,43 @@ const modalStyles = StyleSheet.create({
     },
     paymentModalSection: {
         // Any specific style for section if needed
-    }
+    },
+    advanceInfoCard: {
+        backgroundColor: '#EFF6FF',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#DBEAFE',
+    },
+    advanceInputLabel: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#111827',
+        marginBottom: 8,
+    },
+    advanceInputWrapper: {
+        backgroundColor: '#F9FAFB',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+    },
+    advanceTextInput: {
+        fontSize: 15,
+        color: '#111827',
+    },
+    advanceTipRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 4,
+    },
+    advanceTipText: {
+        fontSize: 12,
+        color: '#2563EB',
+        lineHeight: 18,
+    },
 });
 
 export default CustomerDetailScreen;
