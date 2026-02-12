@@ -25,6 +25,10 @@ import { useAuth } from '../../context/AuthContext';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
 import { useNavigation } from '@react-navigation/native';
 import AddTransactionModal from './AddTransactionModal';
+import QRCode from 'react-native-qrcode-svg';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 
 
 const TransactionCard = ({ transaction, showNote = true }) => {
