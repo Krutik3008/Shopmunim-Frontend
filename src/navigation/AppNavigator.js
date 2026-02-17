@@ -14,6 +14,11 @@ import ProductsScreen from '../screens/shopowner/ProductsScreen';
 import QRCodeScreen from '../screens/shopowner/QRCodeScreen';
 import QRShareScreen from '../screens/shopowner/QRShareScreen';
 import CustomerDashboardScreen from '../screens/customer/DashboardScreen';
+import EditProfileScreen from '../screens/customer/account/EditProfileScreen';
+import NotificationsScreen from '../screens/customer/account/NotificationsScreen';
+import PrivacySecurityScreen from '../screens/customer/account/PrivacySecurityScreen';
+import HelpSupportScreen from '../screens/customer/account/HelpSupportScreen';
+import AboutScreen from '../screens/customer/account/AboutScreen';
 import AdminPanelScreen from '../screens/admin/AdminPanelScreen';
 import AdminCustomerDetailScreen from '../screens/admin/AdminCustomerDetailScreen';
 import CreateShopScreen from '../screens/CreateShopScreen';
@@ -53,6 +58,13 @@ const MainNavigator = ({ initialRoute }) => (
 
         {/* Customer Dashboard - Has its own built-in bottom tabs */}
         <Stack.Screen name="CustomerDashboard" component={CustomerDashboardScreen} />
+
+        {/* Customer Account Screens */}
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+        <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
+        <Stack.Screen name="About" component={AboutScreen} />
 
         {/* Admin Screens */}
         <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />

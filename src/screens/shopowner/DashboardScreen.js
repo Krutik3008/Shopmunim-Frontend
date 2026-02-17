@@ -1059,32 +1059,27 @@ const ShopOwnerDashboardScreen = () => {
                 <View style={styles.settingsCard}>
                     <Text style={styles.settingsTitle}>Account Settings</Text>
 
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
                         <Text style={styles.settingIcon}>📝</Text>
                         <Text style={styles.settingText}>Edit Profile</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
                         <Text style={styles.settingIcon}>🔔</Text>
                         <Text style={styles.settingText}>Notifications</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('PrivacySecurity')}>
                         <Text style={styles.settingIcon}>🔒</Text>
                         <Text style={styles.settingText}>Privacy & Security</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.settingItem}>
-                        <Text style={styles.settingIcon}>🌐</Text>
-                        <Text style={styles.settingText}>Language</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
                         <Text style={styles.settingIcon}>❓</Text>
                         <Text style={styles.settingText}>Help & Support</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.settingItem}>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
                         <Text style={styles.settingIcon}>ℹ️</Text>
                         <Text style={styles.settingText}>About ShopMunim</Text>
                     </TouchableOpacity>

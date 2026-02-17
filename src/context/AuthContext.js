@@ -127,6 +127,25 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateProfile = async (data) => {
+        try {
+            const response = await authAPI.updateProfile(data);
+            console.log('Update profile response:', response.data);
+            const updatedUser = response.data.user || response.data; // Handle different response formats
+
+            // Merge with existing user data to preserve other fields
+            const newUser = { ...user, ...updatedUser };
+            await updateUser(newUser);
+            return { success: true, message: 'Profile updated successfully' };
+        } catch (error) {
+            console.error('Update profile error:', error.response?.data || error.message);
+            return {
+                success: false,
+                message: error.response?.data?.detail || error.response?.data?.message || 'Failed to update profile'
+            };
+        }
+    };
+
     const value = {
         user,
         loading,
@@ -134,6 +153,7 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         updateUser,
+        updateProfile,
         switchRole,
         checkAuth,
     };

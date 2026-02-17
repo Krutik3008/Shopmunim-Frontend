@@ -10,7 +10,7 @@ import {
     RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { customerDashboardAPI } from '../../api';
 import { useNavigation } from '@react-navigation/native';
@@ -161,27 +161,33 @@ const CustomerDashboardScreen = () => {
     );
 
     // Summary Stats Cards for Ledger Tab
-    const SummaryStatsCards = () => (
-        <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-                <Text style={styles.statEmoji}>🏪</Text>
-                <Text style={styles.statValue}>{stats.totalShops}</Text>
-                <Text style={styles.statLabel}>Shops</Text>
+    const SummaryStatsCards = () => {
+        const isOwed = (stats.totalOwed || 0) > 0;
+
+        return (
+            <View style={styles.statsContainer}>
+                <View style={styles.statCard}>
+                    <Text style={styles.statEmoji}>🏪</Text>
+                    <Text style={styles.statValue}>{stats.totalShops}</Text>
+                    <Text style={styles.statLabel}>Shops</Text>
+                </View>
+                <View style={styles.statCard}>
+                    <View style={[styles.rupeeCircle, !isOwed && { backgroundColor: '#F3F4F6' }]}>
+                        <FontAwesome name="rupee" size={18} color={isOwed ? "#EF4444" : "#333"} />
+                    </View>
+                    <Text style={[styles.statValue, isOwed && styles.statValueRed]}>₹{Math.abs(stats.totalOwed || 0).toFixed(2)}</Text>
+                    <Text style={styles.statLabel}>Total Owed</Text>
+                </View>
+                <View style={styles.statCard}>
+                    <Text style={styles.statEmoji}>📊</Text>
+                    <Text style={styles.statValue}>
+                        {stats.netBalance < 0 ? '-' : ''}₹{Math.abs(stats.netBalance || 0).toFixed(2)}
+                    </Text>
+                    <Text style={styles.statLabel}>Net Balance</Text>
+                </View>
             </View>
-            <View style={styles.statCard}>
-                <Text style={styles.statEmoji}>💰</Text>
-                <Text style={[styles.statValue, styles.statValueRed]}>₹{Math.abs(stats.totalOwed || 0).toFixed(2)}</Text>
-                <Text style={styles.statLabel}>Total Owed</Text>
-            </View>
-            <View style={styles.statCard}>
-                <Text style={styles.statEmoji}>📊</Text>
-                <Text style={styles.statValue}>
-                    {stats.netBalance < 0 ? '-' : ''}₹{Math.abs(stats.netBalance || 0).toFixed(2)}
-                </Text>
-                <Text style={styles.statLabel}>Net Balance</Text>
-            </View>
-        </View>
-    );
+        );
+    };
 
     // Empty State Component for Ledger
     const LedgerEmptyState = () => (
@@ -496,35 +502,32 @@ const CustomerDashboardScreen = () => {
             <View style={styles.settingsCard}>
                 <Text style={styles.settingsTitle}>Account Settings</Text>
 
-                <TouchableOpacity style={styles.settingItem}>
+                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
                     <Text style={styles.settingIcon}>📝</Text>
                     <Text style={styles.settingText}>Edit Profile</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem}>
+                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
                     <Text style={styles.settingIcon}>🔔</Text>
                     <Text style={styles.settingText}>Notifications</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem}>
+                <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={() => navigation.navigate('PrivacySecurity')}>
                     <Text style={styles.settingIcon}>🔒</Text>
                     <Text style={styles.settingText}>Privacy & Security</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]}>
-                    <Text style={styles.settingIcon}>🌐</Text>
-                    <Text style={styles.settingText}>Language</Text>
-                </TouchableOpacity>
+
             </View>
 
             {/* Help & About Section */}
             <View style={styles.settingsCard}>
-                <TouchableOpacity style={styles.settingItem}>
+                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
                     <Text style={styles.settingIcon}>❓</Text>
                     <Text style={styles.settingText}>Help & Support</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem}>
+                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
                     <Text style={styles.settingIcon}>ℹ️</Text>
                     <Text style={styles.settingText}>About ShopMunim</Text>
                 </TouchableOpacity>
@@ -618,6 +621,15 @@ const styles = StyleSheet.create({
     statValue: { fontSize: 16, fontWeight: 'bold', color: '#333' },
     statValueRed: { color: '#EF4444' },
     statLabel: { fontSize: 12, color: '#666', marginTop: 2 },
+    rupeeCircle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#FEE2E2',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 4,
+    },
 
     // Empty State
     emptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', marginTop: 8 },
