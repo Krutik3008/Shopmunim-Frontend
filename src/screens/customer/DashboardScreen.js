@@ -176,7 +176,7 @@ const CustomerDashboardScreen = () => {
                         <FontAwesome name="rupee" size={18} color={isOwed ? "#EF4444" : "#333"} />
                     </View>
                     <Text style={[styles.statValue, isOwed && styles.statValueRed]}>₹{Math.abs(stats.totalOwed || 0).toFixed(2)}</Text>
-                    <Text style={styles.statLabel}>Total Owed</Text>
+                    <Text style={styles.statLabel}>Total Dues</Text>
                 </View>
                 <View style={styles.statCard}>
                     <Text style={styles.statEmoji}>📊</Text>
