@@ -1,4 +1,3 @@
-// Customer Detail Screen - With same header and bottom nav as Dashboard
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     View,
@@ -20,6 +19,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { customerAPI, transactionAPI, productAPI, shopAPI } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import ShopHeader from '../../components/shopowner/ShopHeader';
+// import ShopFooter from '../../components/shopowner/ShopFooter'; // Removed as per request
+import ShopBottomNav from '../../components/shopowner/ShopBottomNav';
 import AddTransactionModal from './AddTransactionModal';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -38,7 +40,6 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [shopDetails, setShopDetails] = useState(null);
-    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
 
     // Modal
     const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
@@ -342,56 +343,14 @@ const CustomerDetailScreen = ({ route, navigation }) => {
         return '#FFF';
     };
 
-    // Header Component - Same as Dashboard
-    const Header = () => (
-        <View style={styles.header}>
-            <View style={styles.headerTop}>
-                <Text style={styles.logo}>ShopMunim</Text>
-                <View style={styles.headerRight}>
-                    <TouchableOpacity
-                        style={styles.roleSelector}
-                        onPress={() => setShowRoleDropdown(!showRoleDropdown)}
-                    >
-                        <Ionicons name="storefront" size={16} color="#8B5CF6" />
-                        <Text style={styles.roleSelectorText}>Shop Owner</Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={logout}>
-                        <Text style={styles.headerLogout}>Logout</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-            <View style={styles.headerBottom}>
-                <Text style={styles.welcomeText}>Welcome, <Text style={styles.userName}>{user?.name || 'User'}</Text></Text>
-                <View style={styles.phoneContainer}>
-                    <Text style={styles.phoneText}>+91 {user?.phone}</Text>
-                </View>
-            </View>
-        </View>
-    );
+    // Header Component replaced by imported ShopHeader
 
-    // Tab Button - Same as Dashboard
-    const TabButton = ({ name, icon, label, isActive, onPress }) => (
-        <TouchableOpacity style={styles.tabButton} onPress={onPress}>
-            <View style={[styles.tabIconContainer, isActive && styles.tabIconActive]}>
-                <Ionicons
-                    name={isActive ? icon.replace('-outline', '') : icon}
-                    size={20}
-                    color={isActive ? '#3B82F6' : '#9CA3AF'}
-                />
-            </View>
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
-        </TouchableOpacity>
-    );
 
-    const handleTabPress = (tabName) => {
-        navigation.goBack();
-    };
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             {/* Header - Same as Dashboard */}
-            <Header />
+            <ShopHeader />
 
             <View style={styles.content}>
                 <ScrollView
@@ -679,14 +638,10 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 </ScrollView>
             </View>
 
-            {/* Bottom Navigation - Same as Dashboard */}
-            <View style={styles.bottomNav}>
-                <TabButton name="home" icon="home-outline" label="Home" isActive={false} onPress={() => navigation.goBack()} />
-                <TabButton name="products" icon="cube-outline" label="Products" isActive={false} onPress={() => navigation.goBack()} />
-                <TabButton name="customers" icon="people-outline" label="Customers" isActive={true} onPress={() => navigation.goBack()} />
-                <TabButton name="transactions" icon="receipt-outline" label="Transactions" isActive={false} onPress={() => navigation.goBack()} />
-                <TabButton name="account" icon="person-outline" label="Account" isActive={false} onPress={() => navigation.goBack()} />
-            </View>
+            {/* Bottom Navigation */}
+            <ShopBottomNav activeTab="customers" />
+
+
 
             {/* Add Transaction Modal */}
             <AddTransactionModal
@@ -1410,39 +1365,7 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingHorizontal: 16,
     },
-    // Bottom Navigation - Same as Dashboard
-    bottomNav: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        paddingVertical: 8,
-        paddingBottom: 20,
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    tabButton: {
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: 4,
-    },
-    tabIconContainer: {
-        width: 40,
-        height: 28,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 14,
-    },
-    tabIconActive: {
-        backgroundColor: '#EBF5FF',
-    },
-    tabLabel: {
-        fontSize: 10,
-        color: '#9CA3AF',
-        marginTop: 2,
-    },
-    tabLabelActive: {
-        color: '#3B82F6',
-        fontWeight: '500',
-    },
+
     // Page content styles
     backRow: {
         flexDirection: 'row',

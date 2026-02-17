@@ -23,8 +23,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import AddTransactionModal from './AddTransactionModal';
+import ShopHeader from '../../components/shopowner/ShopHeader';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -93,16 +94,24 @@ const TransactionCard = ({ transaction, showNote = true }) => {
 
 const ShopOwnerDashboardScreen = () => {
     const navigation = useNavigation();
+    const route = useRoute();
     const { user, logout, switchRole } = useAuth();
     const [activeTab, setActiveTab] = useState('home');
+
+    useFocusEffect(
+        React.useCallback(() => {
+            if (route.params?.tab) {
+                setActiveTab(route.params.tab);
+                // Optional: Clear params so it doesn't persist if we navigate back and forth?
+                // navigation.setParams({ tab: undefined });
+            }
+        }, [route.params?.tab])
+    );
     const [shops, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -432,19 +441,7 @@ const ShopOwnerDashboardScreen = () => {
         }
     };
 
-    const handleRoleSwitch = async (role) => {
-        setShowRoleDropdown(false);
-        if (role !== user?.active_role) {
-            const success = await switchRole(role);
-            if (success) {
-                if (role === 'customer') {
-                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard' }] });
-                } else if (role === 'admin') {
-                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
-                }
-            }
-        }
-    };
+
 
     const handleCreateShop = async () => {
         if (!shopName.trim()) {
@@ -522,63 +519,8 @@ const ShopOwnerDashboardScreen = () => {
         }
     };
 
-    // Header Component
-    const Header = () => (
-        <View style={styles.header}>
-            <View style={styles.headerTop}>
-                <Text style={styles.logo}>ShopMunim</Text>
-                <View style={styles.headerRight}>
-                    <TouchableOpacity
-                        style={styles.roleSelector}
-                        onPress={() => setShowRoleDropdown(!showRoleDropdown)}
-                    >
-                        <Ionicons name="storefront" size={16} color="#8B5CF6" />
-                        <Text style={styles.roleSelectorText}>Shop Owner</Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={logout}>
-                        <Text style={styles.headerLogout}>Logout</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-            <View style={styles.headerBottom}>
-                <Text style={styles.welcomeText}>Welcome, <Text style={styles.userName}>{user?.name || 'User'}</Text></Text>
-                <View style={styles.phoneContainer}>
-                    <Text style={styles.phoneText}>+91 {user?.phone}</Text>
-                </View>
-            </View>
+    // Header Component replaced by imported ShopHeader
 
-            {/* Role Dropdown */}
-            {showRoleDropdown && (
-                <View style={styles.roleDropdown}>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('customer')}
-                    >
-                        <Ionicons name="person" size={18} color="#3B82F6" />
-                        <Text style={styles.roleOptionText}>Customer</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('shop_owner')}
-                    >
-                        <Ionicons name="storefront" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText} numberOfLines={1}>Shop Owner</Text>
-                        {user?.active_role === 'shop_owner' && (
-                            <Ionicons name="checkmark" size={18} color="#8B5CF6" />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('admin')}
-                    >
-                        <Ionicons name="shield" size={18} color="#F59E0B" />
-                        <Text style={styles.roleOptionText}>Admin</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
 
     // Empty State Card - Matching reference exactly
     const EmptyStateCard = () => (
@@ -1154,6 +1096,8 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Footer */}
+                {/* Footer */}
+                {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>ShopMunim</Text>
                     <Text style={styles.footerVersion}>Version 1.0.0</Text>
@@ -1205,7 +1149,7 @@ const ShopOwnerDashboardScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <Header />
+            <ShopHeader />
             <View style={styles.content}>{renderContent()}</View>
             {!isKeyboardVisible && (
                 <View style={styles.bottomNav}>
@@ -1746,21 +1690,7 @@ const styles = StyleSheet.create({
     settingText: { flex: 1, fontSize: 15, color: '#374151' },
     logoutTextRed: { color: '#EF4444' },
 
-    footer: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
-        alignItems: 'center',
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-    },
-    footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
-    footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
-    footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+
 
     // Bottom Navigation - Matching reference exactly
     bottomNav: {
@@ -3089,6 +3019,24 @@ const styles = StyleSheet.create({
         paddingTop: 10,
         marginTop: 4,
     },
+
+    // Footer Styles (Local Implementation)
+    footer: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+        marginTop: 20,
+    },
+    footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
+    footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
+    footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
 });
 
 export default ShopOwnerDashboardScreen;

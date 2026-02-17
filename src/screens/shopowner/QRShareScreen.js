@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+// import ShopFooter from '../../components/shopowner/ShopFooter';
 
 const QRShareScreen = () => {
     const navigation = useNavigation();
@@ -393,10 +394,28 @@ const styles = StyleSheet.create({
     settingIcon: { fontSize: 20, marginRight: 12 },
     settingText: { fontSize: 16, color: '#111827' },
     logoutText: { color: '#EF4444' },
-    footer: { alignItems: 'center', paddingVertical: 24 },
+
+    logoutText: { color: '#EF4444' },
+
+    // Footer Styles
+    footer: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 20,
+        alignItems: 'center',
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+        marginTop: 20,
+        marginHorizontal: 16,
+    },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
-    footerTagline: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+    footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+
 });
 
 export default QRShareScreen;
