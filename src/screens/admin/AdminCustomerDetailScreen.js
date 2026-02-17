@@ -422,7 +422,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                     <Text style={styles.label}>Code:</Text>
                                     <View style={styles.codeBadge}>
                                         <Text style={styles.codeText}>
-                                            {shopDetails?.shopCode || shopDetails?.id?.substring(0, 8).toUpperCase() || 'N/A'}
+                                            {shopDetails?.shop_code || 'N/A'}
                                         </Text>
                                     </View>
                                 </View>

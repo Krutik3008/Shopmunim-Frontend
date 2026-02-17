@@ -82,7 +82,9 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
             try {
                 const customersRes = await customerAPI.getAll(shopId);
-                const updatedCustomer = customersRes.data?.find(c => c.id === customer.id);
+                const custData = customersRes.data || {};
+                const customersList = custData.customers || custData || [];
+                const updatedCustomer = customersList.find(c => c.id === customer.id);
                 if (updatedCustomer) {
                     setCustomer(updatedCustomer);
                 }

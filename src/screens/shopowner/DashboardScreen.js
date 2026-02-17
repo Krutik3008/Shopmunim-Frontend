@@ -314,7 +314,8 @@ const ShopOwnerDashboardScreen = () => {
             if (!shopId) return;
 
             const response = await customerAPI.getAll(shopId);
-            setCustomers(response.data || []);
+            const resData = response.data || {};
+            setCustomers(resData.customers || resData || []);
         } catch (error) {
             console.log('Failed to load customers:', error);
             // Don't show alert for background loads, maybe just log
@@ -412,7 +413,8 @@ const ShopOwnerDashboardScreen = () => {
                 loadDashboardStats(shopId);
                 // Load customers first, then transactions (transactions need customer names)
                 const customersRes = await customerAPI.getAll(shopId);
-                const customersList = customersRes.data || [];
+                const custData = customersRes.data || {};
+                const customersList = custData.customers || custData || [];
                 setCustomers(customersList);
                 // Now load transactions with customer names
                 loadTransactionsWithCustomers(shopId, customersList);

@@ -14,8 +14,10 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI, getAPIErrorMessage } from '../../api';
+import AdminShopDetailsScreen from './AdminShopDetailsScreen';
 
 const AdminShopManagement = () => {
+    const [selectedShop, setSelectedShop] = useState(null);
     const [shops, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -158,6 +160,15 @@ const AdminShopManagement = () => {
                         </View>
                     )}
 
+                    {/* View Details Button */}
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => setSelectedShop(item)}
+                    >
+                        <Ionicons name="eye-outline" size={16} color="#374151" />
+                        <Text style={styles.actionButtonText}>View Details</Text>
+                    </TouchableOpacity>
+
                     {/* Footer */}
                     <View style={styles.cardFooter}>
                         <Ionicons name="calendar-outline" size={12} color="#6B7280" />
@@ -169,6 +180,19 @@ const AdminShopManagement = () => {
     };
 
     const totalPages = Math.ceil(totalShops / pageSize);
+
+
+    // Inline Detail View — renders inside AdminPanelScreen (keeps header + bottom nav)
+    if (selectedShop) {
+        return (
+            <AdminShopDetailsScreen
+                shopId={selectedShop.id}
+                shopName={selectedShop.name}
+                shopCategory={selectedShop.category}
+                onBack={() => setSelectedShop(null)}
+            />
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -531,6 +555,24 @@ const styles = StyleSheet.create({
     pageInfoText: {
         fontSize: 12,
         color: '#6B7280',
+    },
+    actionButton: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 12,
+        paddingVertical: 10,
+        borderRadius: 8,
+        marginTop: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    actionButtonText: {
+        color: '#374151',
+        fontSize: 14,
+        fontWeight: '500',
     },
 });
 

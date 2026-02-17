@@ -68,7 +68,8 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                 customerAPI.getAll(shopId),
                 productAPI.getAll(shopId)
             ]);
-            setCustomers(custRes.data || []);
+            const custData = custRes.data || {};
+            setCustomers(custData.customers || custData || []);
             setProducts(prodRes.data || []);
         } catch (error) {
             console.log('AddTransactionModal: Failed to load data:', error);
