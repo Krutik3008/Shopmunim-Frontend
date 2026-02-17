@@ -189,6 +189,7 @@ const AdminShopManagement = () => {
                 shopId={selectedShop.id}
                 shopName={selectedShop.name}
                 shopCategory={selectedShop.category}
+                shopCode={selectedShop.shop_code}
                 onBack={() => setSelectedShop(null)}
             />
         );

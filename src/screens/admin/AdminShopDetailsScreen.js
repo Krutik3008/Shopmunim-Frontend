@@ -7,14 +7,16 @@ import {
     TouchableOpacity,
     TextInput,
     ActivityIndicator,
-    Alert
+    Alert,
+    Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { customerAPI, getAPIErrorMessage } from '../../api';
 import AdminCustomerDetailScreen from './AdminCustomerDetailScreen';
 
-const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
+const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBack }) => {
 
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -23,10 +25,20 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [stats, setStats] = useState({
         totalCustomers: 0,
+        periodActiveCustomers: 0,
         withDues: 0,
         totalTransactions: 0,
-        totalAmount: 0
+        totalAmount: 0,
+        totalSales: 0,
+        totalPayments: 0,
+        totalDues: 0
     });
+
+    // Date Filters
+    const [fromDate, setFromDate] = useState(null);
+    const [toDate, setToDate] = useState(null);
+    const [showFromPicker, setShowFromPicker] = useState(false);
+    const [showToPicker, setShowToPicker] = useState(false);
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(0);
@@ -40,10 +52,56 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
         if (shopId) {
             fetchData();
         } else {
-            Alert.alert('Error', 'No Shop ID provided');
-            if (onBack) onBack();
+            Alert.alert('Error', 'No shop ID provided');
+            onBack();
         }
     }, [shopId]);
+
+    // Re-fetch when date filters change
+    useEffect(() => {
+        if (shopId) {
+            fetchData();
+        }
+    }, [fromDate, toDate]);
+
+    const formatDateDisplay = (date) => {
+        if (!date) return '';
+        const d = new Date(date);
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    };
+
+    const formatDateForAPI = (date) => {
+        if (!date) return null;
+        const d = new Date(date);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const onFromDateChange = (event, selectedDate) => {
+        setShowFromPicker(false);
+        if (event.type === 'dismissed') {
+            setFromDate(null);
+            return;
+        }
+        if (selectedDate) {
+            setFromDate(selectedDate);
+        }
+    };
+
+    const onToDateChange = (event, selectedDate) => {
+        setShowToPicker(false);
+        if (event.type === 'dismissed') {
+            setToDate(null);
+            return;
+        }
+        if (selectedDate) {
+            setToDate(selectedDate);
+        }
+    };
+
+    const clearDateFilters = () => {
+        setFromDate(null);
+        setToDate(null);
+    };
 
     useEffect(() => {
         let matches = [];
@@ -67,7 +125,10 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const response = await customerAPI.getAll(shopId);
+            const params = {};
+            if (fromDate) params.from_date = formatDateForAPI(fromDate);
+            if (toDate) params.to_date = formatDateForAPI(toDate);
+            const response = await customerAPI.getAll(shopId, params);
             const responseData = response.data || {};
             const fetchedCustomers = responseData.customers || responseData || [];
 
@@ -75,18 +136,25 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                 ...c,
                 totalTransactions: c.total_transactions || 0,
                 lastTransaction: c.last_transaction_date,
+                periodDelta: c.period_delta || 0,
                 shop: { id: shopId, name: shopName, category: shopCategory }
             }));
 
             setCustomers(enrichedCustomers);
 
-            const duesCount = enrichedCustomers.filter(c => (c.balance || 0) < 0).length;
+            const duesCount = responseData.with_dues != null
+                ? responseData.with_dues
+                : enrichedCustomers.filter(c => (c.balance || 0) < 0).length;
 
             setStats({
-                totalCustomers: enrichedCustomers.length,
-                withDues: duesCount,
-                totalTransactions: responseData.total_transactions || enrichedCustomers.reduce((sum, c) => sum + (c.totalTransactions || 0), 0),
-                totalAmount: responseData.total_amount || 0
+                totalCustomers: responseData.total_customers || enrichedCustomers.length,
+                periodActiveCustomers: responseData.period_active_customers || 0,
+                withDues: responseData.all_time_with_dues || responseData.with_dues || 0,
+                totalTransactions: responseData.period_transactions || responseData.total_transactions || 0,
+                totalAmount: responseData.total_amount || 0,
+                totalSales: responseData.period_sales || responseData.total_sales || 0,
+                totalPayments: responseData.period_payments || responseData.total_payments || 0,
+                totalDues: responseData.all_time_total_dues || responseData.total_dues || 0
             });
 
         } catch (err) {
@@ -144,17 +212,29 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
 
                 {/* Header: Name and Balance Pill */}
                 <View style={styles.cardHeader}>
-                    <Text style={styles.customerName}>{item.name}</Text>
-                    <View style={[
-                        styles.balancePill,
-                        { backgroundColor: isCredit ? '#ECFDF5' : isOwes ? '#FEF2F2' : '#F3F4F6' }
-                    ]}>
-                        <Text style={[
-                            styles.balanceText,
-                            isCredit ? { color: '#10B981' } : isOwes ? { color: '#EF4444' } : { color: '#374151' }
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.customerName}>{item.name}</Text>
+                        {(fromDate || toDate) && (
+                            <Text style={[styles.periodDeltaText, { color: item.periodDelta < 0 ? '#EF4444' : item.periodDelta > 0 ? '#10B981' : '#6B7280' }]}>
+                                {item.periodDelta < 0 ? `Added ₹${Math.abs(item.periodDelta).toFixed(0)} Dues` :
+                                    item.periodDelta > 0 ? `Paid ₹${item.periodDelta.toFixed(0)}` :
+                                        'No change in period'}
+                            </Text>
+                        )}
+                    </View>
+                    <View style={styles.balanceContainer}>
+                        <View style={[
+                            styles.balancePill,
+                            { backgroundColor: isCredit ? '#ECFDF5' : isOwes ? '#FEF2F2' : '#F3F4F6' }
                         ]}>
-                            ₹{Math.abs(balance).toFixed(0)}
-                        </Text>
+                            <Text style={[
+                                styles.balanceText,
+                                isCredit ? { color: '#10B981' } : isOwes ? { color: '#EF4444' } : { color: '#374151' }
+                            ]}>
+                                ₹{Math.abs(balance).toFixed(0)}
+                            </Text>
+                        </View>
+                        <Text style={styles.balanceSubLabel}>Total Balance</Text>
                     </View>
                 </View>
 
@@ -244,9 +324,17 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                         <TouchableOpacity onPress={onBack} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={24} color="#fff" />
                         </TouchableOpacity>
-                        <View>
-                            <Text style={styles.headerTitle}>{shopName || 'Shop Details'}</Text>
-                            <Text style={styles.headerSubtitle}>View and manage customers for this shop</Text>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.headerTitle} numberOfLines={1}>{shopName || 'Shop Details'}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                                <Text style={styles.headerSubtitle}>Code: </Text>
+                                <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{shopCode || 'N/A'}</Text>
+                                </View>
+                                <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginLeft: 8 }}>
+                                    <Text style={{ color: '#E0E7FF', fontSize: 11, fontWeight: '600' }}>{shopCategory}</Text>
+                                </View>
+                            </View>
                         </View>
                     </View>
 
@@ -256,8 +344,8 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                             <StatsCard
                                 icon="people-outline"
                                 title="Customers"
-                                value={stats.totalCustomers}
-                                subtitle="Total"
+                                value={(fromDate || toDate) ? stats.periodActiveCustomers : stats.totalCustomers}
+                                subtitle={(fromDate || toDate) ? 'Active This Period' : 'Total Registered'}
                                 color="#2563EB"
                                 iconBg="#EFF6FF"
                             />
@@ -265,7 +353,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                                 icon="swap-horizontal-outline"
                                 title="Transactions"
                                 value={stats.totalTransactions}
-                                subtitle="All time"
+                                subtitle={(fromDate || toDate) ? 'Filtered' : 'All time'}
                                 color="#7C3AED"
                                 iconBg="#F3E8FF"
                             />
@@ -274,8 +362,8 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                             <StatsCard
                                 icon="wallet-outline"
                                 title="₹ Amount"
-                                value={`₹${stats.totalAmount.toFixed(0)}`}
-                                subtitle="All time"
+                                value={`₹${(stats.totalSales || 0).toFixed(0)}`}
+                                subtitle={(fromDate || toDate) ? 'Sales (Filtered)' : 'Total Sales'}
                                 color="#059669"
                                 iconBg="#D1FAE5"
                             />
@@ -283,11 +371,63 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                                 icon="trending-down-outline"
                                 title="With Dues"
                                 value={stats.withDues}
-                                subtitle="Customers"
+                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
                                 color="#DC2626"
                                 iconBg="#FEE2E2"
                             />
                         </View>
+                    </View>
+
+                    {/* Date Range Filter */}
+                    <View style={styles.filterCard}>
+                        <View style={styles.filterHeader}>
+                            <View style={styles.filterTitleRow}>
+                                <Ionicons name="filter-outline" size={18} color="#374151" />
+                                <Text style={styles.filterTitle}>Filter by Date</Text>
+                            </View>
+                            {(fromDate || toDate) && (
+                                <TouchableOpacity onPress={clearDateFilters} style={styles.clearBtn}>
+                                    <Ionicons name="close-circle-outline" size={16} color="#EF4444" />
+                                    <Text style={styles.clearBtnText}>Clear</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        <View style={styles.dateFiltersRow}>
+                            <View style={styles.dateFilterItem}>
+                                <Text style={styles.filterLabel}>From Date</Text>
+                                <TouchableOpacity
+                                    style={styles.dateInputContainer}
+                                    onPress={() => setShowFromPicker(true)}
+                                >
+                                    <Text style={[styles.dateInput, !fromDate && { color: '#9CA3AF' }]}>
+                                        {fromDate ? formatDateDisplay(fromDate) : 'dd-mm-yyyy'}
+                                    </Text>
+                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                </TouchableOpacity>
+                            </View>
+                            <View style={styles.dateFilterItem}>
+                                <Text style={styles.filterLabel}>To Date</Text>
+                                <TouchableOpacity
+                                    style={styles.dateInputContainer}
+                                    onPress={() => setShowToPicker(true)}
+                                >
+                                    <Text style={[styles.dateInput, !toDate && { color: '#9CA3AF' }]}>
+                                        {toDate ? formatDateDisplay(toDate) : 'dd-mm-yyyy'}
+                                    </Text>
+                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        {(fromDate || toDate) && (
+                            <View style={styles.activeFilterInfo}>
+                                <Ionicons name="information-circle-outline" size={14} color="#2563EB" />
+                                <Text style={styles.activeFilterText}>
+                                    Showing transactions {fromDate ? `from ${formatDateDisplay(fromDate)}` : ''}{fromDate && toDate ? ' ' : ''}{toDate ? `to ${formatDateDisplay(toDate)}` : ''}
+                                </Text>
+                            </View>
+                        )}
                     </View>
 
                     {/* Bottom Content Area */}
@@ -392,6 +532,27 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, onBack }) => {
                         <View />
                     </View>
                 </ScrollView>
+
+                {showFromPicker && (
+                    <DateTimePicker
+                        value={fromDate || new Date()}
+                        mode="date"
+                        display="default"
+                        onChange={onFromDateChange}
+                        positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                        negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                    />
+                )}
+                {showToPicker && (
+                    <DateTimePicker
+                        value={toDate || new Date()}
+                        mode="date"
+                        display="default"
+                        onChange={onToDateChange}
+                        positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                        negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                    />
+                )}
             </LinearGradient>
         </View>
     );
@@ -406,6 +567,95 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         flexGrow: 1,
+    },
+    filterCard: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        marginHorizontal: 16,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    filterHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    filterTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    filterTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    clearBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 6,
+        backgroundColor: '#FEF2F2',
+    },
+    clearBtnText: {
+        fontSize: 12,
+        color: '#EF4444',
+        fontWeight: '600',
+    },
+    dateFiltersRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    dateFilterItem: {
+        flex: 1,
+    },
+    filterLabel: {
+        fontSize: 11,
+        color: '#6B7280',
+        fontWeight: '600',
+        marginBottom: 4,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    dateInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 10,
+        backgroundColor: '#F9FAFB',
+    },
+    dateInput: {
+        fontSize: 13,
+        color: '#111827',
+        fontWeight: '500',
+    },
+    activeFilterInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        backgroundColor: '#EFF6FF',
+        borderRadius: 6,
+    },
+    activeFilterText: {
+        fontSize: 11,
+        color: '#2563EB',
+        fontWeight: '500',
+        flex: 1,
     },
     header: {
         flexDirection: 'row',
@@ -551,6 +801,20 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         marginBottom: 8,
+    },
+    periodDeltaText: {
+        fontSize: 12,
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    balanceContainer: {
+        alignItems: 'flex-end',
+    },
+    balanceSubLabel: {
+        fontSize: 10,
+        color: '#6B7280',
+        marginTop: 2,
+        fontWeight: '500',
     },
     customerName: {
         fontSize: 16,
