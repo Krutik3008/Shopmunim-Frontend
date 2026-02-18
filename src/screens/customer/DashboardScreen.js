@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
     content: { flex: 1, backgroundColor: '#F9FAFB' }, // Content background
 
     // Header
-    header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E5E5' },
+    header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E5E5', zIndex: 100 },
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     logo: { fontSize: 20, fontWeight: 'bold', color: '#3B82F6' },
     headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
