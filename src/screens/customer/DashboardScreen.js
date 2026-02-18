@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     phoneText: { fontSize: 12, color: '#000' },
 
     // Role Dropdown
-    roleDropdown: { position: 'absolute', top: 45, right: 60, backgroundColor: '#fff', borderRadius: 8, elevation: 5, padding: 8, zIndex: 100, minWidth: 160 },
+    roleDropdown: { position: 'absolute', top: 45, right: 60, backgroundColor: '#fff', borderRadius: 8, elevation: 10, padding: 8, zIndex: 1000, minWidth: 160 },
     roleOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, gap: 10 },
     roleOptionActive: { backgroundColor: '#F0F9FF', borderRadius: 6 },
     roleOptionText: { flex: 1, fontSize: 14, color: '#333' },

@@ -177,6 +177,7 @@ const styles = StyleSheet.create({
         padding: 8,
         zIndex: 1000,
         minWidth: 180,
+        elevation: 10, // Increased elevation for Android
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,

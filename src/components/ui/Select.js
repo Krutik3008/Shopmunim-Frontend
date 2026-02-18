@@ -138,6 +138,8 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.gray[200],
         ...shadows.sm,
+        elevation: 5, // Required for Android to show shadow and better layering
+        zIndex: 1000,
     },
     option: {
         flexDirection: 'row',
