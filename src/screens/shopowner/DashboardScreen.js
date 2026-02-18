@@ -141,6 +141,7 @@ const ShopOwnerDashboardScreen = () => {
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
     const [newCustomerName, setNewCustomerName] = useState('');
     const [newCustomerPhone, setNewCustomerPhone] = useState('');
+    const [newCustomerNickname, setNewCustomerNickname] = useState('');
     const [addingCustomer, setAddingCustomer] = useState(false);
 
     // Add Transaction State
@@ -373,13 +374,15 @@ const ShopOwnerDashboardScreen = () => {
 
             await customerAPI.create(shopId, {
                 name: newCustomerName.trim(),
-                phone: newCustomerPhone.trim()
+                phone: newCustomerPhone.trim(),
+                nickname: newCustomerNickname.trim() || null
             });
 
             Alert.alert('Success', 'Customer added successfully');
             setShowAddCustomerModal(false);
             setNewCustomerName('');
             setNewCustomerPhone('');
+            setNewCustomerNickname('');
             loadCustomers(shopId); // Refresh list
             loadDashboardStats(shopId); // Refresh home stats
         } catch (error) {
@@ -750,7 +753,10 @@ const ShopOwnerDashboardScreen = () => {
                                     </Text>
                                 </View>
                                 <View style={styles.customerInfo}>
-                                    <Text style={styles.customerName}>{customer.name}</Text>
+                                    <Text style={styles.customerName}>
+                                        {customer.name}
+                                        {customer.nickname ? ` (${customer.nickname})` : ''}
+                                    </Text>
                                     <Text style={styles.customerPhone}>+91 {customer.phone}</Text>
                                 </View>
                                 <View style={styles.customerRightSide}>
@@ -1164,6 +1170,18 @@ const ShopOwnerDashboardScreen = () => {
                                     value={newCustomerPhone}
                                     onChangeText={(text) => setNewCustomerPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
                                     keyboardType="numeric"
+                                />
+                            </View>
+
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.inputLabel}>Nickname (Optional)</Text>
+                                <TextInput
+                                    style={styles.textInput}
+                                    placeholder="e.g. Pappu via Sharma ji"
+                                    placeholderTextColor="#9CA3AF"
+                                    value={newCustomerNickname}
+                                    onChangeText={setNewCustomerNickname}
+                                    autoCapitalize="words"
                                 />
                             </View>
 

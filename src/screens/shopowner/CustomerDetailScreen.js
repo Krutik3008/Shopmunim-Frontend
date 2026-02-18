@@ -53,6 +53,13 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
+    // Edit Customer State
+    const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editPhone, setEditPhone] = useState('');
+    const [editNickname, setEditNickname] = useState('');
+    const [updatingCustomer, setUpdatingCustomer] = useState(false);
+
     useFocusEffect(
         useCallback(() => {
             loadData();
@@ -345,12 +352,110 @@ const CustomerDetailScreen = ({ route, navigation }) => {
         return '#FFF';
     };
 
+    const openEditModal = () => {
+        setEditName(customer.name);
+        setEditPhone(customer.phone);
+        setEditNickname(customer.nickname || '');
+        setShowEditCustomerModal(true);
+    };
+
+    const handleUpdateCustomer = async () => {
+        if (!editName.trim()) {
+            Alert.alert('Error', 'Please enter customer name');
+            return;
+        }
+        if (!editPhone.trim() || editPhone.length !== 10) {
+            Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        setUpdatingCustomer(true);
+        try {
+            const updateData = {
+                name: editName.trim(),
+                phone: editPhone.trim(),
+                nickname: editNickname.trim() || null
+            };
+
+            await customerAPI.update(shopId, customer.id, updateData);
+
+            Alert.alert('Success', 'Customer updated successfully');
+            setShowEditCustomerModal(false);
+
+            // Update local state
+            setCustomer(prev => ({ ...prev, ...updateData }));
+            // loadData(); // Optional, but local update is faster
+        } catch (error) {
+            console.log('Failed to update customer:', error);
+            Alert.alert('Error', 'Failed to update customer');
+        } finally {
+            setUpdatingCustomer(false);
+        }
+    };
+
     // Header Component replaced by imported ShopHeader
 
 
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
+            {/* Edit Customer Modal */}
+            <Modal
+                visible={showEditCustomerModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowEditCustomerModal(false)}
+            >
+                <KeyboardAvoidingView
+                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Customer</Text>
+                            <TouchableOpacity onPress={() => setShowEditCustomerModal(false)}>
+                                <Ionicons name="close" size={24} color="#666" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Name</Text>
+                        <TextInput
+                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
+                            value={editName}
+                            onChangeText={setEditName}
+                        />
+
+                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Phone</Text>
+                        <TextInput
+                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
+                            value={editPhone}
+                            onChangeText={(text) => setEditPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
+                            keyboardType="numeric"
+                        />
+
+                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Nickname</Text>
+                        <TextInput
+                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 16 }}
+                            value={editNickname}
+                            onChangeText={setEditNickname}
+                            placeholder="Optional"
+                        />
+
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#3B82F6', padding: 14, borderRadius: 8, alignItems: 'center' }}
+                            onPress={handleUpdateCustomer}
+                            disabled={updatingCustomer}
+                        >
+                            {updatingCustomer ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Update Customer</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </Modal>
+
             {/* Header - Same as Dashboard */}
             <ShopHeader />
 
@@ -369,12 +474,19 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                             <Text style={styles.pageTitleText}>Customer Details</Text>
                             <Text style={styles.pageSubtitle}>Transaction history and management</Text>
                         </View>
+                        <View style={{ flex: 1 }} />
+                        <TouchableOpacity onPress={openEditModal} style={{ padding: 8 }}>
+                            <Ionicons name="create-outline" size={24} color="#3B82F6" />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Customer Info Card */}
                     <View style={styles.customerCard}>
                         <View style={styles.customerLeft}>
-                            <Text style={styles.customerName}>{customer?.name || 'Unknown'}</Text>
+                            <Text style={styles.customerName}>
+                                {customer?.name || 'Unknown'}
+                                {customer?.nickname ? ` (${customer.nickname})` : ''}
+                            </Text>
                             <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
                         </View>
                         <View style={styles.customerRight}>

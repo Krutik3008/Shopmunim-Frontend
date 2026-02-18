@@ -108,6 +108,10 @@ export const customerAPI = {
     // Add a customer to a shop
     create: (shopId, data) => api.post(`/shops/${shopId}/customers`, data),
 
+    // Update customer details
+    update: (shopId, customerId, data) =>
+        api.put(`/shops/${shopId}/customers/${customerId}`, data),
+
     // Get customer transactions (via shop transactions filtered by customer)
     getTransactions: (shopId, customerId) =>
         api.get(`/shops/${shopId}/transactions`).then(response => ({

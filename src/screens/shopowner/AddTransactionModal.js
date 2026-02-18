@@ -46,6 +46,20 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
     // Common State
     const [note, setNote] = useState('');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+
+    // Filter customers based on search query
+    const filterCustomers = () => {
+        if (!customers) return [];
+        if (!customerSearchQuery) return customers;
+
+        const query = customerSearchQuery.toLowerCase();
+        return customers.filter(c =>
+            (c.name && c.name.toLowerCase().includes(query)) ||
+            (c.phone && c.phone.includes(query)) ||
+            (c.nickname && c.nickname.toLowerCase().includes(query))
+        );
+    };
 
 
     useEffect(() => {
@@ -57,6 +71,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             setMethod('products');
             setSelectedProducts({});
             setManualAmount('');
+            setCustomerSearchQuery('');
             setNote('');
         }
     }, [visible, shopId]);
@@ -204,19 +219,23 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                     <ScrollView style={styles.scrollContent} keyboardShouldPersistTaps="handled">
                         <View style={styles.formContent}>
 
-                            {/* Custom Customer Select */}
+                            {/* Custom Customer Select with Search */}
                             <View style={styles.inputContainer}>
                                 <Text style={styles.sectionLabel}>Select Customer *</Text>
 
                                 {customerId ? (
                                     <View style={styles.selectedCustomerCard}>
                                         <View>
-                                            <Text style={styles.selectedCustomerName}>{selectedCustomer?.name}</Text>
+                                            <Text style={styles.selectedCustomerName}>
+                                                {selectedCustomer?.name}
+                                                {selectedCustomer?.nickname ? ` (${selectedCustomer.nickname})` : ''}
+                                            </Text>
                                             <Text style={styles.selectedCustomerPhone}>+91 {selectedCustomer?.phone}</Text>
                                         </View>
                                         <TouchableOpacity
                                             onPress={() => {
                                                 setCustomerId('');
+                                                setCustomerSearchQuery(''); // Clear query when unselecting
                                                 setShowCustomerDropdown(true);
                                             }}
                                             style={styles.changeCustomerBtn}
@@ -226,33 +245,52 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                                     </View>
                                 ) : (
                                     <>
-                                        <TouchableOpacity
-                                            style={styles.selectButton}
-                                            onPress={() => setShowCustomerDropdown(!showCustomerDropdown)}
-                                        >
-                                            <Text style={styles.placeholderText}>Choose a customer</Text>
-                                            <Ionicons name={showCustomerDropdown ? "chevron-up" : "chevron-down"} size={20} color={colors.gray[500]} />
-                                        </TouchableOpacity>
+                                        <View style={styles.searchContainer}>
+                                            <TextInput
+                                                style={styles.searchInput}
+                                                placeholder="Search customer"
+                                                placeholderTextColor={colors.gray[400]}
+                                                value={customerSearchQuery}
+                                                onChangeText={(text) => {
+                                                    setCustomerSearchQuery(text);
+                                                    setShowCustomerDropdown(true);
+                                                }}
+                                                onFocus={() => setShowCustomerDropdown(true)}
+                                            />
+                                            {customerSearchQuery.length > 0 && (
+                                                <TouchableOpacity onPress={() => setCustomerSearchQuery('')} style={styles.clearSearchBtn}>
+                                                    <Ionicons name="close-circle" size={18} color={colors.gray[400]} />
+                                                </TouchableOpacity>
+                                            )}
+                                            <Ionicons name="search-outline" size={20} color={colors.gray[400]} style={styles.searchIcon} />
+                                        </View>
 
-                                        {showCustomerDropdown && (
+                                        {showCustomerDropdown && customerSearchQuery.length > 0 && (
                                             <View style={styles.dropdownList}>
-                                                {customers.length === 0 ? (
-                                                    <Text style={styles.dropdownEmpty}>No customers found</Text>
+                                                {filterCustomers().length === 0 ? (
+                                                    <Text style={styles.dropdownEmpty}>
+                                                        {customerSearchQuery ? 'No matching customers found' : 'Start typing to search...'}
+                                                    </Text>
                                                 ) : (
-                                                    customers.map((customer) => (
-                                                        <TouchableOpacity
-                                                            key={customer.id}
-                                                            style={styles.dropdownItem}
-                                                            onPress={() => {
-                                                                setCustomerId(customer.id);
-                                                                setShowCustomerDropdown(false);
-                                                            }}
-                                                        >
-                                                            <Text style={styles.dropdownItemText}>
-                                                                {customer.name} <Text style={styles.phoneText}>(+91 {customer.phone})</Text>
-                                                            </Text>
-                                                        </TouchableOpacity>
-                                                    ))
+                                                    <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                                                        {filterCustomers().map((customer) => (
+                                                            <TouchableOpacity
+                                                                key={customer.id}
+                                                                style={styles.dropdownItem}
+                                                                onPress={() => {
+                                                                    setCustomerId(customer.id);
+                                                                    setCustomerSearchQuery(''); // Clear after selection
+                                                                    setShowCustomerDropdown(false);
+                                                                }}
+                                                            >
+                                                                <Text style={styles.dropdownItemText}>
+                                                                    {customer.name}
+                                                                    {customer.nickname ? ` (${customer.nickname})` : ''}
+                                                                    <Text style={styles.phoneText}> (+91 {customer.phone})</Text>
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        ))}
+                                                    </ScrollView>
                                                 )}
                                             </View>
                                         )}
@@ -644,6 +682,27 @@ const styles = StyleSheet.create({
     placeholderText: {
         fontSize: fontSize.md,
         color: colors.gray[400],
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.gray[300],
+        borderRadius: borderRadius.lg,
+        backgroundColor: colors.white,
+        paddingHorizontal: spacing.sm,
+    },
+    searchIcon: {
+        marginLeft: spacing.sm,
+    },
+    searchInput: {
+        flex: 1,
+        paddingVertical: 12,
+        fontSize: fontSize.md,
+        color: colors.gray[800],
+    },
+    clearSearchBtn: {
+        padding: 4,
     },
     dropdownList: {
         marginTop: 4,
