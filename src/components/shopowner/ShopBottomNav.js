@@ -1,18 +1,36 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 const TabButton = ({ name, icon, label, isActive, onPress }) => (
-    <TouchableOpacity style={styles.tabButton} onPress={onPress}>
-        <View style={[styles.tabIconContainer, isActive && styles.tabIconActive]}>
-            <Ionicons
-                name={isActive ? icon.replace('-outline', '') : icon}
-                size={20}
-                color={isActive ? '#3B82F6' : '#9CA3AF'}
-            />
-        </View>
-        <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
+    <TouchableOpacity
+        style={styles.navItemWrapper}
+        onPress={onPress}
+    >
+        {isActive ? (
+            <LinearGradient
+                colors={['#EFF6FF', '#DBEAFE']} // Light blue shades
+                style={styles.navItemActiveGradient}
+            >
+                <Ionicons
+                    name={isActive ? icon.replace('-outline', '') : icon}
+                    size={20}
+                    color="#3B82F6"
+                />
+                <Text style={styles.navTextActive}>{label}</Text>
+            </LinearGradient>
+        ) : (
+            <View style={styles.navItem}>
+                <Ionicons
+                    name={icon}
+                    size={20}
+                    color="#6B7280"
+                />
+                <Text style={styles.navText}>{label}</Text>
+            </View>
+        )}
     </TouchableOpacity>
 );
 
@@ -95,18 +113,49 @@ const ShopBottomNav = ({ activeTab = 'home', onTabPress }) => {
 
 const styles = StyleSheet.create({
     bottomNav: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
-        paddingBottom: 8,
-        paddingTop: 8,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+        elevation: 8,
+        height: 65,
+        zIndex: 1000,
     },
-    tabButton: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-    tabIconContainer: { padding: 8, borderRadius: 20 },
-    tabIconActive: { backgroundColor: '#EFF6FF' },
-    tabLabel: { fontSize: 10, color: '#9CA3AF', marginTop: 4 },
-    tabLabelActive: { color: '#3B82F6', fontWeight: '500' },
+    navItemWrapper: {
+        flex: 1,
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navItemActiveGradient: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navText: {
+        fontSize: 10,
+        fontWeight: '500',
+        color: '#6B7280',
+    },
+    navTextActive: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#3B82F6',
+    },
 });
 
 export default ShopBottomNav;

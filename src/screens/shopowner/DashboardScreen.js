@@ -26,10 +26,12 @@ import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } 
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import AddTransactionModal from './AddTransactionModal';
 import ShopHeader from '../../components/shopowner/ShopHeader';
+import ShopBottomNav from '../../components/shopowner/ShopBottomNav';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 const TransactionCard = ({ transaction, showNote = true }) => {
@@ -1093,38 +1095,18 @@ const ShopOwnerDashboardScreen = () => {
     };
 
     // Bottom Navigation Tab - Matching reference exactly
-    const TabButton = ({ name, icon, label }) => {
-        const isActive = activeTab === name;
-        return (
-            <TouchableOpacity
-                style={styles.tabButton}
-                onPress={() => setActiveTab(name)}
-            >
-                <View style={[styles.tabIconContainer, isActive && styles.tabIconActive]}>
-                    <Ionicons
-                        name={isActive ? icon.replace('-outline', '') : icon}
-                        size={20}
-                        color={isActive ? '#3B82F6' : '#9CA3AF'}
-                    />
-                </View>
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{label}</Text>
-            </TouchableOpacity>
-        );
-    };
+    // Bottom Navigation Tab - Matching Admin Panel Style
+    // (TabButton removed - using ShopBottomNav component)
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ShopHeader />
             <View style={styles.content}>{renderContent()}</View>
             {!isKeyboardVisible && (
-                <View style={styles.bottomNav}>
-                    <TabButton name="home" icon="home-outline" label="Home" />
-                    <TabButton name="products" icon="cube-outline" label="Products" />
-                    <TabButton name="customers" icon="people-outline" label="Customers" />
-                    <TabButton name="transactions" icon="receipt-outline" label="Transactions" />
-
-                    <TabButton name="account" icon="person-outline" label="Account" />
-                </View>
+                <ShopBottomNav
+                    activeTab={activeTab}
+                    onTabPress={setActiveTab}
+                />
             )}
 
 
@@ -1574,18 +1556,49 @@ const styles = StyleSheet.create({
 
     // Bottom Navigation - Matching reference exactly
     bottomNav: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: '#FFFFFF',
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
-        paddingBottom: 8,
-        paddingTop: 8,
+        paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+        elevation: 8,
+        height: 65,
+        zIndex: 1000,
     },
-    tabButton: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-    tabIconContainer: { padding: 8, borderRadius: 20 },
-    tabIconActive: { backgroundColor: '#EFF6FF' },
-    tabLabel: { fontSize: 10, color: '#9CA3AF', marginTop: 4 },
-    tabLabelActive: { color: '#3B82F6', fontWeight: '500' },
+    navItemWrapper: {
+        flex: 1,
+        height: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    navItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navItemActiveGradient: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        gap: 4,
+    },
+    navText: {
+        fontSize: 10,
+        fontWeight: '500',
+        color: '#6B7280',
+    },
+    navTextActive: {
+        fontSize: 10,
+        fontWeight: 'bold',
+        color: '#3B82F6',
+    },
 
     // Create Shop Modal Styles
     modalOverlay: {

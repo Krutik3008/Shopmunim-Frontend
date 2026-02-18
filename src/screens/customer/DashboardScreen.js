@@ -159,7 +159,7 @@ const CustomerDashboardScreen = () => {
     const LedgerContent = () => (
         <ScrollView
             style={styles.tabContent}
-            contentContainerStyle={{ paddingBottom: 30 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
             {loading ? (
@@ -290,7 +290,7 @@ const CustomerDashboardScreen = () => {
         const pendingPayments = ledgerData.filter(item => (item.customer?.balance || 0) < 0);
 
         return (
-            <ScrollView style={styles.tabContent}>
+            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 100 }}>
                 <Text style={styles.sectionTitle}>Payment Center</Text>
                 <Text style={styles.sectionSubtitle}>Pending Payments</Text>
 
@@ -377,7 +377,7 @@ const CustomerDashboardScreen = () => {
         }
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 100 }}>
                 <Text style={styles.sectionTitle}>Transaction History</Text>
                 <View style={styles.historyList}>
                     {allTransactions.map((tx, index) => (
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     logoutText: { color: '#EF4444' },
 
     // Footer
-    accountScrollContent: { flexGrow: 1, paddingBottom: 30 },
+    accountScrollContent: { flexGrow: 1, paddingBottom: 100 },
     footer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, alignItems: 'center', marginTop: 'auto', marginBottom: 16 },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },
