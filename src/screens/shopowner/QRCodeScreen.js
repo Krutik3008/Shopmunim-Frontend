@@ -17,7 +17,7 @@ const QRCodeScreen = ({ route, navigation }) => {
     const { shop } = route.params;
 
     // Generate the connect URL
-    const connectUrl = `https://shopmunim.app/connect/${shop.shop_code}`;
+    const connectUrl = `https://shopmunim.com/connect/${encodeURIComponent(shop.name.replace(/\s+/g, ''))}/${shop.shop_code}`;
 
     const handleShare = async () => {
         try {

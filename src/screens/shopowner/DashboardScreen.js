@@ -502,20 +502,24 @@ const ShopOwnerDashboardScreen = () => {
     };
 
     const copyToClipboard = async () => {
-        const link = `https://shopmunim.com/shop/${user?.shop_id || 'demo'}`;
+        const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
+        const shopName = currentShop?.name ? encodeURIComponent(currentShop.name.replace(/\s+/g, '')) : 'Shop';
+        const shopCode = currentShop?.shop_code || 'Code';
+
+        const link = `https://shopmunim.com/connect/${shopName}/${shopCode}`;
         await Clipboard.setStringAsync(link);
         Alert.alert('Success', 'Link copied to clipboard!');
     };
 
     const handleShareLink = async (type) => {
-        const link = `https://shopmunim.com/shop/${user?.shop_id || 'demo'}`;
-        const message = `Check out my shop on ShopMunim: ${link}`;
+        const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
+        const shopName = currentShop?.name ? encodeURIComponent(currentShop.name.replace(/\s+/g, '')) : 'Shop';
+        const shopCode = currentShop?.shop_code || 'Code';
+
+        const link = `https://shopmunim.com/connect/${shopName}/${shopCode}`;
+        const message = `Check out my shop "${currentShop?.name || 'Shop'}" on ShopMunim! Code: ${shopCode}\nLink: ${link}`;
         try {
-            if (type === 'whatsapp') {
-                await Share.share({ message });
-            } else {
-                await Share.share({ message });
-            }
+            await Share.share({ message });
         } catch (error) {
             Alert.alert('Error', 'Failed to share link');
         }
@@ -957,7 +961,7 @@ const ShopOwnerDashboardScreen = () => {
                                 <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.9 }}>
                                     <View style={styles.qrContainer}>
                                         <QRCode
-                                            value={`https://shopmunim.com/shop/${user?.shop_id || 'demo'}`}
+                                            value={`https://shopmunim.com/connect/${currentShop?.name ? encodeURIComponent(currentShop.name.replace(/\s+/g, '')) : 'Shop'}/${currentShop?.shop_code || 'Code'}`}
                                             size={200}
                                             backgroundColor="white"
                                             color="black"
@@ -990,7 +994,7 @@ const ShopOwnerDashboardScreen = () => {
                                 <View style={styles.linkBox}>
                                     <Ionicons name="link-outline" size={20} color="#6B7280" />
                                     <Text style={styles.linkText} numberOfLines={1} ellipsizeMode="tail">
-                                        https://shopmunim.com/shop/{user?.shop_id || 'demo'}
+                                        https://shopmunim.com/connect/{currentShop?.name ? encodeURIComponent(currentShop.name.replace(/\s+/g, '')) : 'Shop'}/{currentShop?.shop_code || 'Code'}
                                     </Text>
                                 </View>
 

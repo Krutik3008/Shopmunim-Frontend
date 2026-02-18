@@ -92,7 +92,7 @@ const QRShareScreen = () => {
 
                     <View style={styles.linkInputRow}>
                         <Ionicons name="link" size={18} color="#9CA3AF" />
-                        <Text style={styles.linkText} numberOfLines={1}>shopmunim.app/shop/{shop?._id?.slice(-8) || 'abc123'}</Text>
+                        <Text style={styles.linkText} numberOfLines={1}>shopmunim.com/connect/{shop?.name ? encodeURIComponent(shop.name.replace(/\s+/g, '')) : 'Shop'}/{shop?.shop_code || 'Code'}</Text>
                     </View>
 
                     <TouchableOpacity style={styles.copyBtn}>
