@@ -22,7 +22,7 @@ import AboutScreen from '../screens/customer/account/AboutScreen';
 import AdminPanelScreen from '../screens/admin/AdminPanelScreen';
 import AdminCustomerDetailScreen from '../screens/admin/AdminCustomerDetailScreen';
 import AdminShopDetailsScreen from '../screens/admin/AdminShopDetailsScreen';
-import CreateShopScreen from '../screens/CreateShopScreen';
+import CreateShopScreen from '../screens/shopowner/CreateShopScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,7 +55,7 @@ const MainNavigator = ({ initialRoute }) => (
         <Stack.Screen name="Products" component={ProductsScreen} />
         <Stack.Screen name="QRCode" component={QRCodeScreen} />
         <Stack.Screen name="QRShare" component={QRShareScreen} />
-        <Stack.Screen name="CreateShop" component={CreateShopScreen} />
+        <Stack.Screen name="CreateShop" component={CreateShopScreen} options={{ presentation: 'transparentModal', animation: 'fade' }} />
 
         {/* Customer Dashboard - Has its own built-in bottom tabs */}
         <Stack.Screen name="CustomerDashboard" component={CustomerDashboardScreen} />

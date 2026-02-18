@@ -14,6 +14,8 @@ import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { customerDashboardAPI } from '../../api';
 import { useNavigation } from '@react-navigation/native';
+import CustomerHeader from '../../components/customer/CustomerHeader';
+import CustomerBottomNav from '../../components/customer/CustomerBottomNav';
 
 const CustomerDashboardScreen = () => {
     const navigation = useNavigation();
@@ -102,63 +104,7 @@ const CustomerDashboardScreen = () => {
 
     const stats = getSummaryStats();
 
-    // Header Component
-    const Header = () => (
-        <View style={styles.header}>
-            <View style={styles.headerTop}>
-                <Text style={styles.logo}>ShopMunim</Text>
-                <View style={styles.headerRight}>
-                    <TouchableOpacity
-                        style={styles.roleSelector}
-                        onPress={() => setShowRoleDropdown(!showRoleDropdown)}
-                    >
-                        <Ionicons name="person" size={16} color="#3B82F6" />
-                        <Text style={styles.roleSelectorText}>Customer</Text>
-                        <Ionicons name="chevron-down" size={16} color="#666" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={logout}>
-                        <Text style={styles.headerLogout}>Logout</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-            <View style={styles.headerBottom}>
-                <Text style={styles.welcomeText}>Welcome, <Text style={styles.userName}>{user?.name || 'User'}</Text></Text>
-                <View style={styles.phoneContainer}>
-                    <Text style={styles.phoneText}>+91 {user?.phone}</Text>
-                </View>
-            </View>
 
-            {/* Role Dropdown */}
-            {showRoleDropdown && (
-                <View style={styles.roleDropdown}>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('customer')}
-                    >
-                        <Ionicons name="person" size={18} color="#3B82F6" />
-                        <Text style={styles.roleOptionText}>Customer</Text>
-                        {user?.active_role === 'customer' && (
-                            <Ionicons name="checkmark" size={18} color="#3B82F6" />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('shop_owner')}
-                    >
-                        <Ionicons name="storefront" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText}>Shop Owner</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('admin')}
-                    >
-                        <Ionicons name="shield" size={18} color="#F59E0B" />
-                        <Text style={styles.roleOptionText}>Admin</Text>
-                    </TouchableOpacity>
-                </View>
-            )}
-        </View>
-    );
 
     // Summary Stats Cards for Ledger Tab
     const SummaryStatsCards = () => {
@@ -558,31 +504,21 @@ const CustomerDashboardScreen = () => {
         }
     };
 
-    // Bottom Navigation Tab
-    const TabButton = ({ name, icon, label }) => (
-        <TouchableOpacity
-            style={styles.tabButton}
-            onPress={() => setActiveTab(name)}
-        >
-            <View style={[styles.tabIconContainer, activeTab === name && styles.tabIconActive]}>
-                <Ionicons name={icon} size={22} color={activeTab === name ? '#3B82F6' : '#666'} />
-            </View>
-            <Text style={[styles.tabLabel, activeTab === name && styles.tabLabelActive]}>{label}</Text>
-        </TouchableOpacity>
-    );
+
 
     console.log('Rendering CustomerDashboard', { activeTab, ledgerDataLength: ledgerData.length });
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <Header />
+            <CustomerHeader
+                user={user}
+                logout={logout}
+                showRoleDropdown={showRoleDropdown}
+                setShowRoleDropdown={setShowRoleDropdown}
+                handleRoleSwitch={handleRoleSwitch}
+            />
             <View style={styles.content}>{renderContent()}</View>
-            <View style={styles.bottomNav}>
-                <TabButton name="ledger" icon="book-outline" label="Ledger" />
-                <TabButton name="payments" icon="card-outline" label="Payments" />
-                <TabButton name="history" icon="time-outline" label="History" />
-                <TabButton name="account" icon="person-outline" label="Account" />
-            </View>
+            <CustomerBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
         </SafeAreaView>
     );
 };
@@ -591,25 +527,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#fff' }, // Changed background to white as per screenshot often implies cleaner look, but let's keep it clean
     content: { flex: 1, backgroundColor: '#F9FAFB' }, // Content background
 
-    // Header
-    header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E5E5', zIndex: 100 },
-    headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    logo: { fontSize: 20, fontWeight: 'bold', color: '#3B82F6' },
-    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    roleSelector: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 5, gap: 6 },
-    roleSelectorText: { fontSize: 14, color: '#333' },
-    headerLogout: { fontSize: 14, color: '#666' },
-    headerBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 },
-    welcomeText: { fontSize: 14, color: '#666' },
-    userName: { fontWeight: 'bold', color: '#333' },
-    phoneContainer: { backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4 },
-    phoneText: { fontSize: 12, color: '#000' },
 
-    // Role Dropdown
-    roleDropdown: { position: 'absolute', top: 45, right: 60, backgroundColor: '#fff', borderRadius: 8, elevation: 10, padding: 8, zIndex: 1000, minWidth: 160 },
-    roleOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 12, gap: 10 },
-    roleOptionActive: { backgroundColor: '#F0F9FF', borderRadius: 6 },
-    roleOptionText: { flex: 1, fontSize: 14, color: '#333' },
 
     // Tab Content
     tabContent: { flex: 1, padding: 16 },
@@ -773,13 +691,7 @@ const styles = StyleSheet.create({
     footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },
     footerTagline: { fontSize: 12, color: '#999', marginTop: 2 },
 
-    // Bottom Navigation
-    bottomNav: { flexDirection: 'row', backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E5E5E5', paddingBottom: 4, paddingTop: 4 },
-    tabButton: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-    tabIconContainer: { padding: 6, borderRadius: 16 },
-    tabIconActive: { backgroundColor: '#EBF5FF' },
-    tabLabel: { fontSize: 10, color: '#666', marginTop: 2 },
-    tabLabelActive: { color: '#3B82F6', fontWeight: '500' },
+
 });
 
 export default CustomerDashboardScreen;

@@ -20,7 +20,7 @@ import {
     Keyboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -102,15 +102,14 @@ const ShopOwnerDashboardScreen = () => {
         React.useCallback(() => {
             if (route.params?.tab) {
                 setActiveTab(route.params.tab);
-                // Optional: Clear params so it doesn't persist if we navigate back and forth?
-                // navigation.setParams({ tab: undefined });
             }
+            // Reload shops when screen gains focus (e.g. after returning from CreateShopScreen)
+            loadShops();
         }, [route.params?.tab])
     );
     const [shops, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    const [showCreateModal, setShowCreateModal] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
     useEffect(() => {
@@ -132,11 +131,7 @@ const ShopOwnerDashboardScreen = () => {
             keyboardDidShowListener.remove();
         };
     }, []);
-    const [shopName, setShopName] = useState('');
-    const [shopCategory, setShopCategory] = useState('');
-    const [shopLocation, setShopLocation] = useState('');
-    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-    const [creating, setCreating] = useState(false);
+
     const [isShareExpanded, setIsShareExpanded] = useState(false);
     const [dashboardStats, setDashboardStats] = useState(null);
 
@@ -166,14 +161,7 @@ const ShopOwnerDashboardScreen = () => {
     const viewShotRef = useRef();
 
 
-    const SHOP_CATEGORIES = [
-        'Grocery',
-        'Restaurant/Food',
-        'Electronics',
-        'Clothing',
-        'Medical/Pharmacy',
-        'Other'
-    ];
+
 
     const formatCurrency = (amount) => `₹${parseFloat(amount || 0).toFixed(2)}`;
     const formatShortDate = (dateString) => {
@@ -445,39 +433,7 @@ const ShopOwnerDashboardScreen = () => {
 
 
 
-    const handleCreateShop = async () => {
-        if (!shopName.trim()) {
-            Alert.alert('Error', 'Please enter shop name');
-            return;
-        }
-        if (!shopCategory) {
-            Alert.alert('Error', 'Please select a category');
-            return;
-        }
-        if (!shopLocation.trim()) {
-            Alert.alert('Error', 'Please enter shop location');
-            return;
-        }
-        setCreating(true);
-        try {
-            await shopAPI.create({
-                name: shopName.trim(),
-                category: shopCategory,
-                location: shopLocation.trim()
-            });
-            setShowCreateModal(false);
-            setShopName('');
-            setShopCategory('');
-            setShopLocation('');
-            Alert.alert('Success', 'Shop created successfully!');
-            loadShops();
-        } catch (error) {
-            console.log('Failed to create shop:', error);
-            Alert.alert('Error', getAPIErrorMessage(error));
-        } finally {
-            setCreating(false);
-        }
-    };
+
 
 
 
@@ -533,7 +489,7 @@ const ShopOwnerDashboardScreen = () => {
         <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>Welcome to ShopMunim!</Text>
             <Text style={styles.emptyDescription}>Create your first shop to get started</Text>
-            <TouchableOpacity style={styles.createShopButton} onPress={() => setShowCreateModal(true)}>
+            <TouchableOpacity style={styles.createShopButton} onPress={() => navigation.navigate('CreateShop')}>
                 <Text style={styles.createShopText}>+ Create Your Shop</Text>
             </TouchableOpacity>
         </View>
@@ -862,7 +818,9 @@ const ShopOwnerDashboardScreen = () => {
                 {/* Transactions List */}
                 {transactions.length === 0 ? (
                     <View style={styles.transactionsEmptyState}>
-                        <Text style={styles.moneyBagEmoji}>💰</Text>
+                        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
+                            <FontAwesome name="rupee" size={28} color="#000000" />
+                        </View>
                         <Text style={styles.tabEmptyText}>No transactions yet</Text>
                         <Text style={styles.tabEmptySubtext}>Record your first transaction!</Text>
                     </View>
@@ -1163,104 +1121,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
             )}
 
-            {/* Create Shop Modal */}
-            <Modal
-                visible={showCreateModal}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowCreateModal(false)}
-            >
-                <KeyboardAvoidingView
-                    style={styles.modalOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                >
-                    <View style={styles.modalContent}>
-                        {/* Modal Header */}
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Create New Shop</Text>
-                            <TouchableOpacity onPress={() => setShowCreateModal(false)} style={styles.modalClose}>
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
 
-                        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                            {/* Shop Name */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Shop Name <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="Enter shop name"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={shopName}
-                                    onChangeText={setShopName}
-                                    autoCapitalize="words"
-                                />
-                            </View>
-
-                            {/* Category */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Category <Text style={styles.required}>*</Text></Text>
-                                <TouchableOpacity
-                                    style={styles.dropdown}
-                                    onPress={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                                >
-                                    <Text style={shopCategory ? styles.dropdownText : styles.placeholder}>
-                                        {shopCategory || 'Select category'}
-                                    </Text>
-                                    <Ionicons
-                                        name={showCategoryDropdown ? "chevron-up" : "chevron-down"}
-                                        size={20}
-                                        color="#9CA3AF"
-                                    />
-                                </TouchableOpacity>
-                            </View>
-
-                            {showCategoryDropdown && (
-                                <View style={styles.categoryList}>
-                                    {SHOP_CATEGORIES.map((cat, idx) => (
-                                        <TouchableOpacity
-                                            key={idx}
-                                            style={styles.categoryItem}
-                                            onPress={() => {
-                                                setShopCategory(cat);
-                                                setShowCategoryDropdown(false);
-                                            }}
-                                        >
-                                            <Text style={styles.categoryItemText}>{cat}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                </View>
-                            )}
-
-                            {/* Location */}
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Location <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="Enter shop location"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={shopLocation}
-                                    onChangeText={setShopLocation}
-                                    autoCapitalize="words"
-                                />
-                            </View>
-
-                            {/* Create Button */}
-                            <TouchableOpacity
-                                style={[styles.submitButton, creating && styles.submitButtonDisabled]}
-                                onPress={handleCreateShop}
-                                disabled={creating}
-                            >
-                                {creating ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={styles.submitButtonText}>Create Shop</Text>
-                                )}
-                            </TouchableOpacity>
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
 
             {/* Add Customer Modal */}
             <Modal
