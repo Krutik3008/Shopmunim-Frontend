@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard, BackHandler } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -53,6 +53,18 @@ const AdminPanelScreen = () => {
             keyboardDidShowListener.remove();
         };
     }, []);
+
+    // Android hardware back button: return to dashboard from other tabs
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (activeView !== 'dashboard') {
+                setActiveView('dashboard');
+                return true;
+            }
+            return false;
+        });
+        return () => backHandler.remove();
+    }, [activeView]);
 
     const navigationItems = [
         {

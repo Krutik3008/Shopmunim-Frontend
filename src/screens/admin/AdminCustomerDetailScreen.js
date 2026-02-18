@@ -8,7 +8,8 @@ import {
     ActivityIndicator,
     Alert,
     TextInput,
-    Modal
+    Modal,
+    BackHandler
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -35,6 +36,15 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             navigation.goBack();
         }
     };
+
+    // Android hardware back button
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            handleBack();
+            return true;
+        });
+        return () => backHandler.remove();
+    }, [onBack]);
 
     // Safety check for customer
     if (!customer) {

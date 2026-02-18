@@ -8,7 +8,8 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
-    Platform
+    Platform,
+    BackHandler
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -56,6 +57,22 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
             onBack();
         }
     }, [shopId]);
+
+    // Android hardware back button
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (selectedCustomer) {
+                setSelectedCustomer(null);
+                return true;
+            }
+            if (onBack) {
+                onBack();
+                return true;
+            }
+            return false;
+        });
+        return () => backHandler.remove();
+    }, [selectedCustomer, onBack]);
 
     // Re-fetch when date filters change
     useEffect(() => {

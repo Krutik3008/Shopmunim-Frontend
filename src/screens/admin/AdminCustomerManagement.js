@@ -9,7 +9,8 @@ import {
     ActivityIndicator,
     Alert,
     ScrollView,
-    Modal
+    Modal,
+    BackHandler
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -43,6 +44,18 @@ const AdminCustomerManagement = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Android hardware back button: return to customer list from detail
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (selectedCustomer) {
+                setSelectedCustomer(null);
+                return true;
+            }
+            return false;
+        });
+        return () => backHandler.remove();
+    }, [selectedCustomer]);
 
     const fetchData = async () => {
         try {

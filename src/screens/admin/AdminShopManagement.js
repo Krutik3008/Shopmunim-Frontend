@@ -9,7 +9,8 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
-    Platform
+    Platform,
+    BackHandler
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,6 +48,18 @@ const AdminShopManagement = () => {
     useEffect(() => {
         doSearch('', 0, pageSize);
     }, []);
+
+    // Android hardware back button: return to shop list from detail
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            if (selectedShop) {
+                setSelectedShop(null);
+                return true;
+            }
+            return false;
+        });
+        return () => backHandler.remove();
+    }, [selectedShop]);
 
     // Page change
     useEffect(() => {
