@@ -87,10 +87,15 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
         return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     };
 
-    const formatDateForAPI = (date) => {
+    const formatDateForAPI = (date, isEndOfDay = false) => {
         if (!date) return null;
         const d = new Date(date);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (isEndOfDay) {
+            d.setHours(23, 59, 59, 999);
+        } else {
+            d.setHours(0, 0, 0, 0);
+        }
+        return d.toISOString();
     };
 
     const onFromDateChange = (event, selectedDate) => {
@@ -143,8 +148,8 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
         try {
             setLoading(true);
             const params = {};
-            if (fromDate) params.from_date = formatDateForAPI(fromDate);
-            if (toDate) params.to_date = formatDateForAPI(toDate);
+            if (fromDate) params.from_date = formatDateForAPI(fromDate, false);
+            if (toDate) params.to_date = formatDateForAPI(toDate, true);
             const response = await customerAPI.getAll(shopId, params);
             const responseData = response.data || {};
             const fetchedCustomers = responseData.customers || responseData || [];
