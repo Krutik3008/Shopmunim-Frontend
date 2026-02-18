@@ -1120,7 +1120,7 @@ const ShopOwnerDashboardScreen = () => {
             >
                 <KeyboardAvoidingView
                     style={styles.modalOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
@@ -1192,7 +1192,7 @@ const ShopOwnerDashboardScreen = () => {
             >
                 <KeyboardAvoidingView
                     style={styles.modalOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 >
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
