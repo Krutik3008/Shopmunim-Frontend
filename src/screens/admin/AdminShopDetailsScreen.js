@@ -251,7 +251,6 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                 ₹{Math.abs(balance).toFixed(0)}
                             </Text>
                         </View>
-                        <Text style={styles.balanceSubLabel}>Total Balance</Text>
                     </View>
                 </View>
 
@@ -342,16 +341,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                             <Ionicons name="arrow-back" size={24} color="#fff" />
                         </TouchableOpacity>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.headerTitle} numberOfLines={1}>{shopName || 'Shop Details'}</Text>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                                <Text style={styles.headerSubtitle}>Code: </Text>
-                                <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{shopCode || 'N/A'}</Text>
-                                </View>
-                                <View style={{ backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginLeft: 8 }}>
-                                    <Text style={{ color: '#E0E7FF', fontSize: 11, fontWeight: '600' }}>{shopCategory}</Text>
-                                </View>
-                            </View>
+                            <Text style={styles.headerTitle} numberOfLines={1}>{shopName || 'Shop Details'}'s Shop Customers</Text>
                         </View>
                     </View>
 
@@ -681,12 +671,16 @@ const styles = StyleSheet.create({
         paddingTop: 10,
     },
     backButton: {
+        marginTop: 15,
         marginRight: 16,
+        marginBottom: 10,
     },
     headerTitle: {
-        fontSize: 24,
+        marginTop: 15,
+        fontSize: 23,
         fontWeight: 'bold',
         color: '#fff',
+        marginBottom: 10,
     },
     headerSubtitle: {
         fontSize: 14,
@@ -823,15 +817,6 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         marginTop: 2,
-    },
-    balanceContainer: {
-        alignItems: 'flex-end',
-    },
-    balanceSubLabel: {
-        fontSize: 10,
-        color: '#6B7280',
-        marginTop: 2,
-        fontWeight: '500',
     },
     customerName: {
         fontSize: 16,
