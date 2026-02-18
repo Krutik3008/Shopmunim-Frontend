@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -26,12 +26,7 @@ const ShopHeader = ({ title }) => {
     return (
         <View style={styles.header}>
             <View style={styles.headerTop}>
-                {/* Header Image/Logo Section */}
                 <View style={styles.brandingContainer}>
-                    {/* Placeholder for Image Logo - uncomment and set source when available */}
-                    {/* <Image source={require('../../../assets/logo.png')} style={styles.logoImage} resizeMode="contain" /> */}
-
-                    {/* Default Text Logo */}
                     <Text style={styles.logo}>{title || 'ShopMunim'}</Text>
                 </View>
 
@@ -65,27 +60,30 @@ const ShopHeader = ({ title }) => {
                     >
                         <Ionicons name="person" size={18} color="#3B82F6" />
                         <Text style={styles.roleOptionText}>Customer</Text>
+                        {user?.active_role === 'customer' && (
+                            <Ionicons name="checkmark" size={18} color="#3B82F6" />
+                        )}
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
                         onPress={() => handleRoleSwitch('shop_owner')}
                     >
                         <Ionicons name="storefront" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText} numberOfLines={1}>Shop Owner</Text>
+                        <Text style={styles.roleOptionText}>Shop Owner</Text>
                         {user?.active_role === 'shop_owner' && (
                             <Ionicons name="checkmark" size={18} color="#8B5CF6" />
                         )}
                     </TouchableOpacity>
-                    {/* Admin role capability check */}
-                    {user?.roles?.includes('admin') || user?.admin_roles?.length > 0 ? (
-                        <TouchableOpacity
-                            style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
-                            onPress={() => handleRoleSwitch('admin')}
-                        >
-                            <Ionicons name="shield" size={18} color="#F59E0B" />
-                            <Text style={styles.roleOptionText}>Admin</Text>
-                        </TouchableOpacity>
-                    ) : null}
+                    <TouchableOpacity
+                        style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
+                        onPress={() => handleRoleSwitch('admin')}
+                    >
+                        <Ionicons name="shield" size={18} color="#F59E0B" />
+                        <Text style={styles.roleOptionText}>Admin</Text>
+                        {user?.active_role === 'admin' && (
+                            <Ionicons name="checkmark" size={18} color="#F59E0B" />
+                        )}
+                    </TouchableOpacity>
                 </View>
             )}
         </View>
@@ -114,11 +112,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         color: '#3B82F6',
-    },
-    logoImage: {
-        width: 30, // Adjust as needed
-        height: 30, // Adjust as needed
-        marginRight: 8,
     },
     headerRight: {
         flexDirection: 'row',
@@ -170,13 +163,13 @@ const styles = StyleSheet.create({
     roleDropdown: {
         position: 'absolute',
         top: 45,
-        right: 0,
+        right: 60,
         backgroundColor: '#fff',
         borderRadius: 8,
-        elevation: 5,
+        elevation: 10,
         padding: 8,
         zIndex: 1000,
-        minWidth: 180,
+        minWidth: 175,
         elevation: 10, // Increased elevation for Android
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -196,7 +189,7 @@ const styles = StyleSheet.create({
     },
     roleOptionText: {
         flex: 1,
-        fontSize: 14,
+        fontSize: 14, // Matches CustomerHeader
         color: '#333',
     },
 });
