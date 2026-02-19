@@ -13,7 +13,8 @@ import {
     TouchableWithoutFeedback,
     Keyboard,
     Dimensions,
-    Platform
+    Platform,
+    RefreshControl
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,10 +26,28 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../context/AuthContext';
+import CustomerHeader from '../../components/customer/CustomerHeader';
+import CustomerBottomNav from '../../components/customer/CustomerBottomNav';
 
-const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propShopId, onBack, initialTransactions, initialShopDetails }) => {
+const ShopLedgerDetailScreen = ({
+    route,
+    customer: propCustomer,
+    shopId: propShopId,
+    onBack,
+    initialTransactions,
+    initialShopDetails,
+    activeTab: propActiveTab,
+    onTabChange
+}) => {
 
     const navigation = useNavigation();
+    const { user, logout, switchRole } = useAuth();
+    const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+    const [localActiveTab, setLocalActiveTab] = useState('ledger');
+
+    const activeTab = propActiveTab || localActiveTab;
+    const setActiveTab = onTabChange || setLocalActiveTab;
 
     // Determine source of data (props or route)
     const customer = propCustomer || route?.params?.customer;
@@ -39,6 +58,29 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
             onBack();
         } else {
             navigation.goBack();
+        }
+    };
+
+    const handleRoleSwitch = async (role) => {
+        setShowRoleDropdown(false);
+        if (role !== user?.active_role) {
+            const success = await switchRole(role);
+            if (success) {
+                if (role === 'shop_owner') {
+                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard' }] });
+                } else if (role === 'admin') {
+                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
+                }
+            }
+        }
+    };
+
+    const handleTabChange = (tab) => {
+        if (onTabChange) {
+            onTabChange(tab);
+        } else {
+            setLocalActiveTab(tab);
+            navigation.navigate('CustomerDashboard', { initialTab: tab });
         }
     };
 
@@ -62,6 +104,7 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
     }
 
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [transactions, setTransactions] = useState([]);
     const [filteredTransactions, setFilteredTransactions] = useState([]);
     const [shopDetails, setShopDetails] = useState(null);
@@ -94,9 +137,10 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
     }, [transactions, fromDate, toDate, transactionType]);
 
     const loadData = async () => {
-        setLoading(true);
+        // Only show full loading if not refreshing
+        if (!refreshing) setLoading(true);
         try {
-            if (initialTransactions) {
+            if (initialTransactions && !refreshing) {
                 const sortedTx = [...initialTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
                 setTransactions(sortedTx);
             } else {
@@ -105,7 +149,7 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                 setTransactions(sortedTx);
             }
 
-            if (initialShopDetails) {
+            if (initialShopDetails && !refreshing) {
                 setShopDetails(initialShopDetails);
             } else {
                 const shopRes = await shopAPI.getDashboard(shopId);
@@ -115,7 +159,13 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
             console.error("Error loading details:", error);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        loadData();
     };
 
     const applyFilters = () => {
@@ -385,14 +435,24 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
 
     return (
         <View style={styles.container}>
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+                <CustomerHeader
+                    user={user}
+                    logout={logout}
+                    showRoleDropdown={showRoleDropdown}
+                    setShowRoleDropdown={setShowRoleDropdown}
+                    handleRoleSwitch={handleRoleSwitch}
+                />
                 <ScrollView
-                    contentContainerStyle={styles.scrollContent}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
                     keyboardShouldPersistTaps="handled"
                     onScrollBeginDrag={() => {
                         setShowTypeDropdown(false);
                         Keyboard.dismiss();
                     }}
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    }
                 >
                     <View style={styles.headerContent}>
                         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
@@ -600,7 +660,7 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                             {/* Detailed Transaction History */}
                             <View style={styles.flatHistorySection}>
                                 <View style={styles.historyTextHeader}>
-                                    <Text style={styles.historyTitle}>Detailed History</Text>
+                                    <Text style={styles.historyTitle}>Detailed Transaction History</Text>
                                     <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
                                 </View>
 
@@ -613,20 +673,29 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                                     filteredTransactions.map((transaction) => {
                                         const isPaymentItem = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
                                         const items = transaction.products || transaction.items || [];
+                                        const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                                        const subtotal = items.reduce((sum, item) => sum + (item.subtotal || (item.price || 0) * (item.quantity || 1)), 0);
 
                                         return (
                                             <View key={transaction.id} style={styles.flatTransactionRow}>
                                                 <View style={styles.txHeader}>
-                                                    <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#000' : '#EF4444' }]}>
-                                                        <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment Made' : 'Purchase (Credit)'}</Text>
+                                                    <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#111827' : '#EF4444' }]}>
+                                                        <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment' : 'Purchase'}</Text>
                                                     </View>
                                                     <View style={styles.txAmountSection}>
-                                                        <Text style={[styles.txAmount, { color: isPaymentItem ? '#10B981' : '#EF4444' }]}>
+                                                        <Text style={[styles.txAmount, { color: isPaymentItem ? '#059669' : '#DC2626' }]}>
                                                             {`${isPaymentItem ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
                                                         </Text>
                                                         <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
                                                     </View>
                                                 </View>
+
+                                                {isPaymentItem && (
+                                                    <View style={styles.paymentStatusRow}>
+                                                        <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                                                        <Text style={styles.paymentStatusText}>Payment received - Balance updated</Text>
+                                                    </View>
+                                                )}
 
                                                 <View style={styles.txDateRow}>
                                                     <Ionicons name="calendar-outline" size={14} color="#6B7280" />
@@ -636,8 +705,8 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                                                 {items.length > 0 && (
                                                     <View style={styles.itemsSection}>
                                                         <View style={styles.itemsHeader}>
-                                                            <Ionicons name="cube-outline" size={14} color="#374151" />
-                                                            <Text style={styles.itemsTitle}> Items:</Text>
+                                                            <Ionicons name="cube-outline" size={14} color="#1E40AF" />
+                                                            <Text style={styles.itemsTitle}> Items Purchased:</Text>
                                                         </View>
                                                         {items.map((item, idx) => (
                                                             <View key={idx} style={styles.itemRow}>
@@ -646,11 +715,17 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                                                                     <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
                                                                 </View>
                                                                 <View style={styles.itemQtySection}>
-                                                                    <Text style={styles.itemQty}>Qty: {item.quantity || 1}</Text>
-                                                                    <Text style={styles.itemSubtotal}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                    <View style={styles.qtyBadge}>
+                                                                        <Text style={styles.qtyBadgeText}>Qty: {item.quantity || 1}</Text>
+                                                                    </View>
+                                                                    <Text style={styles.itemSubtotalValue}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
                                                                 </View>
                                                             </View>
                                                         ))}
+                                                        <View style={styles.itemsSummary}>
+                                                            <Text style={styles.summaryText}>Total Items: {totalQuantity}</Text>
+                                                            <Text style={styles.summaryText}>Subtotal: {formatCurrency(subtotal)}</Text>
+                                                        </View>
                                                     </View>
                                                 )}
                                             </View>
@@ -663,6 +738,8 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
                         </>
                     )}
                 </ScrollView>
+
+                <CustomerBottomNav activeTab={activeTab} setActiveTab={handleTabChange} />
 
                 {showFromPicker && (
                     <DateTimePicker
@@ -690,7 +767,7 @@ const ShopLedgerDetailScreen = ({ route, customer: propCustomer, shopId: propSho
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F9FAFB' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     headerContent: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -699,8 +776,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
-    backButton: { marginRight: 15 },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
+    backButton: { marginRight: 10, marginLeft: -10, marginTop: -10 },
+    headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginTop: -10 },
 
     scrollContent: { padding: 16, paddingBottom: 40 },
 
@@ -891,15 +968,17 @@ const styles = StyleSheet.create({
         color: '#111827',
     },
     historyTitle: {
-        fontSize: 16,
+        fontSize: 20,
         fontWeight: '700',
         color: '#111827',
         marginBottom: 4,
+        marginLeft: -20,
     },
     historyCount: {
         fontSize: 12,
         color: '#6B7280',
         marginBottom: 12,
+        marginLeft: -20,
     },
     customerNameMain: { fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 4 },
     customerPhone: { fontSize: 14, color: '#6B7280', marginBottom: 20 },
@@ -935,10 +1014,17 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     flatTransactionRow: {
-        paddingVertical: 16,
-        paddingHorizontal: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 16,
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        borderWidth: 1,
+        borderColor: '#F3F4F6',
     },
     txHeader: {
         flexDirection: 'row',
@@ -946,52 +1032,55 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
     },
     txBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
     },
     txBadgeText: {
         color: '#fff',
-        fontSize: 11,
-        fontWeight: '600',
+        fontSize: 12,
+        fontWeight: '700',
     },
     txAmountSection: {
         alignItems: 'flex-end',
     },
     txAmount: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: '700',
     },
     txAmountLabel: {
-        fontSize: 11,
+        fontSize: 12,
         color: '#6B7280',
+        marginTop: 2,
     },
     txDateRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 8,
+        marginTop: 12,
+        marginBottom: 8,
     },
     txDate: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#6B7280',
-        marginLeft: 4,
+        marginLeft: 6,
     },
     itemsSection: {
-        backgroundColor: '#EFF6FF',
+        backgroundColor: '#F0F7FF',
         padding: 12,
-        borderRadius: 8,
-        marginTop: 10,
+        borderRadius: 12,
+        marginTop: 12,
         borderWidth: 1,
-        borderColor: '#BFDBFE',
+        borderColor: '#E1EEFF',
     },
     itemsHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: 12,
+        paddingHorizontal: 4,
     },
     itemsTitle: {
-        fontSize: 13,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '700',
         color: '#1E40AF',
     },
     itemRow: {
@@ -999,39 +1088,68 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: '#fff',
-        padding: 10,
-        borderRadius: 6,
-        marginBottom: 6,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
+        padding: 12,
+        borderRadius: 10,
+        marginBottom: 8,
     },
-    itemInfo: {},
+    itemInfo: { flex: 1 },
     itemName: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '700',
         color: '#111827',
     },
     itemPrice: {
-        fontSize: 11,
+        fontSize: 12,
         color: '#6B7280',
         marginTop: 2,
     },
     itemQtySection: {
         alignItems: 'flex-end',
     },
-    itemQty: {
-        fontSize: 11,
-        color: '#374151',
+    qtyBadge: {
         backgroundColor: '#F3F4F6',
         paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 4,
+        paddingVertical: 4,
+        borderRadius: 6,
+        marginBottom: 4,
     },
-    itemSubtotal: {
-        fontSize: 14,
-        fontWeight: '600',
+    qtyBadgeText: {
+        fontSize: 12,
+        color: '#374151',
+        fontWeight: '500',
+    },
+    itemSubtotalValue: {
+        fontSize: 15,
+        fontWeight: '700',
         color: '#2563EB',
-        marginTop: 4,
+    },
+    itemsSummary: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 8,
+        paddingHorizontal: 8,
+        paddingTop: 8,
+        borderTopWidth: 1,
+        borderTopColor: '#E1EEFF',
+    },
+    summaryText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#1E40AF',
+    },
+    paymentStatusRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#DCFCE7',
+        padding: 12,
+        borderRadius: 10,
+        marginTop: 12,
+        gap: 8,
+    },
+    paymentStatusText: {
+        fontSize: 14,
+        color: '#059669',
+        fontWeight: '500',
     },
     dropdownOptions: {
         position: 'absolute',

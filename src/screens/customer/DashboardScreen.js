@@ -841,6 +841,11 @@ const CustomerDashboardScreen = () => {
                         initialShopDetails={selectedShopLedger.shop}
                         initialTransactions={selectedShopLedger.transactions}
                         onBack={() => setSelectedShopLedger(null)}
+                        activeTab={activeTab}
+                        onTabChange={(tab) => {
+                            setActiveTab(tab);
+                            setSelectedShopLedger(null);
+                        }}
                     />
                 </View>
             )}
