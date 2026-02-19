@@ -12,7 +12,9 @@ import {
     Switch,
     KeyboardAvoidingView,
     Platform,
-    ActivityIndicator
+    ActivityIndicator,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -398,414 +400,428 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Edit Customer Modal */}
-            <Modal
-                visible={showEditCustomerModal}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowEditCustomerModal(false)}
-            >
-                <KeyboardAvoidingView
-                    style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                >
-                    <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
-                            <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Customer</Text>
-                            <TouchableOpacity onPress={() => setShowEditCustomerModal(false)}>
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Name</Text>
-                        <TextInput
-                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
-                            value={editName}
-                            onChangeText={setEditName}
-                        />
-
-                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Phone</Text>
-                        <TextInput
-                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
-                            value={editPhone}
-                            onChangeText={(text) => setEditPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
-                            keyboardType="numeric"
-                        />
-
-                        <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Nickname</Text>
-                        <TextInput
-                            style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 16 }}
-                            value={editNickname}
-                            onChangeText={setEditNickname}
-                            placeholder="Optional"
-                        />
-
-                        <TouchableOpacity
-                            style={{ backgroundColor: '#3B82F6', padding: 14, borderRadius: 8, alignItems: 'center' }}
-                            onPress={handleUpdateCustomer}
-                            disabled={updatingCustomer}
-                        >
-                            {updatingCustomer ? (
-                                <ActivityIndicator color="#fff" />
-                            ) : (
-                                <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Update Customer</Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
-                </KeyboardAvoidingView>
-            </Modal>
-
-            {/* Header - Same as Dashboard */}
-            <ShopHeader />
-
-            <View style={styles.content}>
-                <ScrollView
-                    style={styles.scrollView}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-                    showsVerticalScrollIndicator={false}
-                >
-                    {/* Back Button + Title Row */}
-                    <View style={styles.backRow}>
-                        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={24} color="#374151" />
-                        </TouchableOpacity>
-                        <View style={styles.pageTitle}>
-                            <Text style={styles.pageTitleText}>Customer Details</Text>
-                            <Text style={styles.pageSubtitle}>Transaction history and management</Text>
-                        </View>
-                        <View style={{ flex: 1 }} />
-                        <TouchableOpacity onPress={openEditModal} style={{ padding: 8 }}>
-                            <Ionicons name="create-outline" size={24} color="#3B82F6" />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Customer Info Card */}
-                    <View style={styles.customerCard}>
-                        <View style={styles.customerLeft}>
-                            <Text style={styles.customerName}>
-                                {customer?.name || 'Unknown'}
-                                {customer?.nickname ? ` (${customer.nickname})` : ''}
-                            </Text>
-                            <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
-                        </View>
-                        <View style={styles.customerRight}>
-                            <Text style={[styles.balanceAmount, { color: getBalanceColor() }]}>
-                                {formatCurrency(Math.abs(customer?.balance || 0))}
-                            </Text>
-                            <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
-                                <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
-                                    {getBalanceLabel()}
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Add Transaction Button */}
-                    <TouchableOpacity
-                        onPress={() => setShowAddTransactionModal(true)}
-                        onPressIn={() => { }} // For touch feedback
+            <TouchableWithoutFeedback onPress={() => {
+                setShowTypeDropdown(false);
+                Keyboard.dismiss();
+            }}>
+                <View style={{ flex: 1 }}>
+                    {/* Edit Customer Modal */}
+                    <Modal
+                        visible={showEditCustomerModal}
+                        transparent={true}
+                        animationType="fade"
+                        onRequestClose={() => setShowEditCustomerModal(false)}
                     >
-                        <LinearGradient
-                            colors={['#3B82F6', '#2563EB']}
-                            style={styles.addTransactionBtn}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
+                        <KeyboardAvoidingView
+                            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}
+                            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                         >
-                            <Ionicons name="add" size={20} color="#fff" />
-                            <Text style={styles.addTransactionText}>Add Transaction</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
-
-                    {/* Send UPI Link Button */}
-                    <TouchableOpacity style={styles.sendUpiBtn} onPress={handleSendUPILink}>
-                        <Ionicons name="phone-portrait-outline" size={18} color="#111827" />
-                        <Text style={styles.sendUpiBtnText}>Send UPI Link</Text>
-                    </TouchableOpacity>
-
-                    {/* Payment Request Button */}
-                    <TouchableOpacity
-                        onPress={handlePaymentRequest}
-                    >
-                        <LinearGradient
-                            colors={['#F97316', '#EF4444']}
-                            style={styles.paymentRequestBtn}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                        >
-                            <Ionicons name="time-outline" size={18} color="#fff" />
-                            <Text style={styles.paymentRequestText}>Payment Request</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
-
-                    {/* Loading State */}
-                    {loading && (
-                        <View style={styles.loadingContainer}>
-                            <ActivityIndicator size="large" color="#2563EB" />
-                            <Text style={styles.loadingText}>Loading transactions...</Text>
-                        </View>
-                    )}
-
-                    {!loading && (
-                        <>
-                            {/* Purchase Analytics Section */}
-                            <View style={styles.sectionCard}>
-                                <View style={styles.sectionHeader}>
-                                    <Ionicons name="bar-chart-outline" size={18} color="#374151" />
-                                    <Text style={styles.sectionTitle}>Purchase Analytics</Text>
-                                </View>
-
-                                <View style={styles.statsGrid}>
-                                    <View style={[styles.statBox, { backgroundColor: '#EFF6FF' }]}>
-                                        <Text style={[styles.statValue, { color: '#2563EB' }]}>{stats.totalTransactions}</Text>
-                                        <Text style={styles.statLabel}>Total Transactions</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#FEE2E2' }]}>
-                                        <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalCredits}</Text>
-                                        <Text style={styles.statLabel}>Credits Given</Text>
-                                        <Text style={[styles.statSubValue, { color: '#EF4444' }]}>{formatCurrency(stats.totalCreditsAmount)}</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#D1FAE5' }]}>
-                                        <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.totalPayments}</Text>
-                                        <Text style={styles.statLabel}>Payments Received</Text>
-                                        <Text style={[styles.statSubValue, { color: '#10B981' }]}>{formatCurrency(stats.totalPaymentsAmount)}</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#F3E8FF' }]}>
-                                        <Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.totalItems}</Text>
-                                        <Text style={styles.statLabel}>Items Purchased</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.netBalanceRow}>
-                                    <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
-                                    <View style={styles.netBalanceRight}>
-                                        <Text style={[styles.netBalanceValue, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                            {formatCurrency(Math.abs(stats.netBalance))}
-                                        </Text>
-                                        <Text style={[styles.netBalanceStatus, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                            {stats.netBalance >= 0 ? 'Received' : 'Given'}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-
-                            {/* Filters & Export Section */}
-                            <View style={[styles.sectionCard, { zIndex: 10 }]}>
-                                <View style={styles.filterHeader}>
-                                    <View style={styles.filterTitleRow}>
-                                        <Ionicons name="filter-outline" size={18} color="#374151" />
-                                        <Text style={styles.sectionTitle}>Filters & Export</Text>
-                                    </View>
-                                    <View style={styles.exportButtons}>
-                                        <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
-                                            <Ionicons name="document-text-outline" size={14} color="#EF4444" />
-                                            <Text style={styles.pdfBtnText}>PDF</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
-                                            <Ionicons name="grid-outline" size={14} color="#10B981" />
-                                            <Text style={styles.excelBtnText}>Excel</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
-                                <View style={styles.dateFiltersRow}>
-                                    <View style={styles.dateFilterItem}>
-                                        <Text style={styles.filterLabel}>From Date</Text>
-                                        <TouchableOpacity
-                                            style={styles.dateInputContainer}
-                                            onPress={() => setShowFromDatePicker(true)}
-                                        >
-                                            <Text style={[styles.dateInput, !dateFrom && { color: '#9CA3AF' }]}>
-                                                {dateFrom ? formatDateDisplay(dateFrom) : 'dd-mm-yyyy'}
-                                            </Text>
-                                            <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={styles.dateFilterItem}>
-                                        <Text style={styles.filterLabel}>To Date</Text>
-                                        <TouchableOpacity
-                                            style={styles.dateInputContainer}
-                                            onPress={() => setShowToDatePicker(true)}
-                                        >
-                                            <Text style={[styles.dateInput, !dateTo && { color: '#9CA3AF' }]}>
-                                                {dateTo ? formatDateDisplay(dateTo) : 'dd-mm-yyyy'}
-                                            </Text>
-                                            <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
-                                <View style={[styles.typeFilterContainer, { zIndex: 20 }]}>
-                                    <Text style={styles.filterLabel}>Transaction Type</Text>
-                                    <TouchableOpacity
-                                        style={styles.typeDropdown}
-                                        onPress={() => setShowTypeDropdown(!showTypeDropdown)}
-                                    >
-                                        <Text style={styles.typeDropdownText}>
-                                            {transactionType === 'all' ? 'All Transactions' : transactionType === 'credit' ? 'Credits Only' : 'Payments Only'}
-                                        </Text>
-                                        <Ionicons name={showTypeDropdown ? "chevron-up" : "chevron-down"} size={16} color="#9CA3AF" />
+                            <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                                    <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Customer</Text>
+                                    <TouchableOpacity onPress={() => setShowEditCustomerModal(false)}>
+                                        <Ionicons name="close" size={24} color="#666" />
                                     </TouchableOpacity>
+                                </View>
 
-                                    {showTypeDropdown && (
-                                        <View style={styles.customerDetailDropdownOptions}>
-                                            <TouchableOpacity
-                                                style={[styles.customerDetailDropdownOption, transactionType === 'all' && styles.customerDetailDropdownOptionActive]}
-                                                onPress={() => { setTransactionType('all'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'all' && styles.customerDetailDropdownOptionTextActive]}>All Transactions</Text>
-                                                {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.customerDetailDropdownOption, transactionType === 'credit' && styles.customerDetailDropdownOptionActive]}
-                                                onPress={() => { setTransactionType('credit'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'credit' && styles.customerDetailDropdownOptionTextActive]}>Credits Only</Text>
-                                                {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.customerDetailDropdownOption, transactionType === 'payment' && styles.customerDetailDropdownOptionActive]}
-                                                onPress={() => { setTransactionType('payment'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'payment' && styles.customerDetailDropdownOptionTextActive]}>Payments Only</Text>
-                                                {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
-                                            </TouchableOpacity>
-                                        </View>
+                                <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Name</Text>
+                                <TextInput
+                                    style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
+                                    value={editName}
+                                    onChangeText={setEditName}
+                                />
+
+                                <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Phone</Text>
+                                <TextInput
+                                    style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
+                                    value={editPhone}
+                                    onChangeText={(text) => setEditPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
+                                    keyboardType="numeric"
+                                />
+
+                                <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Nickname</Text>
+                                <TextInput
+                                    style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 16 }}
+                                    value={editNickname}
+                                    onChangeText={setEditNickname}
+                                    placeholder="Optional"
+                                />
+
+                                <TouchableOpacity
+                                    style={{ backgroundColor: '#3B82F6', padding: 14, borderRadius: 8, alignItems: 'center' }}
+                                    onPress={handleUpdateCustomer}
+                                    disabled={updatingCustomer}
+                                >
+                                    {updatingCustomer ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Update Customer</Text>
                                     )}
+                                </TouchableOpacity>
+                            </View>
+                        </KeyboardAvoidingView>
+                    </Modal>
+
+                    {/* Header - Same as Dashboard */}
+                    <ShopHeader />
+
+                    <View style={styles.content}>
+                        <ScrollView
+                            style={styles.scrollView}
+                            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {/* Back Button + Title Row */}
+                            <View style={styles.backRow}>
+                                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                                    <Ionicons name="arrow-back" size={24} color="#374151" />
+                                </TouchableOpacity>
+                                <View style={styles.pageTitle}>
+                                    <Text style={styles.pageTitleText}>Customer Details</Text>
+                                    <Text style={styles.pageSubtitle}>Transaction history and management</Text>
+                                </View>
+                                <View style={{ flex: 1 }} />
+                                <TouchableOpacity onPress={openEditModal} style={{ padding: 8 }}>
+                                    <Ionicons name="create-outline" size={24} color="#3B82F6" />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Customer Info Card */}
+                            <View style={styles.customerCard}>
+                                <View style={styles.customerLeft}>
+                                    <Text style={styles.customerName}>
+                                        {customer?.name || 'Unknown'}
+                                        {customer?.nickname ? ` (${customer.nickname})` : ''}
+                                    </Text>
+                                    <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
+                                </View>
+                                <View style={styles.customerRight}>
+                                    <Text style={[styles.balanceAmount, { color: getBalanceColor() }]}>
+                                        {formatCurrency(Math.abs(customer?.balance || 0))}
+                                    </Text>
+                                    <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
+                                        <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
+                                            {getBalanceLabel()}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
 
-                            {/* Detailed Transaction History */}
-                            <View style={styles.historySection}>
-                                <Text style={styles.historyTitle}>Detailed Transaction History</Text>
-                                <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
+                            {/* Add Transaction Button */}
+                            <TouchableOpacity
+                                onPress={() => setShowAddTransactionModal(true)}
+                                onPressIn={() => { }} // For touch feedback
+                            >
+                                <LinearGradient
+                                    colors={['#3B82F6', '#2563EB']}
+                                    style={styles.addTransactionBtn}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                >
+                                    <Ionicons name="add" size={20} color="#fff" />
+                                    <Text style={styles.addTransactionText}>Add Transaction</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
 
-                                {filteredTransactions.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
-                                        <Text style={styles.emptyText}>No transactions found</Text>
+                            {/* Send UPI Link Button */}
+                            <TouchableOpacity style={styles.sendUpiBtn} onPress={handleSendUPILink}>
+                                <Ionicons name="phone-portrait-outline" size={18} color="#111827" />
+                                <Text style={styles.sendUpiBtnText}>Send UPI Link</Text>
+                            </TouchableOpacity>
+
+                            {/* Payment Request Button */}
+                            <TouchableOpacity
+                                onPress={handlePaymentRequest}
+                            >
+                                <LinearGradient
+                                    colors={['#F97316', '#EF4444']}
+                                    style={styles.paymentRequestBtn}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                >
+                                    <Ionicons name="time-outline" size={18} color="#fff" />
+                                    <Text style={styles.paymentRequestText}>Payment Request</Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+
+                            {/* Loading State */}
+                            {loading && (
+                                <View style={styles.loadingContainer}>
+                                    <ActivityIndicator size="large" color="#2563EB" />
+                                    <Text style={styles.loadingText}>Loading transactions...</Text>
+                                </View>
+                            )}
+
+                            {!loading && (
+                                <>
+                                    {/* Purchase Analytics Section */}
+                                    <View style={styles.sectionCard}>
+                                        <View style={styles.sectionHeader}>
+                                            <Ionicons name="bar-chart-outline" size={18} color="#374151" />
+                                            <Text style={styles.sectionTitle}>Purchase Analytics</Text>
+                                        </View>
+
+                                        <View style={styles.statsGrid}>
+                                            <View style={[styles.statBox, { backgroundColor: '#EFF6FF' }]}>
+                                                <Text style={[styles.statValue, { color: '#2563EB' }]}>{stats.totalTransactions}</Text>
+                                                <Text style={styles.statLabel}>Total Transactions</Text>
+                                            </View>
+                                            <View style={[styles.statBox, { backgroundColor: '#FEE2E2' }]}>
+                                                <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalCredits}</Text>
+                                                <Text style={styles.statLabel}>Credits Given</Text>
+                                                <Text style={[styles.statSubValue, { color: '#EF4444' }]}>{formatCurrency(stats.totalCreditsAmount)}</Text>
+                                            </View>
+                                            <View style={[styles.statBox, { backgroundColor: '#D1FAE5' }]}>
+                                                <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.totalPayments}</Text>
+                                                <Text style={styles.statLabel}>Payments Received</Text>
+                                                <Text style={[styles.statSubValue, { color: '#10B981' }]}>{formatCurrency(stats.totalPaymentsAmount)}</Text>
+                                            </View>
+                                            <View style={[styles.statBox, { backgroundColor: '#F3E8FF' }]}>
+                                                <Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.totalItems}</Text>
+                                                <Text style={styles.statLabel}>Items Purchased</Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.netBalanceRow}>
+                                            <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
+                                            <View style={styles.netBalanceRight}>
+                                                <Text style={[styles.netBalanceValue, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
+                                                    {formatCurrency(Math.abs(stats.netBalance))}
+                                                </Text>
+                                                <Text style={[styles.netBalanceStatus, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
+                                                    {stats.netBalance >= 0 ? 'Received' : 'Given'}
+                                                </Text>
+                                            </View>
+                                        </View>
                                     </View>
-                                ) : (
-                                    filteredTransactions.map((transaction) => {
-                                        const isPayment = transaction.type === 'debit' || transaction.type === 'payment';
-                                        const items = transaction.products || transaction.items || [];
 
-                                        return (
-                                            <View key={transaction.id} style={styles.transactionCard}>
-                                                <View style={styles.txHeader}>
-                                                    <View style={[styles.txBadge, { backgroundColor: isPayment ? '#000' : '#EF4444' }]}>
-                                                        <Text style={styles.txBadgeText}>{isPayment ? 'Payment' : 'Purchase'}</Text>
-                                                    </View>
-                                                    <View style={styles.txAmountSection}>
-                                                        <Text style={[styles.txAmount, { color: isPayment ? '#10B981' : '#EF4444' }]}>
-                                                            {`${isPayment ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
-                                                        </Text>
-                                                        <Text style={styles.txAmountLabel}>Amount {isPayment ? 'paid' : 'owed'}</Text>
-                                                    </View>
+                                    {/* Filters & Export Section */}
+                                    <View style={[styles.sectionCard, { zIndex: 10 }]}>
+                                        <View style={styles.filterHeader}>
+                                            <View style={styles.filterTitleRow}>
+                                                <Ionicons name="filter-outline" size={18} color="#374151" />
+                                                <Text style={styles.sectionTitle}>Filters & Export</Text>
+                                            </View>
+                                            <View style={styles.exportButtons}>
+                                                <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
+                                                    <Ionicons name="document-text-outline" size={14} color="#EF4444" />
+                                                    <Text style={styles.pdfBtnText}>PDF</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
+                                                    <Ionicons name="grid-outline" size={14} color="#10B981" />
+                                                    <Text style={styles.excelBtnText}>Excel</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.dateFiltersRow}>
+                                            <View style={styles.dateFilterItem}>
+                                                <Text style={styles.filterLabel}>From Date</Text>
+                                                <TouchableOpacity
+                                                    style={styles.dateInputContainer}
+                                                    onPress={() => setShowFromDatePicker(true)}
+                                                >
+                                                    <Text style={[styles.dateInput, !dateFrom && { color: '#9CA3AF' }]}>
+                                                        {dateFrom ? formatDateDisplay(dateFrom) : 'dd-mm-yyyy'}
+                                                    </Text>
+                                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                                </TouchableOpacity>
+                                            </View>
+                                            <View style={styles.dateFilterItem}>
+                                                <Text style={styles.filterLabel}>To Date</Text>
+                                                <TouchableOpacity
+                                                    style={styles.dateInputContainer}
+                                                    onPress={() => setShowToDatePicker(true)}
+                                                >
+                                                    <Text style={[styles.dateInput, !dateTo && { color: '#9CA3AF' }]}>
+                                                        {dateTo ? formatDateDisplay(dateTo) : 'dd-mm-yyyy'}
+                                                    </Text>
+                                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+
+                                        <View style={[styles.typeFilterContainer, { zIndex: 20 }]}>
+                                            <Text style={styles.filterLabel}>Transaction Type</Text>
+                                            <TouchableOpacity
+                                                style={styles.typeDropdown}
+                                                onPress={() => setShowTypeDropdown(!showTypeDropdown)}
+                                            >
+                                                <Text style={styles.typeDropdownText}>
+                                                    {transactionType === 'all' ? 'All Transactions' : transactionType === 'credit' ? 'Credits Only' : 'Payments Only'}
+                                                </Text>
+                                                <Ionicons name={showTypeDropdown ? "chevron-up" : "chevron-down"} size={16} color="#9CA3AF" />
+                                            </TouchableOpacity>
+
+                                            {showTypeDropdown && (
+                                                <View style={styles.customerDetailDropdownOptions}>
+                                                    <TouchableOpacity
+                                                        style={[styles.customerDetailDropdownOption, transactionType === 'all' && styles.customerDetailDropdownOptionActive]}
+                                                        onPress={() => { setTransactionType('all'); setShowTypeDropdown(false); }}
+                                                    >
+                                                        <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'all' && styles.customerDetailDropdownOptionTextActive]}>All Transactions</Text>
+                                                        {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.customerDetailDropdownOption, transactionType === 'credit' && styles.customerDetailDropdownOptionActive]}
+                                                        onPress={() => { setTransactionType('credit'); setShowTypeDropdown(false); }}
+                                                    >
+                                                        <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'credit' && styles.customerDetailDropdownOptionTextActive]}>Credits Only</Text>
+                                                        {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.customerDetailDropdownOption, transactionType === 'payment' && styles.customerDetailDropdownOptionActive]}
+                                                        onPress={() => { setTransactionType('payment'); setShowTypeDropdown(false); }}
+                                                    >
+                                                        <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'payment' && styles.customerDetailDropdownOptionTextActive]}>Payments Only</Text>
+                                                        {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                    </TouchableOpacity>
                                                 </View>
+                                            )}
+                                        </View>
+                                    </View>
 
-                                                <View style={styles.txDateRow}>
-                                                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                                                    <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
-                                                </View>
+                                    {/* Detailed Transaction History */}
+                                    <View style={styles.historySection}>
+                                        <Text style={styles.historyTitle}>Detailed Transaction History</Text>
+                                        <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
 
-                                                {isPayment && (
-                                                    <View style={styles.txNoteBox}>
-                                                        <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                                                        <Text style={styles.txNoteText}> Payment received - Balance updated</Text>
-                                                    </View>
-                                                )}
+                                        {filteredTransactions.length === 0 ? (
+                                            <View style={styles.emptyState}>
+                                                <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+                                                <Text style={styles.emptyText}>No transactions found</Text>
+                                            </View>
+                                        ) : (
+                                            filteredTransactions.map((transaction) => {
+                                                const isPayment = transaction.type === 'debit' || transaction.type === 'payment';
+                                                const items = transaction.products || transaction.items || [];
 
-                                                {items.length > 0 && (
-                                                    <View style={styles.itemsSection}>
-                                                        <View style={styles.itemsHeader}>
-                                                            <Ionicons name="cube-outline" size={14} color="#374151" />
-                                                            <Text style={styles.itemsTitle}> Items Purchased:</Text>
+                                                return (
+                                                    <View key={transaction.id} style={styles.transactionCard}>
+                                                        <View style={styles.txHeader}>
+                                                            <View style={[styles.txBadge, { backgroundColor: isPayment ? '#000' : '#EF4444' }]}>
+                                                                <Text style={styles.txBadgeText}>{isPayment ? 'Payment' : 'Purchase'}</Text>
+                                                            </View>
+                                                            <View style={styles.txAmountSection}>
+                                                                <Text style={[styles.txAmount, { color: isPayment ? '#10B981' : '#EF4444' }]}>
+                                                                    {`${isPayment ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
+                                                                </Text>
+                                                                <Text style={styles.txAmountLabel}>Amount {isPayment ? 'paid' : 'owed'}</Text>
+                                                            </View>
                                                         </View>
-                                                        {items.map((item, idx) => (
-                                                            <View key={idx} style={styles.itemRow}>
-                                                                <View style={styles.itemInfo}>
-                                                                    <Text style={styles.itemName}>{item.name || 'Item'}</Text>
-                                                                    <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+
+                                                        <View style={styles.txDateRow}>
+                                                            <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                                                            <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
+                                                        </View>
+
+                                                        {isPayment && (
+                                                            <View style={styles.txNoteBox}>
+                                                                <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                                                                <Text style={styles.txNoteText}> Payment received - Balance updated</Text>
+                                                            </View>
+                                                        )}
+
+                                                        {items.length > 0 && (
+                                                            <View style={styles.itemsSection}>
+                                                                <View style={styles.itemsHeader}>
+                                                                    <Ionicons name="cube-outline" size={14} color="#374151" />
+                                                                    <Text style={styles.itemsTitle}> Items Purchased:</Text>
                                                                 </View>
-                                                                <View style={styles.itemQtySection}>
-                                                                    <Text style={styles.itemQty}>Qty: {item.quantity || 1}</Text>
-                                                                    <Text style={styles.itemSubtotal}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                {items.map((item, idx) => (
+                                                                    <View key={idx} style={styles.itemRow}>
+                                                                        <View style={styles.itemInfo}>
+                                                                            <Text style={styles.itemName}>{item.name || 'Item'}</Text>
+                                                                            <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+                                                                        </View>
+                                                                        <View style={styles.itemQtySection}>
+                                                                            <Text style={styles.itemQty}>Qty: {item.quantity || 1}</Text>
+                                                                            <Text style={styles.itemSubtotal}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                        </View>
+                                                                    </View>
+                                                                ))}
+                                                                <View style={styles.itemsTotalRow}>
+                                                                    <Text style={styles.itemsTotalLabel}>Total Items: {items.reduce((sum, i) => sum + (i.quantity || 1), 0)}</Text>
+                                                                    <Text style={styles.itemsTotalValue}>Subtotal: {formatCurrency(items.reduce((sum, i) => sum + (i.subtotal || (i.price || 0) * (i.quantity || 1)), 0))}</Text>
                                                                 </View>
                                                             </View>
-                                                        ))}
-                                                        <View style={styles.itemsTotalRow}>
-                                                            <Text style={styles.itemsTotalLabel}>Total Items: {items.reduce((sum, i) => sum + (i.quantity || 1), 0)}</Text>
-                                                            <Text style={styles.itemsTotalValue}>Subtotal: {formatCurrency(items.reduce((sum, i) => sum + (i.subtotal || (i.price || 0) * (i.quantity || 1)), 0))}</Text>
-                                                        </View>
+                                                        )}
                                                     </View>
-                                                )}
-                                            </View>
-                                        );
-                                    })
-                                )}
-                            </View>
-                        </>
+                                                );
+                                            })
+                                        )}
+                                    </View>
+                                </>
+                            )}
+
+                            <View style={{ height: 70 }} />
+                        </ScrollView>
+                    </View>
+
+                    {/* Bottom Navigation */}
+                    <ShopBottomNav activeTab="customers" />
+
+
+
+                    {/* Add Transaction Modal */}
+                    <AddTransactionModal
+                        visible={showAddTransactionModal}
+                        onClose={() => setShowAddTransactionModal(false)}
+                        shopId={shopId}
+                        onSuccess={handleTransactionSuccess}
+                    />
+
+                    {/* Payment Request Modal */}
+                    <PaymentRequestModal
+                        visible={showPaymentRequestModal}
+                        onClose={() => setShowPaymentRequestModal(false)}
+                        customer={customer}
+                        transactions={transactions}
+                    />
+                    {/* DateTime Pickers */}
+                    {showFromDatePicker && (
+                        <DateTimePicker
+                            value={dateFrom || new Date()}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={(event, selectedDate) => {
+                                setShowFromDatePicker(false);
+                                if (event.type === 'set' && selectedDate) {
+                                    setDateFrom(selectedDate);
+                                } else if (event.type === 'dismissed') {
+                                    setDateFrom(null);
+                                }
+                            }}
+                            positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                            negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                        />
                     )}
-
-                    <View style={{ height: 70 }} />
-                </ScrollView>
-            </View>
-
-            {/* Bottom Navigation */}
-            <ShopBottomNav activeTab="customers" />
-
-
-
-            {/* Add Transaction Modal */}
-            <AddTransactionModal
-                visible={showAddTransactionModal}
-                onClose={() => setShowAddTransactionModal(false)}
-                shopId={shopId}
-                onSuccess={handleTransactionSuccess}
-            />
-
-            {/* Payment Request Modal */}
-            <PaymentRequestModal
-                visible={showPaymentRequestModal}
-                onClose={() => setShowPaymentRequestModal(false)}
-                customer={customer}
-                transactions={transactions}
-            />
-            {/* DateTime Pickers */}
-            {showFromDatePicker && (
-                <DateTimePicker
-                    value={dateFrom || new Date()}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(event, selectedDate) => {
-                        setShowFromDatePicker(false);
-                        if (event.type === 'set' && selectedDate) {
-                            setDateFrom(selectedDate);
-                        } else if (event.type === 'dismissed') {
-                            setDateFrom(null);
-                        }
-                    }}
-                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
-                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
-                />
-            )}
-            {showToDatePicker && (
-                <DateTimePicker
-                    value={dateTo || new Date()}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                    onChange={(event, selectedDate) => {
-                        setShowToDatePicker(false);
-                        if (event.type === 'set' && selectedDate) {
-                            setDateTo(selectedDate);
-                        } else if (event.type === 'dismissed') {
-                            setDateTo(null);
-                        }
-                    }}
-                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
-                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
-                />
-            )}
+                    {showToDatePicker && (
+                        <DateTimePicker
+                            value={dateTo || new Date()}
+                            mode="date"
+                            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                            onChange={(event, selectedDate) => {
+                                setShowToDatePicker(false);
+                                if (event.type === 'set' && selectedDate) {
+                                    setDateTo(selectedDate);
+                                } else if (event.type === 'dismissed') {
+                                    setDateTo(null);
+                                }
+                            }}
+                            positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                            negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                        />
+                    )}
+                    {/* Add Transaction Modal */}
+                    <AddTransactionModal
+                        visible={showAddTransactionModal}
+                        onClose={() => setShowAddTransactionModal(false)}
+                        shopId={shopId}
+                        onSuccess={handleTransactionSuccess}
+                    />
+                </View>
+            </TouchableWithoutFeedback>
         </SafeAreaView>
     );
 };

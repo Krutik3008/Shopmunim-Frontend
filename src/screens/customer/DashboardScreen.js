@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     RefreshControl,
+    Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -16,6 +17,11 @@ import { customerDashboardAPI } from '../../api';
 import { useNavigation } from '@react-navigation/native';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import CustomerBottomNav from '../../components/customer/CustomerBottomNav';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Print from 'expo-print';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as XLSX from 'xlsx';
 
 const CustomerDashboardScreen = () => {
     const navigation = useNavigation();
@@ -26,6 +32,17 @@ const CustomerDashboardScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [expandedItems, setExpandedItems] = useState({});
+
+    // Filters & Export State
+    const [dateFrom, setDateFrom] = useState(null);
+    const [dateTo, setDateTo] = useState(null);
+    const [showFromDatePicker, setShowFromDatePicker] = useState(false);
+    const [showToDatePicker, setShowToDatePicker] = useState(false);
+    const [filteredTransactions, setFilteredTransactions] = useState([]);
+    const [selectedShopId, setSelectedShopId] = useState('all');
+    const [showShopFilterDropdown, setShowShopFilterDropdown] = useState(false);
+    const [transactionType, setTransactionType] = useState('all');
+    const [showTypeFilterDropdown, setShowTypeFilterDropdown] = useState(false);
 
     const toggleExpand = (index) => {
         setExpandedItems(prev => ({
@@ -104,6 +121,172 @@ const CustomerDashboardScreen = () => {
 
     const stats = getSummaryStats();
 
+    const formatShortDate = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "Invalid Date";
+            return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}`;
+        } catch (e) {
+            return dateString || "";
+        }
+    };
+
+    const formatDateDisplay = (date) => {
+        if (!date) return '';
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}-${m}-${y}`;
+    };
+
+    const getAllTransactions = () => {
+        return ledgerData.reduce((acc, shop) => {
+            if (shop.transactions) {
+                const shopTx = shop.transactions.map(tx => ({ ...tx, shopName: shop.shop?.name, shopLocation: shop.shop?.location, shopId: shop.shop?.id }));
+                return [...acc, ...shopTx];
+            }
+            return acc;
+        }, []).sort((a, b) => new Date(b.date) - new Date(a.date));
+    };
+
+    const getFilteredTransactions = () => {
+        let transactions = getAllTransactions();
+        if (dateFrom) {
+            const fromStart = new Date(dateFrom);
+            fromStart.setHours(0, 0, 0, 0);
+            transactions = transactions.filter(t => new Date(t.date) >= fromStart);
+        }
+        if (dateTo) {
+            const toEnd = new Date(dateTo);
+            toEnd.setHours(23, 59, 59, 999);
+            transactions = transactions.filter(t => new Date(t.date) <= toEnd);
+        }
+        if (selectedShopId !== 'all') {
+            transactions = transactions.filter(t => t.shopId === selectedShopId);
+        }
+        if (transactionType !== 'all') {
+            if (transactionType === 'credit') {
+                transactions = transactions.filter(t => t.type === 'credit');
+            } else if (transactionType === 'payment') {
+                transactions = transactions.filter(t => t.type === 'debit' || t.type === 'payment');
+            }
+        }
+        return transactions;
+    };
+
+    const exportToPDF = async () => {
+        try {
+            const transactions = getFilteredTransactions();
+            const now = new Date();
+            const generatedDate = `${now.toLocaleDateString('en-GB')} at ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
+
+            if (transactions.length === 0) {
+                alert('No transactions to export for selected period');
+                return;
+            }
+
+            const txRows = transactions.map(t => {
+                const isPay = t.type === 'debit' || t.type === 'payment' || t.type === 'CREDIT';
+                const items = t.products || t.items || [];
+                const itemNames = items.map(i => i.name || 'Item').join(', ') || '-';
+                const totalQty = items.reduce((s, i) => s + (i.quantity || 1), 0);
+                const typeColor = isPay ? '#10B981' : '#DC2626';
+                const typeLabel = isPay ? 'Payment' : 'Credit';
+                const amountColor = isPay ? '#10B981' : '#DC2626';
+                return `<tr>
+                    <td>${formatShortDate(t.date)}</td>
+                    <td>${t.shopName || '-'}</td>
+                    <td style="color:${typeColor};font-weight:600">${typeLabel}</td>
+                    <td>${itemNames}</td>
+                    <td>${items.length > 0 ? totalQty : '-'}</td>
+                    <td style="color:${amountColor};font-weight:600">₹${parseFloat(t.amount || 0).toFixed(2)}</td>
+                </tr>`;
+            }).join('');
+
+            const html = `
+            <html><head><style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #111827; font-size: 12px; }
+                .header { text-align: center; margin-bottom: 24px; }
+                .header h1 { font-size: 20px; color: #111827; margin-bottom: 6px; }
+                .generated { color: #6B7280; font-size: 11px; margin-top: 4px; }
+                .section { background: #F9FAFB; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+                .info-row { margin-bottom: 4px; font-size: 12px; color: #374151; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                th { background: #F9FAFB; color: #6B7280; padding: 10px 8px; text-align: left; font-size: 11px; font-weight: 600; border-bottom: 2px solid #E5E7EB; }
+                td { padding: 10px 8px; border-bottom: 1px solid #F3F4F6; font-size: 11px; }
+            </style></head><body>
+                <div class="header">
+                    <h1>My Transaction Report</h1>
+                    <div class="generated">${dateFrom || dateTo ? `Period: ${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}` : 'Full History'}</div>
+                    <div class="generated">Generated on: ${generatedDate}</div>
+                </div>
+                <div class="section">
+                    <div style="font-weight: bold; margin-bottom: 6px; color: #D97706;">Customer Information</div>
+                    <div class="info-row"><b>Name:</b> ${user?.name || 'Customer'}</div>
+                    <div class="info-row"><b>Phone:</b> +91 ${user?.phone || 'N/A'}</div>
+                </div>
+                <table>
+                    <tr><th>Date</th><th>Shop</th><th>Type</th><th>Items</th><th>Qty</th><th>Amount</th></tr>
+                    ${txRows}
+                </table>
+            </body></html>`;
+
+            const { uri } = await Print.printToFileAsync({ html });
+            const fileName = `My_Report_${user?.name || 'Customer'}.pdf`;
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.moveAsync({ from: uri, to: fileUri });
+            await Sharing.shareAsync(fileUri);
+        } catch (error) {
+            console.error('PDF export error:', error);
+            alert('Failed to generate PDF');
+        }
+    };
+
+    const exportToExcel = async () => {
+        try {
+            const transactions = getFilteredTransactions();
+            if (transactions.length === 0) {
+                alert('No transactions to export');
+                return;
+            }
+
+            const rows = [];
+            rows.push(['My Transaction Report']);
+            rows.push(['Customer:', user?.name || 'Customer']);
+            rows.push(['From Date:', dateFrom ? formatDateDisplay(dateFrom) : 'All Time']);
+            rows.push(['To Date:', dateTo ? formatDateDisplay(dateTo) : 'Present']);
+            rows.push([]);
+
+            rows.push(['Date', 'Shop', 'Type', 'Items', 'Quantity', 'Amount', 'Note']);
+            transactions.forEach(t => {
+                const isPay = t.type === 'debit' || t.type === 'payment' || t.type === 'CREDIT';
+                const items = t.products || t.items || [];
+                rows.push([
+                    formatShortDate(t.date),
+                    t.shopName || '-',
+                    isPay ? 'Payment' : 'Purchase',
+                    items.map(i => i.name).join(', '),
+                    items.reduce((s, i) => s + (i.quantity || 1), 0),
+                    parseFloat(t.amount || 0),
+                    t.note || t.notes || ''
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+            const wbout = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+
+            const fileName = `My_Report_${user?.name || 'Customer'}.xlsx`;
+            const fileUri = FileSystem.cacheDirectory + fileName;
+            await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
+            await Sharing.shareAsync(fileUri);
+        } catch (error) {
+            console.error('Excel export error:', error);
+            alert('Failed to generate Excel');
+        }
+    };
 
 
     // Summary Stats Cards for Ledger Tab
@@ -293,6 +476,13 @@ const CustomerDashboardScreen = () => {
 
         return (
             <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 100 }}>
+                {(showShopFilterDropdown || showTypeFilterDropdown) && (
+                    <TouchableOpacity
+                        style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 45 }}
+                        onPress={() => { setShowShopFilterDropdown(false); setShowTypeFilterDropdown(false); }}
+                        activeOpacity={1}
+                    />
+                )}
                 <Text style={styles.sectionTitle}>Payment Center</Text>
                 <Text style={styles.sectionSubtitle}>Pending Payments</Text>
 
@@ -323,22 +513,141 @@ const CustomerDashboardScreen = () => {
                     </View>
                 )}
 
-                {/* Quick Actions Section */}
-                <View style={styles.quickActionsOuterCard}>
-                    <Text style={styles.quickActionsTitle}>Quick Actions</Text>
-                    <View style={styles.quickActionsContainer}>
-                        <TouchableOpacity style={styles.quickActionCard}>
-                            <Text style={styles.quickActionEmoji}>🔔</Text>
-                            <Text style={styles.quickActionText}>Payment Reminders</Text>
+                {/* Filter & Export Section */}
+                <View style={[styles.filterExportCard, { marginBottom: 20 }]}>
+                    <View style={styles.filterHeader}>
+                        <View style={styles.filterTitleRow}>
+                            <Ionicons name="filter-outline" size={18} color="#374151" />
+                            <Text style={styles.filterSectionTitle}>Filters & Export</Text>
+                        </View>
+                        <View style={styles.exportButtons}>
+                            <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
+                                <Ionicons name="document-text-outline" size={14} color="#EF4444" />
+                                <Text style={styles.pdfBtnText}>PDF</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
+                                <Ionicons name="grid-outline" size={14} color="#10B981" />
+                                <Text style={styles.excelBtnText}>Excel</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+                    <View style={styles.dateFiltersRow}>
+                        <View style={styles.dateFilterItem}>
+                            <Text style={styles.filterLabel}>From Date</Text>
+                            <TouchableOpacity
+                                style={styles.dateInputContainer}
+                                onPress={() => setShowFromDatePicker(true)}
+                            >
+                                <Text style={[styles.dateInput, !dateFrom && { color: '#9CA3AF' }]}>
+                                    {dateFrom ? formatDateDisplay(dateFrom) : 'dd-mm-yyyy'}
+                                </Text>
+                                <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.dateFilterItem}>
+                            <Text style={styles.filterLabel}>To Date</Text>
+                            <TouchableOpacity
+                                style={styles.dateInputContainer}
+                                onPress={() => setShowToDatePicker(true)}
+                            >
+                                <Text style={[styles.dateInput, !dateTo && { color: '#9CA3AF' }]}>
+                                    {dateTo ? formatDateDisplay(dateTo) : 'dd-mm-yyyy'}
+                                </Text>
+                                <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+
+
+                    {/* Shop Filter */}
+                    <View style={[styles.typeFilterContainer, { marginTop: 12, zIndex: 60 }]}>
+                        <Text style={styles.filterLabel}>Filter by Shop</Text>
+                        <TouchableOpacity
+                            style={styles.typeDropdown}
+                            onPress={() => { setShowShopFilterDropdown(!showShopFilterDropdown); setShowTypeFilterDropdown(false); }}
+                        >
+                            <Text style={styles.typeDropdownText}>
+                                {selectedShopId === 'all'
+                                    ? 'All Shops'
+                                    : ledgerData.find(item => item.shop?.id === selectedShopId)?.shop?.name || 'Selected'}
+                            </Text>
+                            <Ionicons name={showShopFilterDropdown ? "chevron-up" : "chevron-down"} size={16} color="#9CA3AF" />
                         </TouchableOpacity>
-                        <View style={{ width: 12 }} />
-                        <TouchableOpacity style={styles.quickActionCard}>
-                            <Text style={styles.quickActionEmoji}>📊</Text>
-                            <Text style={styles.quickActionText}>Download Report</Text>
+
+                        {showShopFilterDropdown && (
+                            <ScrollView
+                                style={[styles.customerDetailDropdownOptions, { maxHeight: 200 }]}
+                                nestedScrollEnabled={true}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.customerDetailDropdownOption, selectedShopId === 'all' && styles.customerDetailDropdownOptionActive]}
+                                    onPress={() => { setSelectedShopId('all'); setShowShopFilterDropdown(false); }}
+                                >
+                                    <Text style={[styles.customerDetailDropdownOptionText, selectedShopId === 'all' && styles.customerDetailDropdownOptionTextActive]}>All Shops</Text>
+                                    {selectedShopId === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                </TouchableOpacity>
+                                {ledgerData.map((item) => (
+                                    <TouchableOpacity
+                                        key={item.shop?.id}
+                                        style={[styles.customerDetailDropdownOption, selectedShopId === item.shop?.id && styles.customerDetailDropdownOptionActive]}
+                                        onPress={() => { setSelectedShopId(item.shop?.id); setShowShopFilterDropdown(false); }}
+                                    >
+                                        <Text style={[styles.customerDetailDropdownOptionText, selectedShopId === item.shop?.id && styles.customerDetailDropdownOptionTextActive]}>
+                                            {item.shop?.name}
+                                        </Text>
+                                        {selectedShopId === item.shop?.id && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
+                    </View>
+
+                    {/* Transaction Type Filter */}
+                    <View style={[styles.typeFilterContainer, { marginTop: 12, zIndex: showTypeFilterDropdown ? 50 : 40 }]}>
+                        <Text style={styles.filterLabel}>Transaction Type</Text>
+                        <TouchableOpacity
+                            style={styles.typeDropdown}
+                            onPress={() => { setShowTypeFilterDropdown(!showTypeFilterDropdown); setShowShopFilterDropdown(false); }}
+                        >
+                            <Text style={styles.typeDropdownText}>
+                                {transactionType === 'all' ? 'All Transactions' : transactionType === 'credit' ? 'Credits Only' : 'Payments Only'}
+                            </Text>
+                            <Ionicons name={showTypeFilterDropdown ? "chevron-up" : "chevron-down"} size={16} color="#9CA3AF" />
                         </TouchableOpacity>
+
+                        {showTypeFilterDropdown && (
+                            <ScrollView
+                                style={[styles.customerDetailDropdownOptions, { maxHeight: 200 }]}
+                                nestedScrollEnabled={true}
+                            >
+                                <TouchableOpacity
+                                    style={[styles.customerDetailDropdownOption, transactionType === 'all' && styles.customerDetailDropdownOptionActive]}
+                                    onPress={() => { setTransactionType('all'); setShowTypeFilterDropdown(false); }}
+                                >
+                                    <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'all' && styles.customerDetailDropdownOptionTextActive]}>All Transactions</Text>
+                                    {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.customerDetailDropdownOption, transactionType === 'credit' && styles.customerDetailDropdownOptionActive]}
+                                    onPress={() => { setTransactionType('credit'); setShowTypeFilterDropdown(false); }}
+                                >
+                                    <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'credit' && styles.customerDetailDropdownOptionTextActive]}>Credits Only</Text>
+                                    {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.customerDetailDropdownOption, transactionType === 'payment' && styles.customerDetailDropdownOptionActive]}
+                                    onPress={() => { setTransactionType('payment'); setShowTypeFilterDropdown(false); }}
+                                >
+                                    <Text style={[styles.customerDetailDropdownOptionText, transactionType === 'payment' && styles.customerDetailDropdownOptionTextActive]}>Payments Only</Text>
+                                    {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                </TouchableOpacity>
+                            </ScrollView>
+                        )}
                     </View>
                 </View>
-                <View style={{ height: 70 }} />
+
+                <View style={{ height: 100 }} />
             </ScrollView >
         );
     };
@@ -528,6 +837,50 @@ const CustomerDashboardScreen = () => {
             />
             <View style={styles.content}>{renderContent()}</View>
             <CustomerBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+            {/* DateTime Pickers */}
+            {showFromDatePicker && (
+                <DateTimePicker
+                    value={dateFrom || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                        setShowFromDatePicker(false);
+                        if (event.type === 'set' && selectedDate) {
+                            setDateFrom(selectedDate);
+                            // Auto-correct To Date if From > To
+                            if (dateTo && selectedDate > dateTo) {
+                                setDateTo(selectedDate);
+                            }
+                        } else if (event.type === 'dismissed') {
+                            setDateFrom(null);
+                        }
+                    }}
+                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                />
+            )}
+            {showToDatePicker && (
+                <DateTimePicker
+                    value={dateTo || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                        setShowToDatePicker(false);
+                        if (event.type === 'set' && selectedDate) {
+                            setDateTo(selectedDate);
+                            // Auto-correct From Date if To < From
+                            if (dateFrom && selectedDate < dateFrom) {
+                                setDateFrom(selectedDate);
+                            }
+                        } else if (event.type === 'dismissed') {
+                            setDateTo(null);
+                        }
+                    }}
+                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                />
+            )}
         </SafeAreaView>
     );
 };
@@ -662,13 +1015,7 @@ const styles = StyleSheet.create({
     paymentPayBtn: { backgroundColor: '#2563EB', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 },
     paymentPayBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
 
-    // Quick Actions
-    quickActionsOuterCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E5E5E5', marginBottom: 20 },
-    quickActionsTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 12 },
-    quickActionsContainer: { flexDirection: 'row' },
-    quickActionCard: { flex: 1, alignItems: 'center', padding: 12, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E5E5E5' },
-    quickActionEmoji: { fontSize: 20, marginBottom: 8 },
-    quickActionText: { fontSize: 12, color: '#333', textAlign: 'center', fontWeight: '500' },
+
 
     // History Empty State
     historyEmptyCard: { backgroundColor: '#fff', borderRadius: 12, padding: 48, alignItems: 'center', marginTop: 24 },
@@ -699,6 +1046,30 @@ const styles = StyleSheet.create({
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },
     footerTagline: { fontSize: 12, color: '#999', marginTop: 2 },
+
+    // Filter & Export
+    filterExportCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E5E5E5', marginBottom: 20 },
+    filterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    filterTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginRight: 4 },
+    filterSectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+    exportButtons: { flexDirection: 'row', gap: 8 },
+    pdfBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#FEE2E2', gap: 4 },
+    excelBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#D1FAE5', gap: 4 },
+    pdfBtnText: { fontSize: 12, fontWeight: '600', color: '#EF4444' },
+    excelBtnText: { fontSize: 12, fontWeight: '600', color: '#10B981' },
+    dateFiltersRow: { flexDirection: 'row', gap: 12 },
+    dateFilterItem: { flex: 1 },
+    filterLabel: { fontSize: 12, fontWeight: '500', color: '#6B7280', marginBottom: 6 },
+    dateInputContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    dateInput: { fontSize: 13, color: '#374151' },
+    typeFilterContainer: { marginTop: 4 },
+    typeDropdown: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10 },
+    typeDropdownText: { fontSize: 13, color: '#111827' },
+    customerDetailDropdownOptions: { position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#D1D5DB', borderRadius: 8, marginTop: 4, zIndex: 100, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+    customerDetailDropdownOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    customerDetailDropdownOptionActive: { backgroundColor: '#F9FAFB' },
+    customerDetailDropdownOptionText: { fontSize: 13, color: '#374151' },
+    customerDetailDropdownOptionTextActive: { color: '#2563EB', fontWeight: '600' },
 
 
 });

@@ -1199,8 +1199,7 @@ const ShopOwnerDashboardScreen = () => {
                                     <Text style={styles.submitButtonText}>Add Customer</Text>
                                 )}
                             </TouchableOpacity>
-                            {/* Spacer for bottom nav */}
-                            <View style={{ height: 100 }} />
+
                         </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
@@ -1264,8 +1263,7 @@ const ShopOwnerDashboardScreen = () => {
                                     <Text style={styles.submitButtonText}>{editingProduct ? 'Update Product' : 'Add Product'}</Text>
                                 )}
                             </TouchableOpacity>
-                            {/* Spacer for bottom nav */}
-                            <View style={{ height: 100 }} />
+
                         </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
@@ -1636,9 +1634,10 @@ const styles = StyleSheet.create({
     modalContent: {
         backgroundColor: '#fff',
         borderRadius: 12,
-        padding: 24,
+        padding: 20,
         width: '100%',
         maxWidth: 400,
+        maxHeight: '80%',
     },
     modalHeader: {
         flexDirection: 'row',
