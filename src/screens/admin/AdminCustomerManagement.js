@@ -264,14 +264,17 @@ const AdminCustomerManagement = () => {
         );
     };
 
-    const StatsCard = ({ icon, title, value, color, iconBg }) => (
+    const StatsCard = ({ icon, title, value, subtext, color, iconBg }) => (
         <View style={styles.statCard}>
-            <View style={[styles.statIconContainer, { backgroundColor: iconBg || '#F3F4F6' }]}>
-                <Ionicons name={icon} size={28} color={color} />
+            <View style={styles.statCardHeader}>
+                <Text style={styles.statLabel}>{title}</Text>
+                <View style={[styles.statIconContainer, { backgroundColor: iconBg || '#F3F4F6' }]}>
+                    <Ionicons name={icon} size={20} color={color} />
+                </View>
             </View>
             <View style={styles.statTextContainer}>
-                <Text style={styles.statLabel}>{title}</Text>
                 <Text style={styles.statValue}>{value}</Text>
+                <Text style={styles.statSubtext}>{subtext}</Text>
             </View>
         </View>
     );
@@ -293,8 +296,9 @@ const AdminCustomerManagement = () => {
                     <View style={styles.statsContainer}>
                         <StatsCard
                             icon="people-outline"
-                            title="Total Customers"
+                            title="Customers"
                             value={stats.totalCustomers}
+                            subtext="Total Registered"
                             color="#2563EB"
                             iconBg="#EFF6FF"
                         />
@@ -302,20 +306,23 @@ const AdminCustomerManagement = () => {
                             icon="storefront-outline"
                             title="Active Shops"
                             value={stats.activeShops}
+                            subtext="On Platform"
                             color="#059669"
                             iconBg="#D1FAE5"
                         />
                         <StatsCard
                             icon="trending-down-outline"
-                            title="Customers with Dues"
+                            title="With Dues"
                             value={stats.withDues}
+                            subtext="Pending Payments"
                             color="#DC2626"
                             iconBg="#FEE2E2"
                         />
                         <StatsCard
                             icon="swap-horizontal-outline"
-                            title="Total Transactions"
+                            title="Transactions"
                             value={stats.totalTransactions}
+                            subtext="All time"
                             color="#7C3AED"
                             iconBg="#F3E8FF"
                         />
@@ -506,41 +513,59 @@ const styles = StyleSheet.create({
     statsContainer: {
         paddingHorizontal: 16,
         paddingBottom: 24,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        gap: 12,
     },
     statCard: {
+        width: '48%', // Approx 2 columns
         backgroundColor: '#fff',
         borderRadius: 16,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12,
+        padding: 12, // Reduced padding
+        marginBottom: 0,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        height: 110,
+    },
+    statCardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 4, // Reduced margin
     },
     statIconContainer: {
-        width: 50,
-        height: 50,
-        borderRadius: 12,
+        width: 32, // Slightly smaller icon container
+        height: 32,
+        borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: 16,
     },
     statTextContainer: {
-        flex: 1,
+        justifyContent: 'flex-end',
     },
     statLabel: {
-        fontSize: 14,
+        fontSize: 13, // Slightly smaller
         color: '#4B5563',
         fontWeight: '500',
+        flex: 1,
+        marginRight: 8,
     },
     statValue: {
-        fontSize: 24,
+        fontSize: 24, // Reduced fro 28
         fontWeight: 'bold',
         color: '#111827',
-        marginTop: 2,
+        marginBottom: 0,
+    },
+    statSubtext: {
+        fontSize: 11, // Smaller subtext
+        color: '#9CA3AF',
+        marginTop: 0,
     },
     bottomSheet: {
         flex: 1,

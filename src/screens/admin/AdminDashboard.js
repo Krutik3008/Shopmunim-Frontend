@@ -110,8 +110,8 @@ const AdminDashboard = () => {
                 <StatCard
                     title="₹ Amount"
                     icon="cash-outline"
-                    value={formatCurrency(dashboardData?.total_amount || 0)}
-                    subtext="All time"
+                    value={formatCurrency(dashboardData?.total_sales || 0)}
+                    subtext="Total Sales"
                     iconColor="#10B981"
                 />
             </View>

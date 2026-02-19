@@ -93,7 +93,7 @@ const AdminPanelScreen = () => {
         {
             id: 'customers',
             name: 'Customers',
-            icon: 'cart-outline', // Web uses ShoppingCart
+            icon: 'people-outline', // Updated to match domain
             component: AdminCustomerManagement,
             Lib: Ionicons
         },
