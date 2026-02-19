@@ -240,7 +240,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                         <Text style={styles.customerName}>{item.name}</Text>
                         {(fromDate || toDate) && (
                             <Text style={[styles.periodDeltaText, { color: item.periodDelta < 0 ? '#EF4444' : item.periodDelta > 0 ? '#10B981' : '#6B7280' }]}>
-                                {item.periodDelta < 0 ? `Added ₹${Math.abs(item.periodDelta).toFixed(0)} Dues` :
+                                {item.periodDelta < 0 ? `Added ₹${Math.abs(item.periodDelta).toFixed(0)} Due` :
                                     item.periodDelta > 0 ? `Paid ₹${item.periodDelta.toFixed(0)}` :
                                         'No change in period'}
                             </Text>
@@ -249,13 +249,13 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                     <View style={styles.balanceContainer}>
                         <View style={[
                             styles.balancePill,
-                            { backgroundColor: isCredit ? '#ECFDF5' : isOwes ? '#FEF2F2' : '#F3F4F6' }
+                            isCredit ? styles.pillCredit : isOwes ? styles.pillDue : styles.pillClear
                         ]}>
                             <Text style={[
                                 styles.balanceText,
-                                isCredit ? { color: '#10B981' } : isOwes ? { color: '#EF4444' } : { color: '#374151' }
+                                isCredit ? styles.textCredit : isOwes ? styles.textDue : styles.textClear
                             ]}>
-                                ₹{Math.abs(balance).toFixed(0)}
+                                {isCredit ? '+' : isOwes ? '-' : ''}₹{Math.abs(balance).toFixed(0)}
                             </Text>
                         </View>
                     </View>
@@ -277,13 +277,10 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                     </View>
                     <View style={[
                         styles.creditBadge,
-                        isCredit ? { backgroundColor: '#000000' } : isOwes ? { backgroundColor: '#EF4444' } : { backgroundColor: '#F3F4F6' }
+                        isCredit ? styles.badgeCredit : isOwes ? styles.badgeDue : styles.badgeClear
                     ]}>
-                        <Text style={[
-                            styles.creditBadgeText,
-                            isClear ? { color: '#000000' } : { color: '#FFFFFF' }
-                        ]}>
-                            {isCredit ? 'Credit' : isOwes ? 'Owes' : 'Clear'}
+                        <Text style={styles.creditBadgeText}>
+                            {isCredit ? 'Credit' : isOwes ? 'Due' : 'Clear'}
                         </Text>
                     </View>
                 </View>
@@ -393,7 +390,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                 icon="trending-down-outline"
                                 title="With Dues"
                                 value={stats.withDues}
-                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
+                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Due`}
                                 color="#DC2626"
                                 iconBg="#FEE2E2"
                             />
@@ -839,15 +836,31 @@ const styles = StyleSheet.create({
         color: '#111827',
     },
     balancePill: {
-        backgroundColor: '#ECFDF5',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 4,
     },
+    pillCredit: {
+        backgroundColor: '#ECFDF5',
+    },
+    pillDue: {
+        backgroundColor: '#FEF2F2',
+    },
+    pillClear: {
+        backgroundColor: '#000000',
+    },
     balanceText: {
         fontSize: 14,
         fontWeight: 'bold',
+    },
+    textCredit: {
         color: '#10B981',
+    },
+    textDue: {
+        color: '#EF4444',
+    },
+    textClear: {
+        color: '#FFFFFF',
     },
     cardSubHeader: {
         flexDirection: 'row',
@@ -864,10 +877,18 @@ const styles = StyleSheet.create({
         color: '#6B7280',
     },
     creditBadge: {
-        backgroundColor: '#111827',
         borderRadius: 6,
         paddingHorizontal: 10,
         paddingVertical: 4,
+    },
+    badgeCredit: {
+        backgroundColor: '#10B981',
+    },
+    badgeDue: {
+        backgroundColor: '#EF4444',
+    },
+    badgeClear: {
+        backgroundColor: '#000000',
     },
     creditBadgeText: {
         color: '#fff',
