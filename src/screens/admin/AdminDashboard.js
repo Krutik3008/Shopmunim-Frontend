@@ -61,11 +61,13 @@ const AdminDashboard = () => {
     }
 
     // Stats Card Component
-    const StatCard = ({ icon, title, value, subtext, color, iconColor }) => (
+    const StatCard = ({ icon, title, value, subtext, color, iconBg }) => (
         <View style={styles.statCard}>
             <View style={styles.statHeader}>
                 <Text style={styles.statTitle}>{title}</Text>
-                <Ionicons name={icon} size={16} color={iconColor || "#6B7280"} />
+                <View style={[styles.statIconContainer, { backgroundColor: iconBg || '#F3F4F6' }]}>
+                    <Ionicons name={icon} size={18} color={color || "#6B7280"} />
+                </View>
             </View>
             <Text style={styles.statValue}>{value}</Text>
             <Text style={styles.statSubtext}>{subtext}</Text>
@@ -91,28 +93,32 @@ const AdminDashboard = () => {
                     icon="people-outline"
                     value={dashboardData?.total_users || 0}
                     subtext={`+${dashboardData?.new_users_this_week || 0} this week`}
-                    iconColor="#6B7280"
+                    color="#7C3AED"
+                    iconBg="#F3E8FF"
                 />
                 <StatCard
                     title="Shops"
                     icon="storefront-outline"
                     value={dashboardData?.total_shops || 0}
                     subtext={`${dashboardData?.active_shops || 0} active`}
-                    iconColor="#6B7280"
+                    color="#059669"
+                    iconBg="#D1FAE5"
                 />
                 <StatCard
                     title="Customers"
-                    icon="person-add-outline"
+                    icon="people-outline"
                     value={dashboardData?.total_customers || 0}
                     subtext="All shops"
-                    iconColor="#6B7280"
+                    color="#2563EB"
+                    iconBg="#EFF6FF"
                 />
                 <StatCard
                     title="₹ Amount"
-                    icon="cash-outline"
+                    icon="wallet-outline"
                     value={formatCurrency(dashboardData?.total_sales || 0)}
                     subtext="Total Sales"
-                    iconColor="#10B981"
+                    color="#10B981"
+                    iconBg="#ECFDF5"
                 />
             </View>
 
@@ -222,35 +228,42 @@ const styles = StyleSheet.create({
     statCard: {
         width: (width - 40) / 2, // 2 columns with spacing
         backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 16,
         marginBottom: 12,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     statHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'center', // Center vertically
         marginBottom: 8,
+    },
+    statIconContainer: {
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     statTitle: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#111827',
+        color: '#6B7280',
     },
     statValue: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
         color: '#111827',
         marginBottom: 2,
     },
     statSubtext: {
         fontSize: 10,
-        color: '#6B7280',
+        color: '#9CA3AF',
     },
     fullWidthCard: {
         backgroundColor: '#fff',
