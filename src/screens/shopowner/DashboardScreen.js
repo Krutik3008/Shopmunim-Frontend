@@ -631,7 +631,11 @@ const ShopOwnerDashboardScreen = () => {
         }
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabPadding}>
+            <ScrollView
+                style={styles.tabContent}
+                contentContainerStyle={styles.tabPadding}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 {/* Products Parent Card */}
                 <View style={styles.productsCard}>
                     {/* Header Row */}
@@ -713,7 +717,11 @@ const ShopOwnerDashboardScreen = () => {
         }
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabPadding}>
+            <ScrollView
+                style={styles.tabContent}
+                contentContainerStyle={styles.tabPadding}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 {/* Customers Header */}
                 <View style={styles.customersHeader}>
                     <Text style={styles.customersTitle}>Customers</Text>

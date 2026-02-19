@@ -380,7 +380,11 @@ const CustomerDashboardScreen = () => {
         }
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView
+                style={styles.tabContent}
+                contentContainerStyle={{ paddingBottom: 100 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 <Text style={styles.sectionTitle}>Transaction History</Text>
                 <View style={styles.historyList}>
                     {allTransactions.map((tx, index) => (
@@ -428,7 +432,7 @@ const CustomerDashboardScreen = () => {
                         </View>
                     ))}
                 </View>
-                <View style={{ height: 70 }} />
+                <View style={{ height: 10 }} />
             </ScrollView >
         );
     };

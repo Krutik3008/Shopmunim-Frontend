@@ -6,7 +6,7 @@ import { adminAPI, getAPIErrorMessage } from '../../api';
 
 const { width } = Dimensions.get('window');
 
-const AdminDashboard = () => {
+const AdminDashboard = ({ onRefreshStats }) => {
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -21,6 +21,7 @@ const AdminDashboard = () => {
             setLoading(true);
             const response = await adminAPI.getDashboard();
             setDashboardData(response.data);
+            if (onRefreshStats) onRefreshStats(response.data); // Update parent header with new data
             setError('');
         } catch (err) {
             console.error('Dashboard fetch error:', err);

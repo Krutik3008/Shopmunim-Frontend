@@ -20,7 +20,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { customerAPI, transactionAPI, productAPI, shopAPI } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import ShopHeader from '../../components/shopowner/ShopHeader';
-// import ShopFooter from '../../components/shopowner/ShopFooter'; // Removed as per request
 import ShopBottomNav from '../../components/shopowner/ShopBottomNav';
 import AddTransactionModal from './AddTransactionModal';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -748,7 +747,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         </>
                     )}
 
-                    <View style={{ height: 20 }} />
+                    <View style={{ height: 70 }} />
                 </ScrollView>
             </View>
 

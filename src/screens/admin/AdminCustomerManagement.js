@@ -10,7 +10,8 @@ import {
     Alert,
     ScrollView,
     Modal,
-    BackHandler
+    BackHandler,
+    RefreshControl
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,7 +37,15 @@ const AdminCustomerManagement = () => {
 
     // Pagination for list
     const [currentPage, setCurrentPage] = useState(0);
-    const pageSize = 20;
+    const [pageSize, setPageSize] = useState(10);
+    const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
+    const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30];
+
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+        setCurrentPage(0);
+        setShowPageSizeDropdown(false);
+    };
 
     // Filter Modal State
     const [showFilterModal, setShowFilterModal] = useState(false);
@@ -285,7 +294,14 @@ const AdminCustomerManagement = () => {
                 colors={['#4c1d95', '#2563EB']}
                 style={styles.gradient}
             >
-                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    refreshControl={
+                        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
+                    }
+                >
                     {/* Header */}
                     <View style={styles.header}>
                         <Text style={styles.headerTitle}>Customer Analytics</Text>
@@ -419,23 +435,69 @@ const AdminCustomerManagement = () => {
                         )}
 
                         {/* Pagination */}
-                        {totalPages > 1 && (
-                            <View style={styles.paginationRow}>
+                        {/* Pagination - Advanced */}
+                        <View style={styles.paginationContainer}>
+                            <View style={styles.paginationTopRow}>
+                                <Text style={styles.paginationInfoText}>
+                                    Showing {paginatedCustomers.length === 0 ? 0 : currentPage * pageSize + 1} to{' '}
+                                    {Math.min((currentPage + 1) * pageSize, filteredCustomers.length)} of{' '}
+                                    <Text style={styles.paginationInfoBold}>{filteredCustomers.length} customers</Text>
+                                </Text>
+
+                                <View style={styles.pageSizeSelector}>
+                                    <Text style={styles.pageSizeLabel}>Show:</Text>
+                                    <View>
+                                        <TouchableOpacity
+                                            style={styles.pageSizeDropdownButton}
+                                            onPress={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
+                                        >
+                                            <Text style={styles.pageSizeDropdownText}>{pageSize}</Text>
+                                            <Ionicons name={showPageSizeDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#374151" />
+                                        </TouchableOpacity>
+                                        {showPageSizeDropdown && (
+                                            <View style={styles.pageSizeDropdownMenu}>
+                                                {PAGE_SIZE_OPTIONS.map((size) => (
+                                                    <TouchableOpacity
+                                                        key={size}
+                                                        style={[styles.pageSizeDropdownItem, pageSize === size && styles.pageSizeDropdownItemActive]}
+                                                        onPress={() => handlePageSizeChange(size)}
+                                                    >
+                                                        <Text style={[styles.pageSizeDropdownItemText, pageSize === size && styles.pageSizeDropdownItemTextActive]}>{size}</Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        )}
+                                    </View>
+                                </View>
+                            </View>
+
+                            <View style={styles.paginationDivider} />
+
+                            <View style={styles.paginationBottomRow}>
                                 <TouchableOpacity
-                                    disabled={currentPage === 0}
+                                    style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]}
                                     onPress={() => setCurrentPage(c => Math.max(0, c - 1))}
+                                    disabled={currentPage === 0}
                                 >
-                                    <Text style={[styles.pageBtn, currentPage === 0 && styles.disabledText]}>Prev</Text>
+                                    <Ionicons name="chevron-back" size={14} color={currentPage === 0 ? '#D1D5DB' : '#374151'} />
+                                    <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Previous</Text>
                                 </TouchableOpacity>
-                                <Text style={styles.pageText}>Page {currentPage + 1}</Text>
+
+                                <View style={styles.pageInfoBox}>
+                                    <Text style={styles.pageInfoLabel}>Page</Text>
+                                    <Text style={styles.pageInfoNumber}>{currentPage + 1} of {Math.max(1, totalPages)}</Text>
+                                </View>
+
                                 <TouchableOpacity
-                                    disabled={currentPage >= totalPages - 1}
+                                    style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]}
                                     onPress={() => setCurrentPage(c => Math.min(totalPages - 1, c + 1))}
+                                    disabled={currentPage >= totalPages - 1}
                                 >
-                                    <Text style={[styles.pageBtn, currentPage >= totalPages - 1 && styles.disabledText]}>Next</Text>
+                                    <Text style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Next</Text>
+                                    <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages - 1 ? '#D1D5DB' : '#374151'} />
                                 </TouchableOpacity>
                             </View>
-                        )}
+                        </View>
 
                         <View />
                     </View>
@@ -743,23 +805,137 @@ const styles = StyleSheet.create({
         color: '#9CA3AF',
         marginTop: 20,
     },
-    paginationRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 20,
+    // Pagination Styles
+    paginationContainer: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+        elevation: 2,
     },
-    pageBtn: {
-        fontSize: 15,
+    paginationInfoText: {
+        fontSize: 13,
+        color: '#6B7280',
+        flexShrink: 1,
+    },
+    paginationInfoBold: {
+        fontWeight: '600',
+        color: '#374151',
+    },
+    paginationDivider: {
+        height: 1,
+        backgroundColor: '#E5E7EB',
+        marginVertical: 12,
+    },
+    paginationTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    paginationBottomRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    pageSizeSelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    pageSizeLabel: {
+        fontSize: 13,
+        color: '#6B7280',
+        marginRight: 4,
+    },
+    pageSizeDropdownButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 6,
+        backgroundColor: '#fff',
+        gap: 6,
+    },
+    pageSizeDropdownText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#374151',
+    },
+    pageSizeDropdownMenu: {
+        position: 'absolute',
+        bottom: 38,
+        right: 0,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        paddingVertical: 4,
+        minWidth: 70,
+        zIndex: 100,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+    },
+    pageSizeDropdownItem: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        alignItems: 'center',
+    },
+    pageSizeDropdownItemActive: {
+        backgroundColor: '#EEF2FF',
+    },
+    pageSizeDropdownItemText: {
+        fontSize: 13,
+        color: '#374151',
+    },
+    pageSizeDropdownItemTextActive: {
         color: '#4F46E5',
         fontWeight: '600',
     },
-    disabledText: {
+    pageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        backgroundColor: '#fff',
+        gap: 4,
+    },
+    pageButtonDisabled: {
+        backgroundColor: '#F9FAFB',
+        borderColor: '#E5E7EB',
+    },
+    pageButtonText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#374151',
+    },
+    pageButtonTextDisabled: {
         color: '#9CA3AF',
     },
-    pageText: {
-        fontSize: 14,
-        color: '#6B7280',
+    pageInfoBox: {
+        alignItems: 'center',
+        paddingHorizontal: 8,
+    },
+    pageInfoLabel: {
+        fontSize: 11,
+        color: '#9CA3AF',
+        fontWeight: '500',
+    },
+    pageInfoNumber: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#374151',
     },
 
     // Modal Styles

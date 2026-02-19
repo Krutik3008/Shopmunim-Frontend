@@ -25,9 +25,13 @@ const AdminShopManagement = () => {
     const [search, setSearch] = useState('');
     const [totalShops, setTotalShops] = useState(0);
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize] = useState(20);
+    const [pageSize, setPageSize] = useState(10);
+    const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
+
+    const PAGE_SIZE_OPTIONS = [5, 10, 15, 20, 25, 30];
 
     const searchRef = useRef('');
+    const isFirstRender = useRef(true);
 
     const doSearch = async (searchText, page, size) => {
         try {
@@ -63,7 +67,10 @@ const AdminShopManagement = () => {
 
     // Page change
     useEffect(() => {
-        if (currentPage === 0) return;
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
         doSearch(searchRef.current, currentPage, pageSize);
     }, [currentPage]);
 
@@ -72,6 +79,12 @@ const AdminShopManagement = () => {
         searchRef.current = text.trim();
         setCurrentPage(0);
         doSearch(text.trim(), 0, pageSize);
+    };
+
+    const handlePageSizeChange = (newSize) => {
+        setPageSize(newSize);
+        setCurrentPage(0);
+        doSearch(searchRef.current, 0, newSize);
     };
 
     const fetchShops = () => {
@@ -275,34 +288,77 @@ const AdminShopManagement = () => {
                         ))}
                     </View>
                 )}
-            </ScrollView>
 
-            {/* Pagination Controls - Fixed at Bottom */}
-            {totalPages > 1 && (
+                {/* Pagination Controls - Advanced */}
                 <View style={styles.paginationContainer}>
-                    <TouchableOpacity
-                        style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]}
-                        onPress={() => setCurrentPage(Math.max(0, currentPage - 1))}
-                        disabled={currentPage === 0 || loading}
-                    >
-                        <Ionicons name="chevron-back" size={20} color={currentPage === 0 ? '#D1D5DB' : '#4B5563'} />
-                        <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Prev</Text>
-                    </TouchableOpacity>
+                    {/* Top Row: Info + Page Size Selector */}
+                    <View style={styles.paginationTopRow}>
+                        <Text style={styles.paginationInfoText}>
+                            Showing {shops.length === 0 ? 0 : currentPage * pageSize + 1} to{' '}
+                            {Math.min((currentPage + 1) * pageSize, totalShops)} of{' '}
+                            <Text style={styles.paginationInfoBold}>{totalShops} shops</Text>
+                        </Text>
 
-                    <Text style={styles.pageInfoText}>
-                        Page {currentPage + 1} of {totalPages}
-                    </Text>
+                        <View style={styles.pageSizeSelector}>
+                            <Text style={styles.pageSizeLabel}>Show:</Text>
+                            <View>
+                                <TouchableOpacity
+                                    style={styles.pageSizeDropdownButton}
+                                    onPress={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
+                                >
+                                    <Text style={styles.pageSizeDropdownText}>{pageSize}</Text>
+                                    <Ionicons name={showPageSizeDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#374151" />
+                                </TouchableOpacity>
+                                {showPageSizeDropdown && (
+                                    <View style={styles.pageSizeDropdownMenu}>
+                                        {PAGE_SIZE_OPTIONS.map((size) => (
+                                            <TouchableOpacity
+                                                key={size}
+                                                style={[styles.pageSizeDropdownItem, pageSize === size && styles.pageSizeDropdownItemActive]}
+                                                onPress={() => {
+                                                    handlePageSizeChange(size);
+                                                    setShowPageSizeDropdown(false);
+                                                }}
+                                            >
+                                                <Text style={[styles.pageSizeDropdownItemText, pageSize === size && styles.pageSizeDropdownItemTextActive]}>{size}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
+                        </View>
+                    </View>
 
-                    <TouchableOpacity
-                        style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]}
-                        onPress={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
-                        disabled={currentPage >= totalPages - 1 || loading}
-                    >
-                        <Text style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Next</Text>
-                        <Ionicons name="chevron-forward" size={20} color={currentPage >= totalPages - 1 ? '#D1D5DB' : '#4B5563'} />
-                    </TouchableOpacity>
+                    {/* Divider */}
+                    <View style={styles.paginationDivider} />
+
+                    {/* Bottom Row: Previous / Page Info / Next */}
+                    <View style={styles.paginationBottomRow}>
+                        <TouchableOpacity
+                            style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]}
+                            onPress={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                            disabled={currentPage === 0 || loading}
+                        >
+                            <Ionicons name="chevron-back" size={14} color={currentPage === 0 ? '#D1D5DB' : '#374151'} />
+                            <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Previous</Text>
+                        </TouchableOpacity>
+
+                        <View style={styles.pageInfoBox}>
+                            <Text style={styles.pageInfoLabel}>Page</Text>
+                            <Text style={styles.pageInfoNumber}>{currentPage + 1} of {Math.max(1, Math.ceil(totalShops / pageSize))}</Text>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]}
+                            onPress={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                            disabled={currentPage >= totalPages - 1 || loading}
+                        >
+                            <Text style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Next</Text>
+                            <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages - 1 ? '#D1D5DB' : '#374151'} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            )}
+            </ScrollView>
         </View>
     );
 };
@@ -535,41 +591,7 @@ const styles = StyleSheet.create({
         color: '#6B7280',
         fontStyle: 'italic',
     },
-    paginationContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#fff',
-        borderTopWidth: 1,
-        borderTopColor: '#E5E7EB',
-    },
-    pageButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 8,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        backgroundColor: '#fff',
-    },
-    pageButtonDisabled: {
-        backgroundColor: '#F3F4F6',
-        borderColor: '#F3F4F6',
-    },
-    pageButtonText: {
-        fontSize: 12,
-        fontWeight: '500',
-        color: '#4B5563',
-        marginHorizontal: 4,
-    },
-    pageButtonTextDisabled: {
-        color: '#9CA3AF',
-    },
-    pageInfoText: {
-        fontSize: 12,
-        color: '#6B7280',
-    },
+
     actionButton: {
         backgroundColor: '#fff',
         paddingHorizontal: 12,
@@ -587,6 +609,135 @@ const styles = StyleSheet.create({
         color: '#374151',
         fontSize: 14,
         fontWeight: '500',
+    },
+    // Pagination Styles
+    paginationContainer: {
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: '#fff',
+        marginHorizontal: 16,
+        borderRadius: 12,
+        marginBottom: 16,
+    },
+    paginationInfoText: {
+        fontSize: 13,
+        color: '#6B7280',
+        flexShrink: 1,
+    },
+    paginationInfoBold: {
+        fontWeight: '600',
+        color: '#374151',
+    },
+    paginationDivider: {
+        height: 1,
+        backgroundColor: '#F3F4F6',
+        marginVertical: 12,
+    },
+    paginationTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    paginationBottomRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    pageSizeSelector: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    pageSizeLabel: {
+        fontSize: 13,
+        color: '#6B7280',
+        marginRight: 4,
+    },
+    pageSizeDropdownButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 6,
+        backgroundColor: '#fff',
+        gap: 6,
+    },
+    pageSizeDropdownText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#374151',
+    },
+    pageSizeDropdownMenu: {
+        position: 'absolute',
+        bottom: 38,
+        right: 0,
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        paddingVertical: 4,
+        minWidth: 70,
+        zIndex: 100,
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+    },
+    pageSizeDropdownItem: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        alignItems: 'center',
+    },
+    pageSizeDropdownItemActive: {
+        backgroundColor: '#EEF2FF',
+    },
+    pageSizeDropdownItemText: {
+        fontSize: 13,
+        color: '#374151',
+    },
+    pageSizeDropdownItemTextActive: {
+        color: '#4F46E5',
+        fontWeight: '600',
+    },
+    pageButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        backgroundColor: '#fff',
+        gap: 4,
+    },
+    pageButtonDisabled: {
+        backgroundColor: '#F9FAFB',
+        borderColor: '#E5E7EB',
+    },
+    pageButtonText: {
+        fontSize: 13,
+        fontWeight: '500',
+        color: '#374151',
+    },
+    pageButtonTextDisabled: {
+        color: '#9CA3AF',
+    },
+    pageInfoBox: {
+        alignItems: 'center',
+        paddingHorizontal: 8,
+    },
+    pageInfoLabel: {
+        fontSize: 11,
+        color: '#9CA3AF',
+        fontWeight: '500',
+    },
+    pageInfoNumber: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#374151',
     },
 });
 

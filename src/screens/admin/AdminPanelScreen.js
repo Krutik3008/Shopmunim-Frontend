@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard, BackHandler, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -21,22 +21,34 @@ const AdminPanelScreen = () => {
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [stats, setStats] = useState({ total_users: 0 });
+    const [refreshingStats, setRefreshingStats] = useState(false);
     const insets = useSafeAreaInsets();
 
-    const fetchStats = async () => {
+    const fetchStats = async (dataOrEvent) => {
+        // If data is passed directly (from Dashboard), use it to update stats without api call
+        if (dataOrEvent && dataOrEvent.total_users !== undefined) {
+            setStats(dataOrEvent);
+            return;
+        }
+
         try {
+            setRefreshingStats(true);
             const response = await adminAPI.getDashboard();
             if (response.data) {
                 setStats(response.data);
             }
         } catch (error) {
             console.log('Failed to fetch admin stats:', error);
+        } finally {
+            setRefreshingStats(false);
         }
     };
 
     useEffect(() => {
         fetchStats();
+    }, []); // Removed activeView dependency to prevent auto-reload on tab switch
 
+    useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
             'keyboardDidShow',
             () => {
@@ -188,10 +200,17 @@ const AdminPanelScreen = () => {
                             <Text style={styles.statusLabel}>Status: </Text>
                             <Text style={styles.statusValue}>Active</Text>
                         </View>
-                        <View style={styles.statusItem}>
+                        <TouchableOpacity
+                            style={styles.statusItem}
+                            onPress={fetchStats}
+                            disabled={refreshingStats}
+                        >
                             <Text style={styles.statusLabel}>Users: </Text>
                             <Text style={styles.statusValueBlack}>{stats.total_users}</Text>
-                        </View>
+                            {refreshingStats && (
+                                <ActivityIndicator size="small" color="#7C3AED" style={{ marginLeft: 4 }} />
+                            )}
+                        </TouchableOpacity>
                     </View>
                     <Text style={styles.dateText}>
                         {new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
@@ -236,7 +255,7 @@ const AdminPanelScreen = () => {
                 colors={['#581c87', '#1e3a8a', '#312e81']} // Purple-900 to Indigo-900 approximation
                 style={[styles.content, isKeyboardVisible && { marginBottom: 0 }, { marginBottom: isKeyboardVisible ? 0 : 65 + Math.max(insets.bottom, 10) }]}
             >
-                <ActiveComponent />
+                <ActiveComponent onRefreshStats={fetchStats} />
             </LinearGradient>
 
             {/* Bottom Navigation - Fixed - Matches Web Mobile */}

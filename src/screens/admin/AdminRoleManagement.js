@@ -10,7 +10,8 @@ import {
     Alert,
     Modal,
     ScrollView,
-    Switch
+    Switch,
+    RefreshControl
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ const AdminRoleManagement = () => {
     const [users, setUsers] = useState([]);
     const [currentUserRoles, setCurrentUserRoles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
     const [showTestUsers, setShowTestUsers] = useState(false);
 
@@ -43,6 +45,7 @@ const AdminRoleManagement = () => {
             Alert.alert('Error', getAPIErrorMessage(err));
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     };
 
@@ -190,9 +193,19 @@ const AdminRoleManagement = () => {
 
     const filteredUsers = filterUsers();
 
+    const onRefresh = () => {
+        setRefreshing(true);
+        loadUsers();
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+            <ScrollView
+                contentContainerStyle={{ paddingBottom: 20 }}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                }
+            >
                 {/* Header Text - Matches Web Style */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Role Management</Text>
@@ -222,7 +235,7 @@ const AdminRoleManagement = () => {
                     </View>
                 </View>
 
-                {loading ? (
+                {loading && !refreshing ? (
                     <View style={styles.centerContainer}>
                         <ActivityIndicator size="large" color="#7C3AED" />
                     </View>

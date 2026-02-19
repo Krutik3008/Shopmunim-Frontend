@@ -7,7 +7,8 @@ import {
     TextInput,
     ActivityIndicator,
     Alert,
-    ScrollView
+    ScrollView,
+    RefreshControl
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,14 +23,14 @@ const COL_WIDTHS = {
 };
 const TABLE_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
 
-const AdminUserManagement = () => {
+const AdminUserManagement = ({ onRefreshStats }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
     const [totalUsers, setTotalUsers] = useState(0);
     const [currentPage, setCurrentPage] = useState(0);
-    const [pageSize, setPageSize] = useState(20);
+    const [pageSize, setPageSize] = useState(10);
     const [updatingUser, setUpdatingUser] = useState(null);
     const [showPageSizeDropdown, setShowPageSizeDropdown] = useState(false);
     const searchRef = useRef('');
@@ -81,6 +82,7 @@ const AdminUserManagement = () => {
 
     const fetchUsers = () => {
         doSearch(searchRef.current, currentPage, pageSize);
+        if (onRefreshStats) onRefreshStats();
     };
 
     const handleSearchSubmit = () => {
@@ -133,7 +135,13 @@ const AdminUserManagement = () => {
 
     return (
         <View style={styles.container}>
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.containerContent}>
+            <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={styles.containerContent}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchUsers(); }} />
+                }
+            >
                 {/* Header */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>User Management</Text>
