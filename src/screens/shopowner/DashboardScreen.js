@@ -790,7 +790,7 @@ const ShopOwnerDashboardScreen = () => {
                                                 (customer.balance || 0) == 0 ? styles.statusBadgeTextClear :
                                                     (customer.balance || 0) < 0 ? styles.statusBadgeTextDue : styles.statusBadgeTextAdvance
                                             ]}>
-                                                {(customer.balance || 0) == 0 ? 'Clear' : (customer.balance || 0) < 0 ? 'Owes' : 'Credit'}
+                                                {(customer.balance || 0) == 0 ? 'Clear' : (customer.balance || 0) < 0 ? 'Dues' : 'Credit'}
                                             </Text>
                                         </View>
                                         <Text style={[

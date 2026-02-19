@@ -22,6 +22,7 @@ import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
+import ShopLedgerDetailScreen from './ShopLedgerDetailScreen';
 
 const CustomerDashboardScreen = () => {
     const navigation = useNavigation();
@@ -31,7 +32,8 @@ const CustomerDashboardScreen = () => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-    const [expandedItems, setExpandedItems] = useState({});
+    const [selectedShopLedger, setSelectedShopLedger] = useState(null);
+
 
     // Filters & Export State
     const [dateFrom, setDateFrom] = useState(null);
@@ -44,12 +46,7 @@ const CustomerDashboardScreen = () => {
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeFilterDropdown, setShowTypeFilterDropdown] = useState(false);
 
-    const toggleExpand = (index) => {
-        setExpandedItems(prev => ({
-            ...prev,
-            [index]: !prev[index]
-        }));
-    };
+
 
     useEffect(() => {
         loadLedger();
@@ -372,7 +369,7 @@ const CustomerDashboardScreen = () => {
                                             badgeStyle = styles.badgeOwe;
                                             textStyle = styles.badgeOweText;
                                             iconColor = "#fff";
-                                            label = "Owe";
+                                            label = "Dues";
                                         } else if (balance > 0) {
                                             badgeStyle = styles.badgeCredit;
                                             textStyle = styles.badgeCreditText;
@@ -383,13 +380,14 @@ const CustomerDashboardScreen = () => {
                                         return (
                                             <TouchableOpacity
                                                 style={[styles.ledgerBadge, badgeStyle]}
-                                                onPress={() => toggleExpand(index)}
+                                                activeOpacity={0.7}
+                                                onPress={() => setSelectedShopLedger(item)}
                                             >
                                                 <Text style={[styles.ledgerBadgeText, textStyle]}>
                                                     {label} ₹{Math.abs(balance).toFixed(2)}
                                                 </Text>
                                                 <Ionicons
-                                                    name={expandedItems[index] ? "chevron-up" : "chevron-down"}
+                                                    name="chevron-forward"
                                                     size={16}
                                                     color={iconColor}
                                                 />
@@ -398,56 +396,7 @@ const CustomerDashboardScreen = () => {
                                     })()}
                                 </View>
 
-                                {expandedItems[index] && (
-                                    <View style={styles.transactionsSection}>
-                                        {/* Pending Amount Card - Only show if balance is negative (Owe) */}
-                                        {(item.customer?.balance || 0) < 0 && (
-                                            <View style={styles.pendingCard}>
-                                                <View>
-                                                    <Text style={styles.pendingTitle}>Pending Payment</Text>
-                                                    <Text style={styles.pendingSubtitle}>
-                                                        You owe ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}
-                                                    </Text>
-                                                </View>
-                                                <TouchableOpacity style={styles.payNowButton}>
-                                                    <Text style={styles.payNowButtonText}>Pay Now</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        )}
 
-                                        <Text style={styles.transactionsTitle}>Recent Transactions</Text>
-                                        {item.transactions && item.transactions.length > 0 ? (
-                                            item.transactions.map((tx, i) => (
-                                                <View key={i} style={styles.transactionRowContainer}>
-                                                    <View style={styles.transactionRowTop}>
-                                                        <View style={styles.badgeContainer}>
-                                                            <View style={[styles.typeBadge, tx.type === 'debit' ? styles.badgeBlack : styles.badgeRed]}>
-                                                                <Text style={styles.badgeText}>
-                                                                    {tx.type === 'debit' ? 'Payment' : 'Credit'}
-                                                                </Text>
-                                                            </View>
-                                                            <Text style={styles.transactionDate}>{formatDate(tx.date)}</Text>
-                                                        </View>
-                                                        <Text style={[
-                                                            styles.transactionAmount,
-                                                            tx.type === 'debit' ? styles.textGreen : styles.textRed
-                                                        ]}>
-                                                            {formatCurrency(tx.amount, tx.type)}
-                                                        </Text>
-                                                    </View>
-
-                                                    {tx.products && tx.products.length > 0 && (
-                                                        <Text style={styles.transactionItems}>
-                                                            {tx.products.map(p => `${p.product?.name || p.name || 'Item'} x${p.quantity}`).join(', ')}
-                                                        </Text>
-                                                    )}
-                                                </View>
-                                            ))
-                                        ) : (
-                                            <Text style={styles.noTransactionsText}>No transactions yet</Text>
-                                        )}
-                                    </View>
-                                )}
                             </View>
                         ))}
                     </View>
@@ -494,7 +443,7 @@ const CustomerDashboardScreen = () => {
                                     <View style={styles.paymentInfo}>
                                         <Text style={styles.paymentShopName}>{item.shop?.name}</Text>
                                         <Text style={styles.paymentShopLocation}>{item.shop?.location}</Text>
-                                        <Text style={styles.paymentOweText}>Owe: ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}</Text>
+                                        <Text style={styles.paymentOweText}>Dues: ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}</Text>
                                     </View>
                                     <TouchableOpacity style={styles.paymentPayBtn}>
                                         <Text style={styles.paymentPayBtnText}>Pay Now</Text>
@@ -882,6 +831,18 @@ const CustomerDashboardScreen = () => {
                     positiveButton={{ label: 'Set', textColor: '#2563EB' }}
                     negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
                 />
+            )}
+
+            {selectedShopLedger && (
+                <View style={[StyleSheet.absoluteFill, { zIndex: 1000, backgroundColor: '#fff' }]}>
+                    <ShopLedgerDetailScreen
+                        customer={selectedShopLedger.customer}
+                        shopId={selectedShopLedger.shop?.id}
+                        initialShopDetails={selectedShopLedger.shop}
+                        initialTransactions={selectedShopLedger.transactions}
+                        onBack={() => setSelectedShopLedger(null)}
+                    />
+                </View>
             )}
         </SafeAreaView>
     );

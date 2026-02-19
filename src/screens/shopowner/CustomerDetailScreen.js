@@ -335,7 +335,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const getBalanceLabel = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return 'Owes';
+        if (balance < 0) return 'Dues';
         if (balance > 0) return 'Credit';
         return 'Clear';
     };
@@ -468,8 +468,10 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     <View style={styles.content}>
                         <ScrollView
                             style={styles.scrollView}
+                            contentContainerStyle={styles.scrollViewContent}
                             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                             showsVerticalScrollIndicator={false}
+                            keyboardShouldPersistTaps="handled"
                         >
                             {/* Back Button + Title Row */}
                             <View style={styles.backRow}>
@@ -706,7 +708,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                                                 <Text style={[styles.txAmount, { color: isPayment ? '#10B981' : '#EF4444' }]}>
                                                                     {`${isPayment ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
                                                                 </Text>
-                                                                <Text style={styles.txAmountLabel}>Amount {isPayment ? 'paid' : 'owed'}</Text>
+                                                                <Text style={styles.txAmountLabel}>Amount {isPayment ? 'paid' : 'Dues'}</Text>
                                                             </View>
                                                         </View>
 
@@ -754,7 +756,6 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                 </>
                             )}
 
-                            <View style={{ height: 70 }} />
                         </ScrollView>
                     </View>
 
@@ -1492,7 +1493,11 @@ const styles = StyleSheet.create({
     },
     scrollView: {
         flex: 1,
+    },
+    scrollViewContent: {
+        flexGrow: 1,
         paddingHorizontal: 16,
+        paddingBottom: 80,
     },
 
     // Page content styles
