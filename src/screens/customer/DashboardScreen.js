@@ -806,6 +806,8 @@ const CustomerDashboardScreen = () => {
                 <Text style={styles.footerBrand}>ShopMunim</Text>
                 <Text style={styles.footerVersion}>Version 1.0.0</Text>
                 <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
+                <Text style={styles.footerCopyright}>@2026 DEC24 INNOVATION PVT LTD. All Rights Reserved.</Text>
+
             </View>
             {/* <View style={{ height: 50 }} /> */}
         </ScrollView>
@@ -1046,6 +1048,8 @@ const styles = StyleSheet.create({
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },
     footerTagline: { fontSize: 12, color: '#999', marginTop: 2 },
+    footerCopyright: { fontSize: 12, color: '#9CA3AF', marginTop: 6, textAlign: 'center' },
+
 
     // Filter & Export
     filterExportCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#E5E5E5', marginBottom: 20 },

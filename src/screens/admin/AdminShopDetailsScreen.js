@@ -9,7 +9,9 @@ import {
     ActivityIndicator,
     Alert,
     Platform,
-    BackHandler
+    BackHandler,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -339,7 +341,15 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                 colors={['#4c1d95', '#2563EB']}
                 style={styles.gradient}
             >
-                <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    onScrollBeginDrag={() => {
+                        setShowSuggestions(false);
+                        Keyboard.dismiss();
+                    }}
+                >
                     {/* Header */}
                     <View style={styles.header}>
                         <TouchableOpacity onPress={onBack} style={styles.backButton}>

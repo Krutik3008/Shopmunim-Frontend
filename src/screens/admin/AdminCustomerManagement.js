@@ -11,7 +11,9 @@ import {
     ScrollView,
     Modal,
     BackHandler,
-    RefreshControl
+    RefreshControl,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -298,6 +300,11 @@ const AdminCustomerManagement = () => {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                     keyboardShouldPersistTaps="handled"
+                    onScrollBeginDrag={() => {
+                        setShowPageSizeDropdown(false);
+                        setShowSuggestions(false);
+                        Keyboard.dismiss();
+                    }}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
                     }

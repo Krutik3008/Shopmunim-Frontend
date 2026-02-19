@@ -9,7 +9,9 @@ import {
     Alert,
     TextInput,
     Modal,
-    BackHandler
+    BackHandler,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -386,6 +388,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             await Sharing.shareAsync(fileUri, { mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', dialogTitle: `${customer.name}` });
         } catch (error) {
             console.log('Excel export error:', error);
+
             Alert.alert('Error', 'Failed to generate Excel file. Please try again.');
         }
     };
@@ -396,7 +399,14 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             style={styles.container}
         >
             <SafeAreaView>
-                <ScrollView contentContainerStyle={styles.scrollContent}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                    onScrollBeginDrag={() => {
+                        setShowTypeDropdown(false);
+                        Keyboard.dismiss();
+                    }}
+                >
                     <View style={styles.headerContent}>
                         <TouchableOpacity onPress={handleBack} style={styles.backButton}>
                             <Ionicons name="arrow-back" size={24} color="#fff" />

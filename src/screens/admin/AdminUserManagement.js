@@ -8,7 +8,9 @@ import {
     ActivityIndicator,
     Alert,
     ScrollView,
-    RefreshControl
+    RefreshControl,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -138,6 +140,11 @@ const AdminUserManagement = ({ onRefreshStats }) => {
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={styles.containerContent}
+                keyboardShouldPersistTaps="handled"
+                onScrollBeginDrag={() => {
+                    setShowPageSizeDropdown(false);
+                    Keyboard.dismiss();
+                }}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchUsers(); }} />
                 }

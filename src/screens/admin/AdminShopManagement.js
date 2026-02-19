@@ -10,7 +10,9 @@ import {
     ActivityIndicator,
     Alert,
     Platform,
-    BackHandler
+    BackHandler,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -226,6 +228,11 @@ const AdminShopManagement = () => {
             <ScrollView
                 style={{ flex: 1 }}
                 contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
+                onScrollBeginDrag={() => {
+                    setShowPageSizeDropdown(false);
+                    Keyboard.dismiss();
+                }}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchShops(); }} />
                 }
