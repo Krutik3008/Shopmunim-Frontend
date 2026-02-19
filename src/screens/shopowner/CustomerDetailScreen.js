@@ -335,21 +335,19 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const getBalanceLabel = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return 'Dues';
+        if (balance < 0) return 'Due';
         if (balance > 0) return 'Credit';
         return 'Clear';
     };
 
     const getBalanceBgColor = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return '#EF4444'; // Red background for Owes
-        if (balance > 0) return '#111827'; // Black background for Credit
-        return '#F3F4F6'; // Light gray for Clear
+        if (balance < 0) return '#EF4444'; // Red background for Due
+        if (balance > 0) return '#10B981'; // Green background for Credit
+        return '#111827'; // Black for Clear
     };
 
     const getBalanceTextColor = () => {
-        const balance = customer?.balance || 0;
-        if (balance === 0) return '#374151';
         return '#FFF';
     };
 
@@ -499,7 +497,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                 </View>
                                 <View style={styles.customerRight}>
                                     <Text style={[styles.balanceAmount, { color: getBalanceColor() }]}>
-                                        {formatCurrency(Math.abs(customer?.balance || 0))}
+                                        {customer?.balance !== 0 ? (customer?.balance > 0 ? '+' : '-') : ''}{formatCurrency(Math.abs(customer?.balance || 0))}
                                     </Text>
                                     <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
                                         <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
@@ -587,11 +585,11 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                         <View style={styles.netBalanceRow}>
                                             <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
                                             <View style={styles.netBalanceRight}>
-                                                <Text style={[styles.netBalanceValue, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                                    {formatCurrency(Math.abs(stats.netBalance))}
+                                                <Text style={[styles.netBalanceValue, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
+                                                    {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
                                                 </Text>
-                                                <Text style={[styles.netBalanceStatus, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                                    {stats.netBalance >= 0 ? 'Received' : 'Given'}
+                                                <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
+                                                    {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
                                                 </Text>
                                             </View>
                                         </View>

@@ -469,17 +469,17 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                             styles.balanceAmount,
                                             stats.netBalance > 0 ? styles.textGreen : (stats.netBalance < 0 ? styles.textRed : { color: '#374151' })
                                         ]}>
-                                            ₹{Math.abs(stats.netBalance).toFixed(2)}
+                                            {stats.netBalance !== 0 ? (stats.netBalance > 0 ? '+' : '-') : ''}₹{Math.abs(stats.netBalance).toFixed(2)}
                                         </Text>
                                         <View style={[
                                             styles.creditBadge,
-                                            { backgroundColor: stats.netBalance > 0 ? '#000000' : (stats.netBalance < 0 ? '#DC2626' : '#F3F4F6') }
+                                            { backgroundColor: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#DC2626' : '#000000') }
                                         ]}>
                                             <Text style={[
                                                 styles.creditText,
-                                                stats.netBalance === 0 && { color: '#374151' }
+                                                stats.netBalance === 0 && { color: '#FFF' }
                                             ]}>
-                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Owes' : 'Clear')}
+                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
                                             </Text>
                                         </View>
                                     </View>
@@ -517,11 +517,11 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                 <View style={styles.netBalanceRow}>
                                     <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
                                     <View style={styles.netBalanceRight}>
-                                        <Text style={[styles.netBalanceValue, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                            {formatCurrency(Math.abs(stats.netBalance))}
+                                        <Text style={[styles.netBalanceValue, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
+                                            {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
                                         </Text>
-                                        <Text style={[styles.netBalanceStatus, { color: stats.netBalance >= 0 ? '#10B981' : '#EF4444' }]}>
-                                            {stats.netBalance >= 0 ? ' Received' : ' Given'}
+                                        <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
+                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
                                         </Text>
                                     </View>
                                 </View>

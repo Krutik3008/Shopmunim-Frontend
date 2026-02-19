@@ -2370,26 +2370,26 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-end',
     },
     statusBadgeClear: {
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#111827',
     },
     statusBadgeAdvance: {
-        backgroundColor: '#ECFDF5',
+        backgroundColor: '#10B981',
     },
     statusBadgeDue: {
-        backgroundColor: '#FEF2F2',
+        backgroundColor: '#EF4444',
     },
     statusBadgeText: {
         fontSize: 12,
         fontWeight: '600',
     },
     statusBadgeTextClear: {
-        color: '#374151',
+        color: '#FFF',
     },
     statusBadgeTextAdvance: {
-        color: '#10B981',
+        color: '#FFF',
     },
     statusBadgeTextDue: {
-        color: '#EF4444',
+        color: '#FFF',
     },
     balanceAmount: {
         fontSize: 16,
