@@ -28,14 +28,20 @@ const TabButton = ({ name, icon, label, activeTab, setActiveTab }) => {
     );
 };
 
-const CustomerBottomNav = ({ activeTab, setActiveTab }) => (
-    <View style={styles.bottomNav}>
-        <TabButton name="ledger" icon="book-outline" label="Ledger" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <TabButton name="payments" icon="card-outline" label="Payments" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <TabButton name="history" icon="time-outline" label="History" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <TabButton name="account" icon="person-outline" label="Account" activeTab={activeTab} setActiveTab={setActiveTab} />
-    </View>
-);
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const CustomerBottomNav = ({ activeTab, setActiveTab }) => {
+    const insets = useSafeAreaInsets();
+
+    return (
+        <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 10), height: 65 + Math.max(insets.bottom, 10) }]}>
+            <TabButton name="ledger" icon="book-outline" label="Ledger" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton name="payments" icon="card-outline" label="Payments" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton name="history" icon="time-outline" label="History" activeTab={activeTab} setActiveTab={setActiveTab} />
+            <TabButton name="account" icon="person-outline" label="Account" activeTab={activeTab} setActiveTab={setActiveTab} />
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     // Bottom Navigation

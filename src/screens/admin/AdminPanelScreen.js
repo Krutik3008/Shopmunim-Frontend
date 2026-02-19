@@ -10,6 +10,7 @@ import AdminUserManagement from './AdminUserManagement';
 import AdminShopManagement from './AdminShopManagement';
 import AdminCustomerManagement from './AdminCustomerManagement';
 import AdminRoleManagement from './AdminRoleManagement';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -20,6 +21,7 @@ const AdminPanelScreen = () => {
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
     const [stats, setStats] = useState({ total_users: 0 });
+    const insets = useSafeAreaInsets();
 
     const fetchStats = async () => {
         try {
@@ -225,14 +227,14 @@ const AdminPanelScreen = () => {
             {/* Content Area with Dark Gradient Background */}
             <LinearGradient
                 colors={['#581c87', '#1e3a8a', '#312e81']} // Purple-900 to Indigo-900 approximation
-                style={[styles.content, isKeyboardVisible && { marginBottom: 0 }]}
+                style={[styles.content, isKeyboardVisible && { marginBottom: 0 }, { marginBottom: isKeyboardVisible ? 0 : 65 + Math.max(insets.bottom, 10) }]}
             >
                 <ActiveComponent />
             </LinearGradient>
 
             {/* Bottom Navigation - Fixed - Matches Web Mobile */}
             {!isKeyboardVisible && (
-                <View style={styles.bottomNav}>
+                <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 10), height: 65 + Math.max(insets.bottom, 10) }]}>
                     <View style={styles.navContainer}>
                         {navigationItems.map((item) => {
                             const isActive = activeView === item.id;

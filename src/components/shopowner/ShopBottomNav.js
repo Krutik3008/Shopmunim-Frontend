@@ -35,9 +35,12 @@ const TabButton = ({ name, icon, label, isActive, onPress }) => (
 );
 
 // import React from 'react'; // Already verified context
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 const ShopBottomNav = ({ activeTab = 'home', onTabPress }) => {
     const navigation = useNavigation();
     const route = useRoute();
+    const insets = useSafeAreaInsets();
 
     // Default navigation handler if none provided
     const handlePress = (tab) => {
@@ -71,7 +74,7 @@ const ShopBottomNav = ({ activeTab = 'home', onTabPress }) => {
     };
 
     return (
-        <View style={styles.bottomNav}>
+        <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 10), height: 60 + Math.max(insets.bottom, 10) }]}>
             <TabButton
                 name="home"
                 icon="home-outline"
