@@ -202,7 +202,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
         >
             <KeyboardAvoidingView
                 style={styles.modalOverlay}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <View style={styles.modalContent}>
                     {/* Header */}

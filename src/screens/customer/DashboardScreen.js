@@ -270,6 +270,8 @@ const CustomerDashboardScreen = () => {
                     </View>
                 </>
             )}
+            {/* Spacer for bottom nav */}
+            <View style={{ height: 70 }} />
         </ScrollView>
     );
 
@@ -336,7 +338,8 @@ const CustomerDashboardScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </View>
-            </ScrollView>
+                <View style={{ height: 70 }} />
+            </ScrollView >
         );
     };
 
@@ -425,7 +428,8 @@ const CustomerDashboardScreen = () => {
                         </View>
                     ))}
                 </View>
-            </ScrollView>
+                <View style={{ height: 70 }} />
+            </ScrollView >
         );
     };
 
@@ -449,17 +453,17 @@ const CustomerDashboardScreen = () => {
                 <Text style={styles.settingsTitle}>Account Settings</Text>
 
                 <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
-                    <Text style={styles.settingIcon}>📝</Text>
+                    <Ionicons name="person-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Edit Profile</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
-                    <Text style={styles.settingIcon}>🔔</Text>
+                    <Ionicons name="notifications-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Notifications</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={() => navigation.navigate('PrivacySecurity')}>
-                    <Text style={styles.settingIcon}>🔒</Text>
+                    <Ionicons name="lock-closed-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Privacy & Security</Text>
                 </TouchableOpacity>
 
@@ -469,17 +473,17 @@ const CustomerDashboardScreen = () => {
             {/* Help & About Section */}
             <View style={styles.settingsCard}>
                 <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
-                    <Text style={styles.settingIcon}>❓</Text>
+                    <Ionicons name="help-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Help & Support</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
-                    <Text style={styles.settingIcon}>ℹ️</Text>
+                    <Ionicons name="information-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>About ShopMunim</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={logout}>
-                    <Text style={styles.settingIcon}>🚪</Text>
+                    <Ionicons name="log-out-outline" size={22} color="#EF4444" style={{ marginRight: 12 }} />
                     <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
                 </TouchableOpacity>
             </View>
@@ -490,6 +494,7 @@ const CustomerDashboardScreen = () => {
                 <Text style={styles.footerVersion}>Version 1.0.0</Text>
                 <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
             </View>
+            {/* <View style={{ height: 50 }} /> */}
         </ScrollView>
     );
 
@@ -680,7 +685,7 @@ const styles = StyleSheet.create({
     settingsTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 8 },
     settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
     settingItemLast: { borderBottomWidth: 0 },
-    settingIcon: { fontSize: 18, marginRight: 12 },
+
     settingText: { flex: 1, fontSize: 15, color: '#333' },
     logoutText: { color: '#EF4444' },
 

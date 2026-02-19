@@ -520,6 +520,8 @@ const ShopOwnerDashboardScreen = () => {
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 >
                     <EmptyStateCard />
+                    {/* Spacer for bottom nav */}
+                    <View style={{ height: 100 }} />
                 </ScrollView>
             );
         }
@@ -607,6 +609,9 @@ const ShopOwnerDashboardScreen = () => {
                         </View>
                     )}
                 </View>
+
+                {/* Spacer for bottom nav */}
+                <View style={{ height: 70 }} />
             </ScrollView>
         );
     };
@@ -619,6 +624,8 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
+                    {/* Spacer for bottom nav */}
+                    <View style={{ height: 100 }} />
                 </ScrollView>
             );
         }
@@ -678,7 +685,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 60 }} />
+                <View style={{ height: 70 }} />
             </ScrollView>
         );
     };
@@ -699,6 +706,8 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
+                    {/* Spacer for bottom nav */}
+                    <View style={{ height: 100 }} />
                 </ScrollView>
             );
         }
@@ -795,6 +804,8 @@ const ShopOwnerDashboardScreen = () => {
                         ))}
                     </View>
                 )}
+                {/* Spacer for bottom nav */}
+                <View style={{ height: 70 }} />
             </ScrollView>
         );
     };
@@ -807,6 +818,8 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
+                    {/* Spacer for bottom nav */}
+                    <View style={{ height: 100 }} />
                 </ScrollView>
             );
         }
@@ -840,8 +853,8 @@ const ShopOwnerDashboardScreen = () => {
                     </View>
                 )}
 
-                {/* Spacer */}
-                <View style={{ height: 60 }} />
+                {/* Spacer for bottom nav */}
+                <View style={{ height: 70 }} />
             </ScrollView>
         );
     };
@@ -1032,44 +1045,44 @@ const ShopOwnerDashboardScreen = () => {
                     <Text style={styles.settingsTitle}>Account Settings</Text>
 
                     <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
-                        <Text style={styles.settingIcon}>📝</Text>
+                        <Ionicons name="person-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                         <Text style={styles.settingText}>Edit Profile</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
-                        <Text style={styles.settingIcon}>🔔</Text>
+                        <Ionicons name="notifications-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                         <Text style={styles.settingText}>Notifications</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('PrivacySecurity')}>
-                        <Text style={styles.settingIcon}>🔒</Text>
+                        <Ionicons name="lock-closed-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                         <Text style={styles.settingText}>Privacy & Security</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
-                        <Text style={styles.settingIcon}>❓</Text>
+                        <Ionicons name="help-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                         <Text style={styles.settingText}>Help & Support</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
-                        <Text style={styles.settingIcon}>ℹ️</Text>
+                        <Ionicons name="information-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                         <Text style={styles.settingText}>About ShopMunim</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={logout}>
-                        <Text style={styles.settingIcon}>🚪</Text>
+                        <Ionicons name="log-out-outline" size={22} color="#EF4444" style={{ marginRight: 12 }} />
                         <Text style={[styles.settingText, styles.logoutTextRed]}>Logout</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Footer */}
-                {/* Footer */}
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>ShopMunim</Text>
                     <Text style={styles.footerVersion}>Version 1.0.0</Text>
                     <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
                 </View>
+                {/* Spacer for bottom nav */}
+                <View style={{ height: 70 }} />
             </ScrollView >
         );
     };
@@ -1178,6 +1191,8 @@ const ShopOwnerDashboardScreen = () => {
                                     <Text style={styles.submitButtonText}>Add Customer</Text>
                                 )}
                             </TouchableOpacity>
+                            {/* Spacer for bottom nav */}
+                            <View style={{ height: 100 }} />
                         </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
@@ -1241,6 +1256,8 @@ const ShopOwnerDashboardScreen = () => {
                                     <Text style={styles.submitButtonText}>{editingProduct ? 'Update Product' : 'Add Product'}</Text>
                                 )}
                             </TouchableOpacity>
+                            {/* Spacer for bottom nav */}
+                            <View style={{ height: 100 }} />
                         </ScrollView>
                     </View>
                 </KeyboardAvoidingView>
@@ -1275,7 +1292,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8F9FA' },
     container: { flex: 1, backgroundColor: '#F8F9FA' },
     content: { flex: 1, overflow: 'hidden' },
-    accountScrollContent: { paddingBottom: 100, flexGrow: 1 },
+
 
     // Header
     header: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#E5E5E5' },
@@ -1548,7 +1565,7 @@ const styles = StyleSheet.create({
     settingsTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 8 },
     settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
     settingItemLast: { borderBottomWidth: 0 },
-    settingIcon: { fontSize: 18, marginRight: 12 },
+
     settingText: { flex: 1, fontSize: 15, color: '#374151' },
     logoutTextRed: { color: '#EF4444' },
 
