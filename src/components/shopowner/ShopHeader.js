@@ -53,38 +53,45 @@ const ShopHeader = ({ title }) => {
 
             {/* Role Dropdown */}
             {showRoleDropdown && (
-                <View style={styles.roleDropdown}>
+                <>
                     <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('customer')}
-                    >
-                        <Ionicons name="person" size={18} color="#3B82F6" />
-                        <Text style={styles.roleOptionText}>Customer</Text>
-                        {user?.active_role === 'customer' && (
-                            <Ionicons name="checkmark" size={18} color="#3B82F6" />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('shop_owner')}
-                    >
-                        <Ionicons name="storefront" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText}>Shop Owner</Text>
-                        {user?.active_role === 'shop_owner' && (
-                            <Ionicons name="checkmark" size={18} color="#8B5CF6" />
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('admin')}
-                    >
-                        <Ionicons name="shield" size={18} color="#F59E0B" />
-                        <Text style={styles.roleOptionText}>Admin</Text>
-                        {user?.active_role === 'admin' && (
-                            <Ionicons name="checkmark" size={18} color="#F59E0B" />
-                        )}
-                    </TouchableOpacity>
-                </View>
+                        style={styles.backdrop}
+                        activeOpacity={1}
+                        onPress={() => setShowRoleDropdown(false)}
+                    />
+                    <View style={styles.roleDropdown}>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('customer')}
+                        >
+                            <Ionicons name="person" size={18} color="#3B82F6" />
+                            <Text style={styles.roleOptionText}>Customer</Text>
+                            {user?.active_role === 'customer' && (
+                                <Ionicons name="checkmark" size={18} color="#3B82F6" />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('shop_owner')}
+                        >
+                            <Ionicons name="storefront" size={18} color="#8B5CF6" />
+                            <Text style={styles.roleOptionText}>Shop Owner</Text>
+                            {user?.active_role === 'shop_owner' && (
+                                <Ionicons name="checkmark" size={18} color="#8B5CF6" />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('admin')}
+                        >
+                            <Ionicons name="shield" size={18} color="#F59E0B" />
+                            <Text style={styles.roleOptionText}>Admin</Text>
+                            {user?.active_role === 'admin' && (
+                                <Ionicons name="checkmark" size={18} color="#F59E0B" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </>
             )}
         </View>
     );
@@ -191,6 +198,15 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14, // Matches CustomerHeader
         color: '#333',
+    },
+    backdrop: {
+        position: 'absolute',
+        top: -1000,
+        left: -1000,
+        right: -1000,
+        bottom: -1000,
+        zIndex: 990,
+        backgroundColor: 'transparent',
     },
 });
 

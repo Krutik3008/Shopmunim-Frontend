@@ -201,27 +201,34 @@ const AdminPanelScreen = () => {
 
             {/* Role Dropdown - Positioned Absolutely over content */}
             {showRoleDropdown && (
-                <View style={styles.roleDropdown}>
-                    <View style={styles.dropdownHeader}>
-                        <Text style={styles.dropdownUserName}>{user?.name}</Text>
-                        <Text style={styles.dropdownUserRole}>Super Administrator</Text>
+                <>
+                    <TouchableOpacity
+                        style={styles.backdrop}
+                        activeOpacity={1}
+                        onPress={() => setShowRoleDropdown(false)}
+                    />
+                    <View style={styles.roleDropdown}>
+                        <View style={styles.dropdownHeader}>
+                            <Text style={styles.dropdownUserName}>{user?.name}</Text>
+                            <Text style={styles.dropdownUserRole}>Super Administrator</Text>
+                        </View>
+                        <View style={styles.dropdownDivider} />
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('customer')}
+                        >
+                            <Ionicons name="person-outline" size={18} color="#3B82F6" />
+                            <Text style={styles.roleOptionText}>Customer View</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('shop_owner')}
+                        >
+                            <Ionicons name="storefront-outline" size={18} color="#8B5CF6" />
+                            <Text style={styles.roleOptionText}>Shop Owner View</Text>
+                        </TouchableOpacity>
                     </View>
-                    <View style={styles.dropdownDivider} />
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('customer')}
-                    >
-                        <Ionicons name="person-outline" size={18} color="#3B82F6" />
-                        <Text style={styles.roleOptionText}>Customer View</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('shop_owner')}
-                    >
-                        <Ionicons name="storefront-outline" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText}>Shop Owner View</Text>
-                    </TouchableOpacity>
-                </View>
+                </>
             )}
 
             {/* Content Area with Dark Gradient Background */}
@@ -531,6 +538,15 @@ const styles = StyleSheet.create({
         color: '#EF4444',
         marginLeft: 12,
         fontWeight: '600',
+    },
+    backdrop: {
+        position: 'absolute',
+        top: -1000,
+        left: -1000,
+        right: -1000,
+        bottom: -1000,
+        zIndex: 90,
+        backgroundColor: 'transparent',
     }
 });
 
