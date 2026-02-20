@@ -523,7 +523,7 @@ const CustomerDashboardScreen = () => {
         const pendingPayments = ledgerData.filter(item => (item.customer?.balance || 0) < 0);
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 100 }}>
+            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 140 }}>
                 {(showShopFilterDropdown || showTypeFilterDropdown) && (
                     <TouchableOpacity
                         style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 45 }}
@@ -695,7 +695,7 @@ const CustomerDashboardScreen = () => {
                     </View>
                 </View>
 
-                <View style={{ height: 100 }} />
+                <View style={{ height: 50 }} />
             </ScrollView >
         );
     };
@@ -739,7 +739,7 @@ const CustomerDashboardScreen = () => {
         return (
             <ScrollView
                 style={styles.tabContent}
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 120 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 onScrollBeginDrag={() => setShowPerPageDropdown(false)}
             >
@@ -851,7 +851,7 @@ const CustomerDashboardScreen = () => {
                         );
                     })()}
                 </View>
-                <View style={{ height: 10 }} />
+                <View style={{ height: 30 }} />
             </ScrollView >
         );
     };
@@ -1196,7 +1196,7 @@ const styles = StyleSheet.create({
     logoutText: { color: '#EF4444' },
 
     // Footer
-    accountScrollContent: { flexGrow: 1, paddingBottom: 100 },
+    accountScrollContent: { flexGrow: 1, paddingBottom: 140 },
     footer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, alignItems: 'center', marginTop: 'auto', marginBottom: 16 },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },

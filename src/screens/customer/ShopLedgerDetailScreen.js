@@ -546,7 +546,7 @@ const ShopLedgerDetailScreen = ({
                     handleRoleSwitch={handleRoleSwitch}
                 />
                 <ScrollView
-                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+                    contentContainerStyle={[styles.scrollContent, { paddingBottom: 80 }]}
                     keyboardShouldPersistTaps="handled"
                     onScrollBeginDrag={() => {
                         setShowTypeDropdown(false);
@@ -905,7 +905,7 @@ const ShopLedgerDetailScreen = ({
                                 })()}
                             </View>
 
-                            <View style={{ height: 20 }} />
+                            <View style={{ height: 50 }} />
                         </>
                     )}
                 </ScrollView>
