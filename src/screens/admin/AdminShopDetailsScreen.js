@@ -240,7 +240,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                         <Text style={styles.customerName}>{item.name}</Text>
                         {(fromDate || toDate) && (
                             <Text style={[styles.periodDeltaText, { color: item.periodDelta < 0 ? '#EF4444' : item.periodDelta > 0 ? '#10B981' : '#6B7280' }]}>
-                                {item.periodDelta < 0 ? `Added ₹${Math.abs(item.periodDelta).toFixed(0)} Due` :
+                                {item.periodDelta < 0 ? `Added ₹${Math.abs(item.periodDelta).toFixed(0)} Dues` :
                                     item.periodDelta > 0 ? `Paid ₹${item.periodDelta.toFixed(0)}` :
                                         'No change in period'}
                             </Text>
@@ -280,7 +280,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                         isCredit ? styles.badgeCredit : isOwes ? styles.badgeDue : styles.badgeClear
                     ]}>
                         <Text style={styles.creditBadgeText}>
-                            {isCredit ? 'Credit' : isOwes ? 'Due' : 'Clear'}
+                            {isCredit ? 'Credit' : isOwes ? 'Dues' : 'Clear'}
                         </Text>
                     </View>
                 </View>
@@ -390,7 +390,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                 icon="trending-down-outline"
                                 title="With Dues"
                                 value={stats.withDues}
-                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Due`}
+                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
                                 color="#DC2626"
                                 iconBg="#FEE2E2"
                             />

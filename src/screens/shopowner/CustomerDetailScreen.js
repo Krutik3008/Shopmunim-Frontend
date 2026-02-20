@@ -335,7 +335,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const getBalanceLabel = () => {
         const balance = customer?.balance || 0;
-        if (balance < 0) return 'Due';
+        if (balance < 0) return 'Dues';
         if (balance > 0) return 'Credit';
         return 'Clear';
     };
@@ -589,7 +589,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                                 {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
                                             </Text>
                                             <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
-                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
+                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                             </Text>
                                         </View>
                                     </View>
@@ -970,7 +970,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                                                 {requestType === 'Payment Due Reminder' && (customer?.balance || 0) < 0 && (
                                                     <View style={{ backgroundColor: '#EF4444', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginRight: 8 }}>
                                                         <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>
-                                                            {formatCurrency(Math.abs(customer?.balance || 0))} Due
+                                                            {formatCurrency(Math.abs(customer?.balance || 0))} Dues
                                                         </Text>
                                                     </View>
                                                 )}

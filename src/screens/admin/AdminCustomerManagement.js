@@ -232,7 +232,7 @@ const AdminCustomerManagement = () => {
                             styles.creditBadgeText,
                             isClear ? { color: '#000000' } : { color: '#FFFFFF' }
                         ]}>
-                            {isCredit ? 'Credit' : isOwes ? 'Owes' : 'Clear'}
+                            {isCredit ? 'Credit' : isOwes ? 'Dues' : 'Clear'}
                         </Text>
                     </View>
                 </View>

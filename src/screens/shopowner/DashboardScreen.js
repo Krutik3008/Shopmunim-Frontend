@@ -11,7 +11,6 @@ import {
     ActivityIndicator,
     RefreshControl,
     Alert,
-    Modal,
     TextInput,
     KeyboardAvoidingView,
     Platform,
@@ -21,6 +20,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Modal } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -919,20 +919,25 @@ const ShopOwnerDashboardScreen = () => {
 
                             {/* Card 1: Shop Info Card */}
                             <View style={styles.shopInfoCard}>
-                                <View style={styles.cardHeaderRow}>
-                                    <Ionicons name="qr-code-outline" size={20} color="#000" />
-                                    <Text style={styles.cardTitle}>Shop QR Code & Share Link</Text>
+                                <View style={[styles.cardHeaderRow, { justifyContent: 'space-between' }]}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Ionicons name="qr-code-outline" size={20} color="#000" />
+                                        <Text style={styles.cardTitle}>Shop Info</Text>
+                                    </View>
+                                    <TouchableOpacity onPress={() => navigation.navigate('CreateShop', { shop: currentShop })}>
+                                        <Ionicons name="create-outline" size={20} color="#4B5563" />
+                                    </TouchableOpacity>
                                 </View>
 
                                 <View style={styles.shopDetailsContent}>
-                                    <Text style={styles.shopNameLarge}>{currentShop?.name || 'Shop Name'}</Text>
-
-                                    <View style={styles.locationCodeRow}>
-                                        <Text style={styles.shopLocationText}>{currentShop?.location || 'Location'}</Text>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                                        <Text style={[styles.shopNameLarge, { marginBottom: 0, flex: 1 }]}>{currentShop?.name || 'Shop Name'}</Text>
                                         <View style={styles.shopCodeBadge}>
                                             <Text style={styles.shopCodeText}>Code: {currentShop?.shop_code || '...'}</Text>
                                         </View>
                                     </View>
+
+                                    <Text style={[styles.shopLocationText, { marginBottom: 12 }]}>{currentShop?.location || 'Location'}</Text>
 
                                     <View style={styles.categoryBadgeSmall}>
                                         <Text style={styles.categoryBadgeTextSmall}>{currentShop?.category || 'Category'}</Text>
@@ -1137,138 +1142,100 @@ const ShopOwnerDashboardScreen = () => {
             {/* Add Customer Modal */}
             <Modal
                 visible={showAddCustomerModal}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowAddCustomerModal(false)}
+                onClose={() => setShowAddCustomerModal(false)}
+                title="Add New Customer"
             >
-                <KeyboardAvoidingView
-                    style={styles.modalOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Customer Name <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter customer name"
+                        placeholderTextColor="#9CA3AF"
+                        value={newCustomerName}
+                        onChangeText={setNewCustomerName}
+                        autoCapitalize="words"
+                    />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Phone Number <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter 10-digit phone number"
+                        placeholderTextColor="#9CA3AF"
+                        value={newCustomerPhone}
+                        onChangeText={(text) => setNewCustomerPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
+                        keyboardType="numeric"
+                    />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Nickname (Optional)</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="e.g. Pappu via Sharma ji"
+                        placeholderTextColor="#9CA3AF"
+                        value={newCustomerNickname}
+                        onChangeText={setNewCustomerNickname}
+                        autoCapitalize="words"
+                    />
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.submitButton, addingCustomer && styles.submitButtonDisabled]}
+                    onPress={handleAddCustomer}
+                    disabled={addingCustomer}
                 >
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Add New Customer</Text>
-                            <TouchableOpacity onPress={() => setShowAddCustomerModal(false)} style={styles.modalClose}>
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <ScrollView keyboardShouldPersistTaps="handled">
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Customer Name <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="Enter customer name"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newCustomerName}
-                                    onChangeText={setNewCustomerName}
-                                    autoCapitalize="words"
-                                />
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Phone Number <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="Enter 10-digit phone number"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newCustomerPhone}
-                                    onChangeText={(text) => setNewCustomerPhone(text.replace(/[^0-9]/g, '').slice(0, 10))}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Nickname (Optional)</Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="e.g. Pappu via Sharma ji"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newCustomerNickname}
-                                    onChangeText={setNewCustomerNickname}
-                                    autoCapitalize="words"
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={[styles.submitButton, addingCustomer && styles.submitButtonDisabled]}
-                                onPress={handleAddCustomer}
-                                disabled={addingCustomer}
-                            >
-                                {addingCustomer ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={styles.submitButtonText}>Add Customer</Text>
-                                )}
-                            </TouchableOpacity>
-
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
+                    {addingCustomer ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.submitButtonText}>Add Customer</Text>
+                    )}
+                </TouchableOpacity>
             </Modal>
 
             {/* Add Product Modal */}
             <Modal
                 visible={showAddProductModal}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowAddProductModal(false)}
+                onClose={() => setShowAddProductModal(false)}
+                title={editingProduct ? 'Edit Product' : 'Add New Product'}
+                description={editingProduct ? 'Update product details' : 'Add a new product to your shop inventory'}
             >
-                <KeyboardAvoidingView
-                    style={styles.modalOverlay}
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Product Name <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="e.g., Tea, Cigarette, Wafers"
+                        placeholderTextColor="#9CA3AF"
+                        value={newProductName}
+                        onChangeText={setNewProductName}
+                        autoCapitalize="words"
+                    />
+                </View>
+
+                <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Price (₹) <Text style={styles.required}>*</Text></Text>
+                    <TextInput
+                        style={styles.textInput}
+                        placeholder="Enter price"
+                        placeholderTextColor="#9CA3AF"
+                        value={newProductPrice}
+                        onChangeText={setNewProductPrice}
+                        keyboardType="numeric"
+                    />
+                </View>
+
+                <TouchableOpacity
+                    style={[styles.submitButton, addingProduct && styles.submitButtonDisabled]}
+                    onPress={handleAddProduct}
+                    disabled={addingProduct}
                 >
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <View>
-                                <Text style={styles.modalTitle}>{editingProduct ? 'Edit Product' : 'Add New Product'}</Text>
-                                <Text style={styles.modalSubtitle}>{editingProduct ? 'Update product details' : 'Add a new product to your shop inventory'}</Text>
-                            </View>
-                            <TouchableOpacity onPress={() => setShowAddProductModal(false)} style={styles.modalClose}>
-                                <Ionicons name="close" size={24} color="#666" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <ScrollView keyboardShouldPersistTaps="handled">
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Product Name <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="e.g., Tea, Cigarette, Wafers"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newProductName}
-                                    onChangeText={setNewProductName}
-                                    autoCapitalize="words"
-                                />
-                            </View>
-
-                            <View style={styles.inputGroup}>
-                                <Text style={styles.inputLabel}>Price (₹) <Text style={styles.required}>*</Text></Text>
-                                <TextInput
-                                    style={styles.textInput}
-                                    placeholder="Enter price"
-                                    placeholderTextColor="#9CA3AF"
-                                    value={newProductPrice}
-                                    onChangeText={setNewProductPrice}
-                                    keyboardType="numeric"
-                                />
-                            </View>
-
-                            <TouchableOpacity
-                                style={[styles.submitButton, addingProduct && styles.submitButtonDisabled]}
-                                onPress={handleAddProduct}
-                                disabled={addingProduct}
-                            >
-                                {addingProduct ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : (
-                                    <Text style={styles.submitButtonText}>{editingProduct ? 'Update Product' : 'Add Product'}</Text>
-                                )}
-                            </TouchableOpacity>
-
-                        </ScrollView>
-                    </View>
-                </KeyboardAvoidingView>
+                    {addingProduct ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.submitButtonText}>{editingProduct ? 'Update Product' : 'Add Product'}</Text>
+                    )}
+                </TouchableOpacity>
             </Modal>
 
 
@@ -2278,6 +2245,8 @@ const styles = StyleSheet.create({
     shopLocationText: {
         fontSize: 15,
         color: '#6B7280',
+        flex: 1,
+        marginRight: 8,
     },
     categoryBadgeSmall: {
         backgroundColor: '#F3F4F6',

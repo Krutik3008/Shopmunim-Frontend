@@ -265,7 +265,7 @@ const ShopLedgerDetailScreen = ({
             const now = new Date();
             const generatedDate = `${now.toLocaleDateString('en-GB')} at ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
 
-            const balanceStatus = stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear');
+            const balanceStatus = stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear');
 
             const txRows = filteredTransactions.map(t => {
                 const isPay = t.type === 'debit' || t.type === 'payment' || t.type === 'CREDIT';
@@ -522,7 +522,7 @@ const ShopLedgerDetailScreen = ({
                                                 styles.creditText,
                                                 stats.netBalance === 0 && { color: '#FFF' }
                                             ]}>
-                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
+                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                             </Text>
                                         </View>
                                     </View>
@@ -564,7 +564,7 @@ const ShopLedgerDetailScreen = ({
                                             {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
                                         </Text>
                                         <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
-                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
+                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                         </Text>
                                     </View>
                                 </View>

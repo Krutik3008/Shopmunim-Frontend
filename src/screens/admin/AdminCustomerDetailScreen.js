@@ -479,7 +479,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                                 styles.creditText,
                                                 stats.netBalance === 0 && { color: '#FFF' }
                                             ]}>
-                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
+                                                {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                             </Text>
                                         </View>
                                     </View>
@@ -521,7 +521,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                             {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
                                         </Text>
                                         <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
-                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Due' : 'Clear')}
+                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                         </Text>
                                     </View>
                                 </View>
@@ -640,7 +640,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                                                         <Text style={[styles.txAmount, { color: isPaymentItem ? '#10B981' : '#EF4444' }]}>
                                                             {`${isPaymentItem ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
                                                         </Text>
-                                                        <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'owed'}</Text>
+                                                        <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
                                                     </View>
                                                 </View>
 

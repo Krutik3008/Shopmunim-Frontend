@@ -94,6 +94,9 @@ export const shopAPI = {
     // Get shop by code (public)
     getByCode: (shopCode) => api.get(`/shops/public/${shopCode}`),
 
+    // Update shop details
+    update: (shopId, data) => api.put(`/shops/${shopId}`, data),
+
     // Connect customer to shop (public)
     connectToShop: (shopCode, customerData) =>
         api.post(`/shops/public/${shopCode}/connect`, customerData),

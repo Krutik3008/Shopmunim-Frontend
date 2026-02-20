@@ -755,7 +755,7 @@ const CustomerDashboardScreen = () => {
                 <Text style={styles.footerBrand}>ShopMunim</Text>
                 <Text style={styles.footerVersion}>Version 1.0.0</Text>
                 <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
-                <Text style={styles.footerCopyright}>@2026 DEC24 INNOVATION PVT LTD. All Rights Reserved.</Text>
+                <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
             </View>
             {/* <View style={{ height: 50 }} /> */}
