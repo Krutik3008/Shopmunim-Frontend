@@ -1686,7 +1686,7 @@ const styles = StyleSheet.create({
     scrollViewContent: {
         flexGrow: 1,
         paddingHorizontal: 16,
-        paddingBottom: 80,
+        paddingBottom: 120,
     },
 
     // Page content styles

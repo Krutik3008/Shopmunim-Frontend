@@ -616,7 +616,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 70 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
         );
     };
@@ -694,7 +694,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 70 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
         );
     };
@@ -818,7 +818,7 @@ const ShopOwnerDashboardScreen = () => {
                     </View>
                 )}
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 70 }} />
+                <View style={{ height: 130 }} />
             </ScrollView>
         );
     };
@@ -938,7 +938,7 @@ const ShopOwnerDashboardScreen = () => {
                     )}
 
                     {/* Spacer for bottom nav */}
-                    <View style={{ height: 70 }} />
+                    <View style={{ height: 120 }} />
                 </Pressable>
             </ScrollView>
         );
@@ -1170,11 +1170,11 @@ const ShopOwnerDashboardScreen = () => {
                     <Text style={styles.footerBrand}>ShopMunim</Text>
                     <Text style={styles.footerVersion}>Version 1.0.0</Text>
                     <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
-                    <Text style={styles.footerCopyright}>@2026 DEC24 INNOVATION PVT LTD. All Rights Reserved.</Text>
+                    <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
                 </View>
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 70 }} />
+                <View style={{ height: 80 }} />
             </ScrollView >
         );
     };
