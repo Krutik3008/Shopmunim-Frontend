@@ -137,6 +137,11 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+    const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
+
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
@@ -494,297 +499,366 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             style={styles.container}
         >
             <SafeAreaView>
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    keyboardShouldPersistTaps="handled"
-                    onScrollBeginDrag={() => {
-                        setShowTypeDropdown(false);
-                        Keyboard.dismiss();
-                    }}
-                >
-                    <View style={styles.headerContent}>
-                        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={24} color="#fff" />
-                        </TouchableOpacity>
-                        <View>
-                            <Text style={styles.headerTitle}>{customer.name}'s Purchase History</Text>
+                <TouchableWithoutFeedback onPress={() => { setShowTypeDropdown(false); setShowPerPageDropdown(false); Keyboard.dismiss(); }}>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        onScrollBeginDrag={() => {
+                            setShowTypeDropdown(false);
+                            setShowPerPageDropdown(false);
+                            Keyboard.dismiss();
+                        }}
+                    >
+                        <View style={styles.headerContent}>
+                            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                                <Ionicons name="arrow-back" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <View>
+                                <Text style={styles.headerTitle}>{customer.name}'s Purchase History</Text>
+                            </View>
                         </View>
-                    </View>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 40 }} />
-                    ) : (
-                        <>
-                            {/* Shop Information Card */}
-                            <View style={styles.card}>
-                                <View style={styles.cardHeaderRow}>
-                                    <Ionicons name="storefront-outline" size={20} color="#111827" />
-                                    <Text style={styles.cardTitle}>Shop Information</Text>
-                                </View>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 40 }} />
+                        ) : (
+                            <>
+                                {/* Shop Information Card */}
+                                <View style={styles.card}>
+                                    <View style={styles.cardHeaderRow}>
+                                        <Ionicons name="storefront-outline" size={20} color="#111827" />
+                                        <Text style={styles.cardTitle}>Shop Information</Text>
+                                    </View>
 
-                                <View style={styles.infoRow}>
-                                    <Text style={styles.label}>Name:</Text>
-                                    <Text style={styles.value}>{shopDetails?.name || 'Loading...'}</Text>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <Text style={styles.label}>Category:</Text>
-                                    <Text style={styles.value}>{shopDetails?.category || 'General'}</Text>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <Text style={styles.label}>Location:</Text>
-                                    <Text style={styles.value}>{shopDetails?.location || 'Unknown'}</Text>
-                                </View>
-                                <View style={styles.infoRow}>
-                                    <Text style={styles.label}>Code:</Text>
-                                    <View style={styles.codeBadge}>
-                                        <Text style={styles.codeText}>
-                                            {shopDetails?.shop_code || 'N/A'}
-                                        </Text>
+                                    <View style={styles.infoRow}>
+                                        <Text style={styles.label}>Name:</Text>
+                                        <Text style={styles.value}>{shopDetails?.name || 'Loading...'}</Text>
+                                    </View>
+                                    <View style={styles.infoRow}>
+                                        <Text style={styles.label}>Category:</Text>
+                                        <Text style={styles.value}>{shopDetails?.category || 'General'}</Text>
+                                    </View>
+                                    <View style={styles.infoRow}>
+                                        <Text style={styles.label}>Location:</Text>
+                                        <Text style={styles.value}>{shopDetails?.location || 'Unknown'}</Text>
+                                    </View>
+                                    <View style={styles.infoRow}>
+                                        <Text style={styles.label}>Code:</Text>
+                                        <View style={styles.codeBadge}>
+                                            <Text style={styles.codeText}>
+                                                {shopDetails?.shop_code || 'N/A'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.infoRow}>
+                                        <Text style={styles.label}>Owner:</Text>
+                                        <Text style={styles.value}>User ({shopDetails?.owner_id || '...'})</Text>
                                     </View>
                                 </View>
-                                <View style={styles.infoRow}>
-                                    <Text style={styles.label}>Owner:</Text>
-                                    <Text style={styles.value}>User ({shopDetails?.owner_id || '...'})</Text>
-                                </View>
-                            </View>
 
-                            {/* Customer Information Card */}
-                            <View style={styles.card}>
-                                <View style={styles.cardHeaderRow}>
-                                    <Ionicons name="person-outline" size={20} color="#111827" />
-                                    <Text style={styles.cardTitle}>Customer Information</Text>
-                                </View>
+                                {/* Customer Information Card */}
+                                <View style={styles.card}>
+                                    <View style={styles.cardHeaderRow}>
+                                        <Ionicons name="person-outline" size={20} color="#111827" />
+                                        <Text style={styles.cardTitle}>Customer Information</Text>
+                                    </View>
 
-                                <Text style={styles.customerNameMain}>{customer.name}</Text>
-                                <Text style={styles.customerPhone}>+91 {customer.phone}</Text>
+                                    <Text style={styles.customerNameMain}>{customer.name}</Text>
+                                    <Text style={styles.customerPhone}>+91 {customer.phone}</Text>
 
-                                <View style={styles.balanceContainer}>
-                                    <Text style={styles.balanceLabel}>Current Balance</Text>
-                                    <View style={styles.balanceRight}>
-                                        <Text style={[
-                                            styles.balanceAmount,
-                                            stats.netBalance > 0 ? styles.textGreen : (stats.netBalance < 0 ? styles.textRed : { color: '#374151' })
-                                        ]}>
-                                            {stats.netBalance !== 0 ? (stats.netBalance > 0 ? '+' : '-') : ''}₹{Math.abs(stats.netBalance).toFixed(2)}
-                                        </Text>
-                                        <View style={[
-                                            styles.creditBadge,
-                                            { backgroundColor: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#DC2626' : '#000000') }
-                                        ]}>
+                                    <View style={styles.balanceContainer}>
+                                        <Text style={styles.balanceLabel}>Current Balance</Text>
+                                        <View style={styles.balanceRight}>
                                             <Text style={[
-                                                styles.creditText,
-                                                stats.netBalance === 0 && { color: '#FFF' }
+                                                styles.balanceAmount,
+                                                stats.netBalance > 0 ? styles.textGreen : (stats.netBalance < 0 ? styles.textRed : { color: '#374151' })
                                             ]}>
+                                                {stats.netBalance !== 0 ? (stats.netBalance > 0 ? '+' : '-') : ''}₹{Math.abs(stats.netBalance).toFixed(2)}
+                                            </Text>
+                                            <View style={[
+                                                styles.creditBadge,
+                                                { backgroundColor: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#DC2626' : '#000000') }
+                                            ]}>
+                                                <Text style={[
+                                                    styles.creditText,
+                                                    stats.netBalance === 0 && { color: '#FFF' }
+                                                ]}>
+                                                    {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </View>
+
+                                {/* Purchase Analytics Section - Owner View Match */}
+                                <View style={styles.sectionCard}>
+                                    <View style={styles.sectionHeader}>
+                                        <Ionicons name="bar-chart-outline" size={18} color="#374151" />
+                                        <Text style={styles.sectionTitle}>Purchase Analytics</Text>
+                                    </View>
+
+                                    <View style={styles.statsGrid}>
+                                        <View style={[styles.statBox, { backgroundColor: '#EFF6FF' }]}>
+                                            <Text style={[styles.statValue, { color: '#2563EB' }]}>{stats.totalTransactions}</Text>
+                                            <Text style={styles.statLabel}>Total Transactions</Text>
+                                        </View>
+                                        <View style={[styles.statBox, { backgroundColor: '#FEE2E2' }]}>
+                                            <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalCredits}</Text>
+                                            <Text style={styles.statLabel}>Credits Given</Text>
+                                            <Text style={[styles.statSubValue, { color: '#EF4444' }]}>{formatCurrency(stats.totalCreditsAmount)}</Text>
+                                        </View>
+                                        <View style={[styles.statBox, { backgroundColor: '#D1FAE5' }]}>
+                                            <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.totalPayments}</Text>
+                                            <Text style={styles.statLabel}>Payments Received</Text>
+                                            <Text style={[styles.statSubValue, { color: '#10B981' }]}>{formatCurrency(stats.totalPaymentsAmount)}</Text>
+                                        </View>
+                                        <View style={[styles.statBox, { backgroundColor: '#F3E8FF' }]}>
+                                            <Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.totalItems}</Text>
+                                            <Text style={styles.statLabel}>Items Purchased</Text>
+                                        </View>
+                                    </View>
+
+                                    <View style={styles.netBalanceRow}>
+                                        <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
+                                        <View style={styles.netBalanceRight}>
+                                            <Text style={[styles.netBalanceValue, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
+                                                {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
+                                            </Text>
+                                            <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
                                                 {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
                                             </Text>
                                         </View>
                                     </View>
                                 </View>
-                            </View>
 
-                            {/* Purchase Analytics Section - Owner View Match */}
-                            <View style={styles.sectionCard}>
-                                <View style={styles.sectionHeader}>
-                                    <Ionicons name="bar-chart-outline" size={18} color="#374151" />
-                                    <Text style={styles.sectionTitle}>Purchase Analytics</Text>
-                                </View>
-
-                                <View style={styles.statsGrid}>
-                                    <View style={[styles.statBox, { backgroundColor: '#EFF6FF' }]}>
-                                        <Text style={[styles.statValue, { color: '#2563EB' }]}>{stats.totalTransactions}</Text>
-                                        <Text style={styles.statLabel}>Total Transactions</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#FEE2E2' }]}>
-                                        <Text style={[styles.statValue, { color: '#EF4444' }]}>{stats.totalCredits}</Text>
-                                        <Text style={styles.statLabel}>Credits Given</Text>
-                                        <Text style={[styles.statSubValue, { color: '#EF4444' }]}>{formatCurrency(stats.totalCreditsAmount)}</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#D1FAE5' }]}>
-                                        <Text style={[styles.statValue, { color: '#10B981' }]}>{stats.totalPayments}</Text>
-                                        <Text style={styles.statLabel}>Payments Received</Text>
-                                        <Text style={[styles.statSubValue, { color: '#10B981' }]}>{formatCurrency(stats.totalPaymentsAmount)}</Text>
-                                    </View>
-                                    <View style={[styles.statBox, { backgroundColor: '#F3E8FF' }]}>
-                                        <Text style={[styles.statValue, { color: '#7C3AED' }]}>{stats.totalItems}</Text>
-                                        <Text style={styles.statLabel}>Items Purchased</Text>
-                                    </View>
-                                </View>
-
-                                <View style={styles.netBalanceRow}>
-                                    <Text style={styles.netBalanceLabel}>Net Transaction Balance:</Text>
-                                    <View style={styles.netBalanceRight}>
-                                        <Text style={[styles.netBalanceValue, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
-                                            {stats.netBalance > 0 ? '+' : (stats.netBalance < 0 ? '-' : '')}{formatCurrency(Math.abs(stats.netBalance))}
-                                        </Text>
-                                        <Text style={[styles.netBalanceStatus, { color: stats.netBalance > 0 ? '#10B981' : (stats.netBalance < 0 ? '#EF4444' : '#111827') }]}>
-                                            {stats.netBalance > 0 ? 'Credit' : (stats.netBalance < 0 ? 'Dues' : 'Clear')}
-                                        </Text>
-                                    </View>
-                                </View>
-                            </View>
-
-                            {/* Filters & Export Section */}
-                            <View style={[styles.sectionCard, { zIndex: 10 }]}>
-                                <View style={styles.filterHeader}>
-                                    <View style={styles.filterTitleRow}>
-                                        <Ionicons name="filter-outline" size={18} color="#374151" />
-                                        <Text style={styles.sectionTitle}>Filters & Export</Text>
-                                    </View>
-                                    <View style={styles.exportButtons}>
-                                        <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
-                                            <Ionicons name="document-text-outline" size={14} color="#EF4444" />
-                                            <Text style={styles.pdfBtnText}>PDF</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
-                                            <Ionicons name="grid-outline" size={14} color="#10B981" />
-                                            <Text style={styles.excelBtnText}>Excel</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
-                                <View style={styles.dateFiltersRow}>
-                                    <View style={styles.dateFilterItem}>
-                                        <Text style={styles.filterLabel}>From Date</Text>
-                                        <TouchableOpacity
-                                            style={styles.dateInputContainer}
-                                            onPress={() => setShowFromPicker(true)}
-                                        >
-                                            <Text style={[styles.dateInput, !fromDate && { color: '#9CA3AF' }]}>
-                                                {fromDate ? formatDateDisplay(fromDate) : 'dd-mm-yyyy'}
-                                            </Text>
-                                            <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                    <View style={styles.dateFilterItem}>
-                                        <Text style={styles.filterLabel}>To Date</Text>
-                                        <TouchableOpacity
-                                            style={styles.dateInputContainer}
-                                            onPress={() => setShowToPicker(true)}
-                                        >
-                                            <Text style={[styles.dateInput, !toDate && { color: '#9CA3AF' }]}>
-                                                {toDate ? formatDateDisplay(toDate) : 'dd-mm-yyyy'}
-                                            </Text>
-                                            <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-
-                                <View style={[styles.typeFilterContainer, { zIndex: 20 }]}>
-                                    <Text style={styles.filterLabel}>Transaction Type</Text>
-                                    <TouchableOpacity
-                                        style={styles.typeDropdown}
-                                        onPress={() => setShowTypeDropdown(!showTypeDropdown)}
-                                    >
-                                        <Text style={styles.typeDropdownText}>
-                                            {transactionType === 'all' ? 'All Transactions' : transactionType === 'credit' ? 'Credits Only' : 'Payments Only'}
-                                        </Text>
-                                        <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
-                                    </TouchableOpacity>
-                                    {showTypeDropdown && (
-                                        <View style={styles.dropdownOptions}>
-                                            <TouchableOpacity
-                                                style={[styles.dropdownOption, transactionType === 'all' && styles.dropdownOptionActive]}
-                                                onPress={() => { setTransactionType('all'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.dropdownOptionText, transactionType === 'all' && styles.dropdownOptionTextActive]}>All Transactions</Text>
-                                                {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                {/* Filters & Export Section */}
+                                <View style={[styles.sectionCard, { zIndex: 10 }]}>
+                                    <View style={styles.filterHeader}>
+                                        <View style={styles.filterTitleRow}>
+                                            <Ionicons name="filter-outline" size={18} color="#374151" />
+                                            <Text style={styles.sectionTitle}>Filters & Export</Text>
+                                        </View>
+                                        <View style={styles.exportButtons}>
+                                            <TouchableOpacity style={styles.pdfBtn} onPress={exportToPDF}>
+                                                <Ionicons name="document-text-outline" size={14} color="#EF4444" />
+                                                <Text style={styles.pdfBtnText}>PDF</Text>
                                             </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.dropdownOption, transactionType === 'credit' && styles.dropdownOptionActive]}
-                                                onPress={() => { setTransactionType('credit'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.dropdownOptionText, transactionType === 'credit' && styles.dropdownOptionTextActive]}>Credits Only</Text>
-                                                {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.dropdownOption, transactionType === 'payment' && styles.dropdownOptionActive]}
-                                                onPress={() => { setTransactionType('payment'); setShowTypeDropdown(false); }}
-                                            >
-                                                <Text style={[styles.dropdownOptionText, transactionType === 'payment' && styles.dropdownOptionTextActive]}>Payments Only</Text>
-                                                {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                            <TouchableOpacity style={styles.excelBtn} onPress={exportToExcel}>
+                                                <Ionicons name="grid-outline" size={14} color="#10B981" />
+                                                <Text style={styles.excelBtnText}>Excel</Text>
                                             </TouchableOpacity>
                                         </View>
-                                    )}
-                                </View>
-                            </View>
-
-                            {/* Detailed Transaction History */}
-                            <View style={[styles.sectionCard, { zIndex: 1 }]}>
-                                <Text style={styles.historyTitle}>Detailed Transaction History</Text>
-                                <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
-
-                                {filteredTransactions.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
-                                        <Text style={styles.emptyText}>No transactions found</Text>
                                     </View>
-                                ) : (
-                                    filteredTransactions.map((transaction) => {
-                                        const isPayment = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
 
-                                        const isPaymentItem = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
+                                    <View style={styles.dateFiltersRow}>
+                                        <View style={styles.dateFilterItem}>
+                                            <Text style={styles.filterLabel}>From Date</Text>
+                                            <TouchableOpacity
+                                                style={styles.dateInputContainer}
+                                                onPress={() => setShowFromPicker(true)}
+                                            >
+                                                <Text style={[styles.dateInput, !fromDate && { color: '#9CA3AF' }]}>
+                                                    {fromDate ? formatDateDisplay(fromDate) : 'dd-mm-yyyy'}
+                                                </Text>
+                                                <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View style={styles.dateFilterItem}>
+                                            <Text style={styles.filterLabel}>To Date</Text>
+                                            <TouchableOpacity
+                                                style={styles.dateInputContainer}
+                                                onPress={() => setShowToPicker(true)}
+                                            >
+                                                <Text style={[styles.dateInput, !toDate && { color: '#9CA3AF' }]}>
+                                                    {toDate ? formatDateDisplay(toDate) : 'dd-mm-yyyy'}
+                                                </Text>
+                                                <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
 
-                                        const items = transaction.products || transaction.items || [];
+                                    <View style={[styles.typeFilterContainer, { zIndex: 20 }]}>
+                                        <Text style={styles.filterLabel}>Transaction Type</Text>
+                                        <TouchableOpacity
+                                            style={styles.typeDropdown}
+                                            onPress={() => setShowTypeDropdown(!showTypeDropdown)}
+                                        >
+                                            <Text style={styles.typeDropdownText}>
+                                                {transactionType === 'all' ? 'All Transactions' : transactionType === 'credit' ? 'Credits Only' : 'Payments Only'}
+                                            </Text>
+                                            <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
+                                        </TouchableOpacity>
+                                        {showTypeDropdown && (
+                                            <View style={styles.dropdownOptions}>
+                                                <TouchableOpacity
+                                                    style={[styles.dropdownOption, transactionType === 'all' && styles.dropdownOptionActive]}
+                                                    onPress={() => { setTransactionType('all'); setShowTypeDropdown(false); }}
+                                                >
+                                                    <Text style={[styles.dropdownOptionText, transactionType === 'all' && styles.dropdownOptionTextActive]}>All Transactions</Text>
+                                                    {transactionType === 'all' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={[styles.dropdownOption, transactionType === 'credit' && styles.dropdownOptionActive]}
+                                                    onPress={() => { setTransactionType('credit'); setShowTypeDropdown(false); }}
+                                                >
+                                                    <Text style={[styles.dropdownOptionText, transactionType === 'credit' && styles.dropdownOptionTextActive]}>Credits Only</Text>
+                                                    {transactionType === 'credit' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={[styles.dropdownOption, transactionType === 'payment' && styles.dropdownOptionActive]}
+                                                    onPress={() => { setTransactionType('payment'); setShowTypeDropdown(false); }}
+                                                >
+                                                    <Text style={[styles.dropdownOptionText, transactionType === 'payment' && styles.dropdownOptionTextActive]}>Payments Only</Text>
+                                                    {transactionType === 'payment' && <Ionicons name="checkmark" size={16} color="#2563EB" />}
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
+                                    </View>
+                                </View>
 
-                                        return (
-                                            <View key={transaction.id} style={styles.transactionCard}>
-                                                <View style={styles.txHeader}>
-                                                    <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#000' : '#EF4444' }]}>
-                                                        <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment Received' : 'Purchase (Credit)'}</Text>
+                                {/* Detailed Transaction History */}
+                                {(() => {
+                                    const totalItems = filteredTransactions.length;
+                                    const totalPages = Math.ceil(totalItems / perPage);
+                                    const startIdx = (currentPage - 1) * perPage;
+                                    const endIdx = Math.min(startIdx + perPage, totalItems);
+                                    const paginatedTx = filteredTransactions.slice(startIdx, endIdx);
+
+                                    return (
+                                        <>
+                                            <View style={[styles.sectionCard, { zIndex: 1 }]}>
+                                                <Text style={styles.historyTitle}>Detailed Transaction History</Text>
+                                                <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
+
+                                                {filteredTransactions.length === 0 ? (
+                                                    <View style={styles.emptyState}>
+                                                        <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+                                                        <Text style={styles.emptyText}>No transactions found</Text>
                                                     </View>
-                                                    <View style={styles.txAmountSection}>
-                                                        <Text style={[styles.txAmount, { color: isPaymentItem ? '#10B981' : '#EF4444' }]}>
-                                                            {`${isPaymentItem ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
-                                                        </Text>
-                                                        <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
-                                                    </View>
-                                                </View>
+                                                ) : (
+                                                    paginatedTx.map((transaction) => {
+                                                        const isPayment = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
+                                                        const isPaymentItem = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
+                                                        const items = transaction.products || transaction.items || [];
 
-                                                <View style={styles.txDateRow}>
-                                                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                                                    <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
-                                                </View>
-
-                                                {isPaymentItem && (
-                                                    <View style={styles.txNoteBox}>
-                                                        <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                                                        <Text style={styles.txNoteText}> Payment received - Balance updated</Text>
-                                                    </View>
-                                                )}
-
-                                                {items.length > 0 && (
-                                                    <View style={styles.itemsSection}>
-                                                        <View style={styles.itemsHeader}>
-                                                            <Ionicons name="cube-outline" size={14} color="#374151" />
-                                                            <Text style={styles.itemsTitle}> Items Purchased:</Text>
-                                                        </View>
-                                                        {items.map((item, idx) => (
-                                                            <View key={idx} style={styles.itemRow}>
-                                                                <View style={styles.itemInfo}>
-                                                                    <Text style={styles.itemName}>{item.name || 'Item'}</Text>
-                                                                    <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+                                                        return (
+                                                            <View key={transaction.id} style={styles.transactionCard}>
+                                                                <View style={styles.txHeader}>
+                                                                    <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#000' : '#EF4444' }]}>
+                                                                        <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment Received' : 'Purchase (Credit)'}</Text>
+                                                                    </View>
+                                                                    <View style={styles.txAmountSection}>
+                                                                        <Text style={[styles.txAmount, { color: isPaymentItem ? '#10B981' : '#EF4444' }]}>
+                                                                            {`${isPaymentItem ? '+' : '-'}\u20b9${parseFloat(transaction.amount || 0).toFixed(2)}`}
+                                                                        </Text>
+                                                                        <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
+                                                                    </View>
                                                                 </View>
-                                                                <View style={styles.itemQtySection}>
-                                                                    <Text style={styles.itemQty}>Qty: {item.quantity || 1}</Text>
-                                                                    <Text style={styles.itemSubtotal}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+
+                                                                <View style={styles.txDateRow}>
+                                                                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                                                                    <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
                                                                 </View>
+
+                                                                {isPaymentItem && (
+                                                                    <View style={styles.txNoteBox}>
+                                                                        <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                                                                        <Text style={styles.txNoteText}> Payment received - Balance updated</Text>
+                                                                    </View>
+                                                                )}
+
+                                                                {items.length > 0 && (
+                                                                    <View style={styles.itemsSection}>
+                                                                        <View style={styles.itemsHeader}>
+                                                                            <Ionicons name="cube-outline" size={14} color="#374151" />
+                                                                            <Text style={styles.itemsTitle}> Items Purchased:</Text>
+                                                                        </View>
+                                                                        {items.map((item, idx) => (
+                                                                            <View key={idx} style={styles.itemRow}>
+                                                                                <View style={styles.itemInfo}>
+                                                                                    <Text style={styles.itemName}>{item.name || 'Item'}</Text>
+                                                                                    <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+                                                                                </View>
+                                                                                <View style={styles.itemQtySection}>
+                                                                                    <Text style={styles.itemQty}>Qty: {item.quantity || 1}</Text>
+                                                                                    <Text style={styles.itemSubtotal}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                                </View>
+                                                                            </View>
+                                                                        ))}
+                                                                        <View style={styles.itemsTotalRow}>
+                                                                            <Text style={styles.itemsTotalLabel}>Total Items: {items.reduce((sum, i) => sum + (i.quantity || 1), 0)}</Text>
+                                                                            <Text style={styles.itemsTotalValue}>Subtotal: {formatCurrency(items.reduce((sum, i) => sum + (i.subtotal || (i.price || 0) * (i.quantity || 1)), 0))}</Text>
+                                                                        </View>
+                                                                    </View>
+                                                                )}
                                                             </View>
-                                                        ))}
-                                                        <View style={styles.itemsTotalRow}>
-                                                            <Text style={styles.itemsTotalLabel}>Total Items: {items.reduce((sum, i) => sum + (i.quantity || 1), 0)}</Text>
-                                                            <Text style={styles.itemsTotalValue}>Subtotal: {formatCurrency(items.reduce((sum, i) => sum + (i.subtotal || (i.price || 0) * (i.quantity || 1)), 0))}</Text>
-                                                        </View>
-                                                    </View>
+                                                        );
+                                                    })
                                                 )}
                                             </View>
-                                        );
-                                    })
-                                )}
-                            </View>
 
-                            <View style={{ height: 20 }} />
-                        </>
-                    )}
-                </ScrollView>
+                                            {/* Pagination Card - Outside transaction card */}
+                                            {totalItems > 0 && (
+                                                <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 16, marginBottom: -10, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6', zIndex: 20, overflow: 'visible' }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, zIndex: 10, overflow: 'visible' }}>
+                                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                                                            Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
+                                                        </Text>
+                                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 10, overflow: 'visible' }}>
+                                                            <Text style={{ fontSize: 13, color: '#6B7280' }}>Show:</Text>
+                                                            <TouchableOpacity
+                                                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, gap: 4 }}
+                                                                onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
+                                                            >
+                                                                <Text style={{ fontSize: 13, color: '#111827', fontWeight: '500' }}>{perPage}</Text>
+                                                                <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
+                                                            </TouchableOpacity>
+                                                            {showPerPageDropdown && (
+                                                                <View style={{ position: 'absolute', bottom: '100%', right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, minWidth: 60, zIndex: 100 }}>
+                                                                    {[5, 10, 25, 50].map(val => (
+                                                                        <TouchableOpacity
+                                                                            key={val}
+                                                                            style={[{ paddingVertical: 8, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }, perPage === val && { backgroundColor: '#EFF6FF' }]}
+                                                                            onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
+                                                                        >
+                                                                            <Text style={[{ fontSize: 13, color: '#374151' }, perPage === val && { color: '#2563EB', fontWeight: '600' }]}>{val}</Text>
+                                                                        </TouchableOpacity>
+                                                                    ))}
+                                                                </View>
+                                                            )}
+                                                        </View>
+                                                    </View>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <TouchableOpacity
+                                                            style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage <= 1 && { opacity: 0.5 }]}
+                                                            onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
+                                                            disabled={currentPage <= 1}
+                                                        >
+                                                            <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                                            <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage <= 1 && { color: '#D1D5DB' }]}>Previous</Text>
+                                                        </TouchableOpacity>
+                                                        <View style={{ alignItems: 'center' }}>
+                                                            <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Page</Text>
+                                                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>{currentPage} of {totalPages}</Text>
+                                                        </View>
+                                                        <TouchableOpacity
+                                                            style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage >= totalPages && { opacity: 0.5 }]}
+                                                            onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
+                                                            disabled={currentPage >= totalPages}
+                                                        >
+                                                            <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage >= totalPages && { color: '#D1D5DB' }]}>Next</Text>
+                                                            <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+
+                                <View style={{ height: 20 }} />
+                            </>
+                        )}
+                    </ScrollView>
+                </TouchableWithoutFeedback>
 
 
                 {showFromPicker && (

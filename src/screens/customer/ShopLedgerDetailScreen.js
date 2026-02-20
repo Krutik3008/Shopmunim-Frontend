@@ -177,6 +177,11 @@ const ShopLedgerDetailScreen = ({
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
+    const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
+
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
@@ -545,6 +550,7 @@ const ShopLedgerDetailScreen = ({
                     keyboardShouldPersistTaps="handled"
                     onScrollBeginDrag={() => {
                         setShowTypeDropdown(false);
+                        setShowPerPageDropdown(false);
                         Keyboard.dismiss();
                     }}
                     refreshControl={
@@ -761,74 +767,142 @@ const ShopLedgerDetailScreen = ({
                                     <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
                                 </View>
 
-                                {filteredTransactions.length === 0 ? (
-                                    <View style={styles.emptyState}>
-                                        <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
-                                        <Text style={styles.emptyText}>No transactions found</Text>
-                                    </View>
-                                ) : (
-                                    filteredTransactions.map((transaction) => {
-                                        const isPaymentItem = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
-                                        const items = transaction.products || transaction.items || [];
-                                        const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
-                                        const subtotal = items.reduce((sum, item) => sum + (item.subtotal || (item.price || 0) * (item.quantity || 1)), 0);
+                                {(() => {
+                                    const totalItems = filteredTransactions.length;
+                                    const totalPages = Math.ceil(totalItems / perPage);
+                                    const startIdx = (currentPage - 1) * perPage;
+                                    const endIdx = Math.min(startIdx + perPage, totalItems);
+                                    const paginatedTx = filteredTransactions.slice(startIdx, endIdx);
 
-                                        return (
-                                            <View key={transaction.id} style={styles.flatTransactionRow}>
-                                                <View style={styles.txHeader}>
-                                                    <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#111827' : '#EF4444' }]}>
-                                                        <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment' : 'Purchase'}</Text>
-                                                    </View>
-                                                    <View style={styles.txAmountSection}>
-                                                        <Text style={[styles.txAmount, { color: isPaymentItem ? '#059669' : '#DC2626' }]}>
-                                                            {`${isPaymentItem ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
-                                                        </Text>
-                                                        <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
-                                                    </View>
+                                    return (
+                                        <>
+                                            {totalItems === 0 ? (
+                                                <View style={styles.emptyState}>
+                                                    <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+                                                    <Text style={styles.emptyText}>No transactions found</Text>
                                                 </View>
+                                            ) : (
+                                                paginatedTx.map((transaction) => {
+                                                    const isPaymentItem = transaction.type === 'debit' || transaction.type === 'payment' || transaction.type === 'CREDIT';
+                                                    const items = transaction.products || transaction.items || [];
+                                                    const totalQuantity = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+                                                    const subtotal = items.reduce((sum, item) => sum + (item.subtotal || (item.price || 0) * (item.quantity || 1)), 0);
 
-                                                {isPaymentItem && (
-                                                    <View style={styles.paymentStatusRow}>
-                                                        <Ionicons name="checkmark-circle" size={16} color="#059669" />
-                                                        <Text style={styles.paymentStatusText}>Payment received - Balance updated</Text>
-                                                    </View>
-                                                )}
-
-                                                <View style={styles.txDateRow}>
-                                                    <Ionicons name="calendar-outline" size={14} color="#6B7280" />
-                                                    <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
-                                                </View>
-
-                                                {items.length > 0 && (
-                                                    <View style={styles.itemsSection}>
-                                                        <View style={styles.itemsHeader}>
-                                                            <Ionicons name="cube-outline" size={14} color="#1E40AF" />
-                                                            <Text style={styles.itemsTitle}> Items Purchased:</Text>
-                                                        </View>
-                                                        {items.map((item, idx) => (
-                                                            <View key={idx} style={styles.itemRow}>
-                                                                <View style={styles.itemInfo}>
-                                                                    <Text style={styles.itemName}>{item.name || 'Item'}</Text>
-                                                                    <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+                                                    return (
+                                                        <View key={transaction.id} style={styles.flatTransactionRow}>
+                                                            <View style={styles.txHeader}>
+                                                                <View style={[styles.txBadge, { backgroundColor: isPaymentItem ? '#111827' : '#EF4444' }]}>
+                                                                    <Text style={styles.txBadgeText}>{isPaymentItem ? 'Payment' : 'Purchase'}</Text>
                                                                 </View>
-                                                                <View style={styles.itemQtySection}>
-                                                                    <View style={styles.qtyBadge}>
-                                                                        <Text style={styles.qtyBadgeText}>Qty: {item.quantity || 1}</Text>
-                                                                    </View>
-                                                                    <Text style={styles.itemSubtotalValue}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                <View style={styles.txAmountSection}>
+                                                                    <Text style={[styles.txAmount, { color: isPaymentItem ? '#059669' : '#DC2626' }]}>
+                                                                        {`${isPaymentItem ? '+' : '-'}₹${parseFloat(transaction.amount || 0).toFixed(2)}`}
+                                                                    </Text>
+                                                                    <Text style={styles.txAmountLabel}>Amount {isPaymentItem ? 'paid' : 'Dues'}</Text>
                                                                 </View>
                                                             </View>
-                                                        ))}
-                                                        <View style={styles.itemsSummary}>
-                                                            <Text style={styles.summaryText}>Total Items: {totalQuantity}</Text>
-                                                            <Text style={styles.summaryText}>Subtotal: {formatCurrency(subtotal)}</Text>
+
+                                                            {isPaymentItem && (
+                                                                <View style={styles.paymentStatusRow}>
+                                                                    <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                                                                    <Text style={styles.paymentStatusText}>Payment received - Balance updated</Text>
+                                                                </View>
+                                                            )}
+
+                                                            <View style={styles.txDateRow}>
+                                                                <Ionicons name="calendar-outline" size={14} color="#6B7280" />
+                                                                <Text style={styles.txDate}>{formatShortDate(transaction.date)}</Text>
+                                                            </View>
+
+                                                            {items.length > 0 && (
+                                                                <View style={styles.itemsSection}>
+                                                                    <View style={styles.itemsHeader}>
+                                                                        <Ionicons name="cube-outline" size={14} color="#1E40AF" />
+                                                                        <Text style={styles.itemsTitle}> Items Purchased:</Text>
+                                                                    </View>
+                                                                    {items.map((item, idx) => (
+                                                                        <View key={idx} style={styles.itemRow}>
+                                                                            <View style={styles.itemInfo}>
+                                                                                <Text style={styles.itemName}>{item.name || 'Item'}</Text>
+                                                                                <Text style={styles.itemPrice}>@ {formatCurrency(item.price || 0)} each</Text>
+                                                                            </View>
+                                                                            <View style={styles.itemQtySection}>
+                                                                                <View style={styles.qtyBadge}>
+                                                                                    <Text style={styles.qtyBadgeText}>Qty: {item.quantity || 1}</Text>
+                                                                                </View>
+                                                                                <Text style={styles.itemSubtotalValue}>{formatCurrency(item.subtotal || (item.price || 0) * (item.quantity || 1))}</Text>
+                                                                            </View>
+                                                                        </View>
+                                                                    ))}
+                                                                    <View style={styles.itemsSummary}>
+                                                                        <Text style={styles.summaryText}>Total Items: {totalQuantity}</Text>
+                                                                        <Text style={styles.summaryText}>Subtotal: {formatCurrency(subtotal)}</Text>
+                                                                    </View>
+                                                                </View>
+                                                            )}
+                                                        </View>
+                                                    );
+                                                })
+                                            )}
+
+                                            {/* Pagination Card */}
+                                            {totalItems > 0 && (
+                                                <View style={styles.paginationCard}>
+                                                    <View style={styles.paginationTopRow}>
+                                                        <Text style={styles.paginationInfo}>
+                                                            Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
+                                                        </Text>
+                                                        <View style={styles.paginationShowRow}>
+                                                            <Text style={styles.paginationShowLabel}>Show:</Text>
+                                                            <TouchableOpacity
+                                                                style={styles.perPageDropdown}
+                                                                onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
+                                                            >
+                                                                <Text style={styles.perPageDropdownText}>{perPage}</Text>
+                                                                <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
+                                                            </TouchableOpacity>
+                                                            {showPerPageDropdown && (
+                                                                <View style={styles.perPageDropdownOptions}>
+                                                                    {[5, 10, 25, 50].map(val => (
+                                                                        <TouchableOpacity
+                                                                            key={val}
+                                                                            style={[styles.perPageOption, perPage === val && styles.perPageOptionActive]}
+                                                                            onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
+                                                                        >
+                                                                            <Text style={[styles.perPageOptionText, perPage === val && styles.perPageOptionTextActive]}>{val}</Text>
+                                                                        </TouchableOpacity>
+                                                                    ))}
+                                                                </View>
+                                                            )}
                                                         </View>
                                                     </View>
-                                                )}
-                                            </View>
-                                        );
-                                    })
-                                )}
+                                                    <View style={styles.paginationBottomRow}>
+                                                        <TouchableOpacity
+                                                            style={[styles.paginationBtn, currentPage <= 1 && styles.paginationBtnDisabled]}
+                                                            onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
+                                                            disabled={currentPage <= 1}
+                                                        >
+                                                            <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                                            <Text style={[styles.paginationBtnText, currentPage <= 1 && styles.paginationBtnTextDisabled]}>Previous</Text>
+                                                        </TouchableOpacity>
+                                                        <View style={styles.paginationCenter}>
+                                                            <Text style={styles.paginationPageLabel}>Page</Text>
+                                                            <Text style={styles.paginationPageNum}>{currentPage} of {totalPages}</Text>
+                                                        </View>
+                                                        <TouchableOpacity
+                                                            style={[styles.paginationBtn, currentPage >= totalPages && styles.paginationBtnDisabled]}
+                                                            onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
+                                                            disabled={currentPage >= totalPages}
+                                                        >
+                                                            <Text style={[styles.paginationBtnText, currentPage >= totalPages && styles.paginationBtnTextDisabled]}>Next</Text>
+                                                            <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </View>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                             </View>
 
                             <View style={{ height: 20 }} />
@@ -1348,6 +1422,28 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: '#1F2937',
     },
+
+    // Pagination styles
+    paginationCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6' },
+    paginationTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    paginationInfo: { fontSize: 13, color: '#6B7280' },
+    paginationShowRow: { flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 10 },
+    paginationShowLabel: { fontSize: 13, color: '#6B7280' },
+    perPageDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
+    perPageDropdownText: { fontSize: 13, color: '#111827', fontWeight: '500' },
+    perPageDropdownOptions: { position: 'absolute', bottom: '100%', right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, minWidth: 60, zIndex: 100 },
+    perPageOption: { paddingVertical: 8, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    perPageOptionActive: { backgroundColor: '#EFF6FF' },
+    perPageOptionText: { fontSize: 13, color: '#374151' },
+    perPageOptionTextActive: { color: '#2563EB', fontWeight: '600' },
+    paginationBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    paginationBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 },
+    paginationBtnDisabled: { opacity: 0.5 },
+    paginationBtnText: { fontSize: 13, color: '#374151', fontWeight: '500' },
+    paginationBtnTextDisabled: { color: '#D1D5DB' },
+    paginationCenter: { alignItems: 'center' },
+    paginationPageLabel: { fontSize: 11, color: '#9CA3AF' },
+    paginationPageNum: { fontSize: 14, fontWeight: '600', color: '#111827' },
 });
 
 export default ShopLedgerDetailScreen;

@@ -92,6 +92,11 @@ const CustomerDashboardScreen = () => {
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeFilterDropdown, setShowTypeFilterDropdown] = useState(false);
 
+    // History pagination state
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyPerPage, setHistoryPerPage] = useState(10);
+    const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
+
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
@@ -736,53 +741,115 @@ const CustomerDashboardScreen = () => {
                 style={styles.tabContent}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                onScrollBeginDrag={() => setShowPerPageDropdown(false)}
             >
                 <Text style={styles.sectionTitle}>Transaction History</Text>
                 <View style={styles.historyList}>
-                    {allTransactions.map((tx, index) => (
-                        <View key={index} style={styles.historyCard}>
-                            <View style={styles.historyTopRow}>
-                                {/* Left Column: Name and Date */}
-                                <View style={styles.historyLeftCol}>
-                                    <Text style={styles.historyShopName}>{tx.shopName}</Text>
-                                    <Text style={styles.historyDate}>{formatDate(tx.date)}</Text>
-                                </View>
+                    {(() => {
+                        const totalItems = allTransactions.length;
+                        const totalPages = Math.ceil(totalItems / historyPerPage);
+                        const startIdx = (historyPage - 1) * historyPerPage;
+                        const endIdx = Math.min(startIdx + historyPerPage, totalItems);
+                        const paginatedTx = allTransactions.slice(startIdx, endIdx);
 
-                                {/* Right Column: Amount and Badge */}
-                                <View style={styles.historyRightCol}>
-                                    <Text style={[
-                                        styles.historyAmount,
-                                        tx.type === 'debit' ? styles.textGreen : styles.textRed
-                                    ]}>
-                                        {formatCurrency(tx.amount, tx.type)}
-                                    </Text>
-                                    <View style={[styles.historyBadge, tx.type === 'debit' ? styles.badgeBlack : styles.badgeRed]}>
-                                        <Text style={styles.historyBadgeText}>
-                                            {tx.type === 'debit' ? 'Payment Made' : 'Credit Taken'}
-                                        </Text>
+                        return (
+                            <>
+                                {paginatedTx.map((tx, index) => (
+                                    <View key={index} style={styles.historyCard}>
+                                        <View style={styles.historyTopRow}>
+                                            <View style={styles.historyLeftCol}>
+                                                <Text style={styles.historyShopName}>{tx.shopName}</Text>
+                                                <Text style={styles.historyDate}>{formatDate(tx.date)}</Text>
+                                            </View>
+                                            <View style={styles.historyRightCol}>
+                                                <Text style={[
+                                                    styles.historyAmount,
+                                                    tx.type === 'debit' ? styles.textGreen : styles.textRed
+                                                ]}>
+                                                    {formatCurrency(tx.amount, tx.type)}
+                                                </Text>
+                                                <View style={[styles.historyBadge, tx.type === 'debit' ? styles.badgeBlack : styles.badgeRed]}>
+                                                    <Text style={styles.historyBadgeText}>
+                                                        {tx.type === 'debit' ? 'Payment Made' : 'Credit Taken'}
+                                                    </Text>
+                                                </View>
+                                            </View>
+                                        </View>
+                                        {tx.products && tx.products.length > 0 && (
+                                            <View style={styles.historyItemsContainer}>
+                                                <Text style={styles.historyLabel}>Items: </Text>
+                                                <Text style={styles.historyValue}>
+                                                    {tx.products.map(p => `${p.product?.name || p.name || 'Item'} x${p.quantity} (₹${p.price || 0})`).join(', ')}
+                                                </Text>
+                                            </View>
+                                        )}
+                                        {tx.note ? (
+                                            <View style={styles.historyNoteRow}>
+                                                <Text style={styles.historyLabel}>Note: </Text>
+                                                <Text style={styles.historyValue}>{tx.note}</Text>
+                                            </View>
+                                        ) : null}
                                     </View>
-                                </View>
-                            </View>
+                                ))}
 
-                            {/* Items Section (Gray Box) */}
-                            {tx.products && tx.products.length > 0 && (
-                                <View style={styles.historyItemsContainer}>
-                                    <Text style={styles.historyLabel}>Items: </Text>
-                                    <Text style={styles.historyValue}>
-                                        {tx.products.map(p => `${p.product?.name || p.name || 'Item'} x${p.quantity} (₹${p.price || 0})`).join(', ')}
-                                    </Text>
-                                </View>
-                            )}
-
-                            {/* Note Section (Text on Card) */}
-                            {tx.note ? (
-                                <View style={styles.historyNoteRow}>
-                                    <Text style={styles.historyLabel}>Note: </Text>
-                                    <Text style={styles.historyValue}>{tx.note}</Text>
-                                </View>
-                            ) : null}
-                        </View>
-                    ))}
+                                {/* Pagination Card */}
+                                {totalItems > 0 && (
+                                    <View style={styles.paginationCard}>
+                                        <View style={styles.paginationTopRow}>
+                                            <Text style={styles.paginationInfo}>
+                                                Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
+                                            </Text>
+                                            <View style={styles.paginationShowRow}>
+                                                <Text style={styles.paginationShowLabel}>Show:</Text>
+                                                <TouchableOpacity
+                                                    style={styles.perPageDropdown}
+                                                    onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
+                                                >
+                                                    <Text style={styles.perPageDropdownText}>{historyPerPage}</Text>
+                                                    <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
+                                                </TouchableOpacity>
+                                                {showPerPageDropdown && (
+                                                    <View style={styles.perPageDropdownOptions}>
+                                                        {[5, 10, 25, 50].map(val => (
+                                                            <TouchableOpacity
+                                                                key={val}
+                                                                style={[styles.perPageOption, historyPerPage === val && styles.perPageOptionActive]}
+                                                                onPress={() => { setHistoryPerPage(val); setHistoryPage(1); setShowPerPageDropdown(false); }}
+                                                            >
+                                                                <Text style={[styles.perPageOptionText, historyPerPage === val && styles.perPageOptionTextActive]}>{val}</Text>
+                                                            </TouchableOpacity>
+                                                        ))}
+                                                    </View>
+                                                )}
+                                            </View>
+                                        </View>
+                                        <View style={styles.paginationBottomRow}>
+                                            <TouchableOpacity
+                                                style={[styles.paginationBtn, historyPage <= 1 && styles.paginationBtnDisabled]}
+                                                onPress={() => { if (historyPage > 1) setHistoryPage(historyPage - 1); }}
+                                                disabled={historyPage <= 1}
+                                            >
+                                                <Ionicons name="chevron-back" size={14} color={historyPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                                <Text style={[styles.paginationBtnText, historyPage <= 1 && styles.paginationBtnTextDisabled]}>Previous</Text>
+                                            </TouchableOpacity>
+                                            <View style={styles.paginationCenter}>
+                                                <Text style={styles.paginationPageLabel}>Page</Text>
+                                                <Text style={styles.paginationPageNum}>{historyPage} of {totalPages}</Text>
+                                            </View>
+                                            <TouchableOpacity
+                                                style={[styles.paginationBtn, historyPage >= totalPages && styles.paginationBtnDisabled]}
+                                                onPress={() => { if (historyPage < totalPages) setHistoryPage(historyPage + 1); }}
+                                                disabled={historyPage >= totalPages}
+                                            >
+                                                <Text style={[styles.paginationBtnText, historyPage >= totalPages && styles.paginationBtnTextDisabled]}>Next</Text>
+                                                <Ionicons name="chevron-forward" size={14} color={historyPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                            </TouchableOpacity>
+                                        </View>
+                                    </View>
+                                )}
+                            </>
+                        );
+                    })()}
                 </View>
                 <View style={{ height: 10 }} />
             </ScrollView >
@@ -861,7 +928,7 @@ const CustomerDashboardScreen = () => {
         switch (activeTab) {
             case 'ledger': return <LedgerContent />;
             case 'payments': return <PaymentsContent />;
-            case 'history': return <HistoryContent />;
+            case 'history': return HistoryContent();
             case 'account': return <AccountContent />;
             default: return <LedgerContent />;
         }
@@ -1167,7 +1234,27 @@ const styles = StyleSheet.create({
     toastIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center' },
     toastText: { fontSize: 14, fontWeight: '500', color: '#1F2937' },
 
-
+    // Pagination styles
+    paginationCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 16, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6' },
+    paginationTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+    paginationInfo: { fontSize: 13, color: '#6B7280' },
+    paginationShowRow: { flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 10 },
+    paginationShowLabel: { fontSize: 13, color: '#6B7280' },
+    perPageDropdown: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, gap: 4 },
+    perPageDropdownText: { fontSize: 13, color: '#111827', fontWeight: '500' },
+    perPageDropdownOptions: { position: 'absolute', bottom: '100%', right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, minWidth: 60, zIndex: 100 },
+    perPageOption: { paddingVertical: 8, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    perPageOptionActive: { backgroundColor: '#EFF6FF' },
+    perPageOptionText: { fontSize: 13, color: '#374151' },
+    perPageOptionTextActive: { color: '#2563EB', fontWeight: '600' },
+    paginationBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    paginationBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 },
+    paginationBtnDisabled: { opacity: 0.5 },
+    paginationBtnText: { fontSize: 13, color: '#374151', fontWeight: '500' },
+    paginationBtnTextDisabled: { color: '#D1D5DB' },
+    paginationCenter: { alignItems: 'center' },
+    paginationPageLabel: { fontSize: 11, color: '#9CA3AF' },
+    paginationPageNum: { fontSize: 14, fontWeight: '600', color: '#111827' },
 });
 
 export default CustomerDashboardScreen;

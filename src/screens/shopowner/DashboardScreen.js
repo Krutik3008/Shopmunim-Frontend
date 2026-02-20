@@ -148,7 +148,13 @@ const ShopOwnerDashboardScreen = () => {
 
     // Add Transaction State
     const [transactions, setTransactions] = useState([]);
+    const [addingTransaction, setAddingTransaction] = useState(false);
     const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(2);
+    const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
 
     // Add Product State
     const [products, setProducts] = useState([]);
@@ -425,6 +431,7 @@ const ShopOwnerDashboardScreen = () => {
 
     const onRefresh = () => {
         setRefreshing(true);
+        setCurrentPage(1);
         loadShops();
         // If we have a current shop, refresh its stats and data explicitly too
         if (user?.shop_id || (shops.length > 0 && shops[0].id)) {
@@ -832,6 +839,12 @@ const ShopOwnerDashboardScreen = () => {
             );
         }
 
+        const totalItems = transactions.length;
+        const totalPages = Math.ceil(totalItems / perPage);
+        const startIdx = (currentPage - 1) * perPage;
+        const endIdx = Math.min(startIdx + perPage, totalItems);
+        const paginatedTx = transactions.slice(startIdx, endIdx);
+
         return (
             <ScrollView style={styles.tabContent} contentContainerStyle={styles.dashboardContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -854,11 +867,69 @@ const ShopOwnerDashboardScreen = () => {
                         <Text style={styles.tabEmptySubtext}>Record your first transaction!</Text>
                     </View>
                 ) : (
-                    <View style={styles.transactionsList}>
-                        {transactions.map((t) => (
-                            <TransactionCard key={t.id} transaction={t} />
-                        ))}
-                    </View>
+                    <>
+                        <View style={styles.transactionsList}>
+                            {paginatedTx.map((t) => (
+                                <TransactionCard key={t.id} transaction={t} />
+                            ))}
+                        </View>
+
+                        {/* Pagination Card */}
+                        {totalItems > 0 && (
+                            <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 16, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6' }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                                    <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                                        Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
+                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 10 }}>
+                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>Show:</Text>
+                                        <TouchableOpacity
+                                            style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, gap: 4 }}
+                                            onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
+                                        >
+                                            <Text style={{ fontSize: 13, color: '#111827', fontWeight: '500' }}>{perPage}</Text>
+                                            <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
+                                        </TouchableOpacity>
+                                        {showPerPageDropdown && (
+                                            <View style={{ position: 'absolute', bottom: '100%', right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, minWidth: 60, zIndex: 100 }}>
+                                                {[5, 10, 25, 50].map(val => (
+                                                    <TouchableOpacity
+                                                        key={val}
+                                                        style={[{ paddingVertical: 8, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }, perPage === val && { backgroundColor: '#EFF6FF' }]}
+                                                        onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
+                                                    >
+                                                        <Text style={[{ fontSize: 13, color: '#374151' }, perPage === val && { color: '#2563EB', fontWeight: '600' }]}>{val}</Text>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </View>
+                                        )}
+                                    </View>
+                                </View>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <TouchableOpacity
+                                        style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage <= 1 && { opacity: 0.5 }]}
+                                        onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
+                                        disabled={currentPage <= 1}
+                                    >
+                                        <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                        <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage <= 1 && { color: '#D1D5DB' }]}>Previous</Text>
+                                    </TouchableOpacity>
+                                    <View style={{ alignItems: 'center' }}>
+                                        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Page</Text>
+                                        <Text style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>{currentPage} of {totalPages}</Text>
+                                    </View>
+                                    <TouchableOpacity
+                                        style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage >= totalPages && { opacity: 0.5 }]}
+                                        onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
+                                        disabled={currentPage >= totalPages}
+                                    >
+                                        <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage >= totalPages && { color: '#D1D5DB' }]}>Next</Text>
+                                        <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+                    </>
                 )}
 
                 {/* Spacer for bottom nav */}
@@ -1133,7 +1204,12 @@ const ShopOwnerDashboardScreen = () => {
             {!isKeyboardVisible && (
                 <ShopBottomNav
                     activeTab={activeTab}
-                    onTabPress={setActiveTab}
+                    onTabPress={(tab) => {
+                        if (tab !== activeTab) {
+                            setCurrentPage(1);
+                        }
+                        setActiveTab(tab);
+                    }}
                 />
             )}
 

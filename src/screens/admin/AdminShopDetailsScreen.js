@@ -44,8 +44,9 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
     const [showToPicker, setShowToPicker] = useState(false);
 
     // Pagination
-    const [currentPage, setCurrentPage] = useState(0);
-    const pageSize = 20;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(2);
+    const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
 
     // Autocomplete State
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -203,8 +204,11 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
     };
 
     const filteredCustomers = filterCustomers();
-    const paginatedCustomers = filteredCustomers.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
-    const totalPages = Math.ceil(filteredCustomers.length / pageSize);
+    const totalItems = filteredCustomers.length;
+    const totalPages = Math.ceil(totalItems / perPage);
+    const startIdx = (currentPage - 1) * perPage;
+    const endIdx = Math.min(startIdx + perPage, totalItems);
+    const paginatedCustomers = filteredCustomers.slice(startIdx, endIdx);
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -338,219 +342,259 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                 colors={['#4c1d95', '#2563EB']}
                 style={styles.gradient}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    onScrollBeginDrag={() => {
-                        setShowSuggestions(false);
-                        Keyboard.dismiss();
-                    }}
-                >
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <TouchableOpacity onPress={onBack} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={24} color="#fff" />
-                        </TouchableOpacity>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.headerTitle} numberOfLines={1}>{shopName || 'Shop Details'}'s Shop Customers</Text>
-                        </View>
-                    </View>
-
-                    {/* Stats Grid 2x2 */}
-                    <View style={styles.statsContainer}>
-                        <View style={styles.statsRow}>
-                            <StatsCard
-                                icon="people-outline"
-                                title="Customers"
-                                value={(fromDate || toDate) ? stats.periodActiveCustomers : stats.totalCustomers}
-                                subtitle={(fromDate || toDate) ? 'Active This Period' : 'Total Registered'}
-                                color="#2563EB"
-                                iconBg="#EFF6FF"
-                            />
-                            <StatsCard
-                                icon="swap-horizontal-outline"
-                                title="Transactions"
-                                value={stats.totalTransactions}
-                                subtitle={(fromDate || toDate) ? 'Filtered' : 'All time'}
-                                color="#7C3AED"
-                                iconBg="#F3E8FF"
-                            />
-                        </View>
-                        <View style={styles.statsRow}>
-                            <StatsCard
-                                icon="wallet-outline"
-                                title="₹ Amount"
-                                value={`₹${(stats.totalSales || 0).toFixed(0)}`}
-                                subtitle={(fromDate || toDate) ? 'Sales (Filtered)' : 'Total Sales'}
-                                color="#059669"
-                                iconBg="#D1FAE5"
-                            />
-                            <StatsCard
-                                icon="trending-down-outline"
-                                title="With Dues"
-                                value={stats.withDues}
-                                subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
-                                color="#DC2626"
-                                iconBg="#FEE2E2"
-                            />
-                        </View>
-                    </View>
-
-                    {/* Date Range Filter */}
-                    <View style={styles.filterCard}>
-                        <View style={styles.filterHeader}>
-                            <View style={styles.filterTitleRow}>
-                                <Ionicons name="filter-outline" size={18} color="#374151" />
-                                <Text style={styles.filterTitle}>Filter by Date</Text>
+                <TouchableWithoutFeedback onPress={() => { setShowPerPageDropdown(false); setShowSuggestions(false); Keyboard.dismiss(); }}>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        onScrollBeginDrag={() => {
+                            setShowSuggestions(false);
+                            setShowPerPageDropdown(false);
+                            Keyboard.dismiss();
+                        }}
+                    >
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <TouchableOpacity onPress={onBack} style={styles.backButton}>
+                                <Ionicons name="arrow-back" size={24} color="#fff" />
+                            </TouchableOpacity>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.headerTitle} numberOfLines={1}>{shopName || 'Shop Details'}'s Shop Customers</Text>
                             </View>
+                        </View>
+
+                        {/* Stats Grid 2x2 */}
+                        <View style={styles.statsContainer}>
+                            <View style={styles.statsRow}>
+                                <StatsCard
+                                    icon="people-outline"
+                                    title="Customers"
+                                    value={(fromDate || toDate) ? stats.periodActiveCustomers : stats.totalCustomers}
+                                    subtitle={(fromDate || toDate) ? 'Active This Period' : 'Total Registered'}
+                                    color="#2563EB"
+                                    iconBg="#EFF6FF"
+                                />
+                                <StatsCard
+                                    icon="swap-horizontal-outline"
+                                    title="Transactions"
+                                    value={stats.totalTransactions}
+                                    subtitle={(fromDate || toDate) ? 'Filtered' : 'All time'}
+                                    color="#7C3AED"
+                                    iconBg="#F3E8FF"
+                                />
+                            </View>
+                            <View style={styles.statsRow}>
+                                <StatsCard
+                                    icon="wallet-outline"
+                                    title="₹ Amount"
+                                    value={`₹${(stats.totalSales || 0).toFixed(0)}`}
+                                    subtitle={(fromDate || toDate) ? 'Sales (Filtered)' : 'Total Sales'}
+                                    color="#059669"
+                                    iconBg="#D1FAE5"
+                                />
+                                <StatsCard
+                                    icon="trending-down-outline"
+                                    title="With Dues"
+                                    value={stats.withDues}
+                                    subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
+                                    color="#DC2626"
+                                    iconBg="#FEE2E2"
+                                />
+                            </View>
+                        </View>
+
+                        {/* Date Range Filter */}
+                        <View style={styles.filterCard}>
+                            <View style={styles.filterHeader}>
+                                <View style={styles.filterTitleRow}>
+                                    <Ionicons name="filter-outline" size={18} color="#374151" />
+                                    <Text style={styles.filterTitle}>Filter by Date</Text>
+                                </View>
+                                {(fromDate || toDate) && (
+                                    <TouchableOpacity onPress={clearDateFilters} style={styles.clearBtn}>
+                                        <Ionicons name="close-circle-outline" size={16} color="#EF4444" />
+                                        <Text style={styles.clearBtnText}>Clear</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+
+                            <View style={styles.dateFiltersRow}>
+                                <View style={styles.dateFilterItem}>
+                                    <Text style={styles.filterLabel}>From Date</Text>
+                                    <TouchableOpacity
+                                        style={styles.dateInputContainer}
+                                        onPress={() => setShowFromPicker(true)}
+                                    >
+                                        <Text style={[styles.dateInput, !fromDate && { color: '#9CA3AF' }]}>
+                                            {fromDate ? formatDateDisplay(fromDate) : 'dd-mm-yyyy'}
+                                        </Text>
+                                        <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                </View>
+                                <View style={styles.dateFilterItem}>
+                                    <Text style={styles.filterLabel}>To Date</Text>
+                                    <TouchableOpacity
+                                        style={styles.dateInputContainer}
+                                        onPress={() => setShowToPicker(true)}
+                                    >
+                                        <Text style={[styles.dateInput, !toDate && { color: '#9CA3AF' }]}>
+                                            {toDate ? formatDateDisplay(toDate) : 'dd-mm-yyyy'}
+                                        </Text>
+                                        <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
                             {(fromDate || toDate) && (
-                                <TouchableOpacity onPress={clearDateFilters} style={styles.clearBtn}>
-                                    <Ionicons name="close-circle-outline" size={16} color="#EF4444" />
-                                    <Text style={styles.clearBtnText}>Clear</Text>
-                                </TouchableOpacity>
+                                <View style={styles.activeFilterInfo}>
+                                    <Ionicons name="information-circle-outline" size={14} color="#2563EB" />
+                                    <Text style={styles.activeFilterText}>
+                                        Showing transactions {fromDate ? `from ${formatDateDisplay(fromDate)}` : ''}{fromDate && toDate ? ' ' : ''}{toDate ? `to ${formatDateDisplay(toDate)}` : ''}
+                                    </Text>
+                                </View>
                             )}
                         </View>
 
-                        <View style={styles.dateFiltersRow}>
-                            <View style={styles.dateFilterItem}>
-                                <Text style={styles.filterLabel}>From Date</Text>
-                                <TouchableOpacity
-                                    style={styles.dateInputContainer}
-                                    onPress={() => setShowFromPicker(true)}
-                                >
-                                    <Text style={[styles.dateInput, !fromDate && { color: '#9CA3AF' }]}>
-                                        {fromDate ? formatDateDisplay(fromDate) : 'dd-mm-yyyy'}
-                                    </Text>
-                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                </TouchableOpacity>
-                            </View>
-                            <View style={styles.dateFilterItem}>
-                                <Text style={styles.filterLabel}>To Date</Text>
-                                <TouchableOpacity
-                                    style={styles.dateInputContainer}
-                                    onPress={() => setShowToPicker(true)}
-                                >
-                                    <Text style={[styles.dateInput, !toDate && { color: '#9CA3AF' }]}>
-                                        {toDate ? formatDateDisplay(toDate) : 'dd-mm-yyyy'}
-                                    </Text>
-                                    <Ionicons name="calendar-outline" size={16} color="#9CA3AF" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
+                        {/* Bottom Content Area */}
+                        <View style={styles.bottomSheet}>
 
-                        {(fromDate || toDate) && (
-                            <View style={styles.activeFilterInfo}>
-                                <Ionicons name="information-circle-outline" size={14} color="#2563EB" />
-                                <Text style={styles.activeFilterText}>
-                                    Showing transactions {fromDate ? `from ${formatDateDisplay(fromDate)}` : ''}{fromDate && toDate ? ' ' : ''}{toDate ? `to ${formatDateDisplay(toDate)}` : ''}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
+                            {/* Search Card */}
+                            <View style={[styles.searchCard, { zIndex: 10 }]}>
+                                <View style={styles.searchHeader}>
+                                    <Ionicons name="people-outline" size={20} color="#111827" />
+                                    <Text style={styles.searchTitle}>Search Customers</Text>
+                                </View>
 
-                    {/* Bottom Content Area */}
-                    <View style={styles.bottomSheet}>
+                                <View style={styles.searchContainerRelative}>
+                                    <View style={styles.searchInputContainer}>
+                                        <Ionicons name="search-outline" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
+                                        <TextInput
+                                            style={styles.searchInput}
+                                            placeholder="Search customers..."
+                                            placeholderTextColor="#9CA3AF"
+                                            value={search}
+                                            onChangeText={setSearch}
+                                            onFocus={() => {
+                                                setShowSuggestions(true);
+                                            }}
+                                            onBlur={() => {
+                                                setTimeout(() => setShowSuggestions(false), 200);
+                                            }}
+                                        />
+                                        {search.length > 0 && (
+                                            <TouchableOpacity onPress={() => { setSearch(''); setShowSuggestions(false); }}>
+                                                <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
 
-                        {/* Search Card */}
-                        <View style={[styles.searchCard, { zIndex: 10 }]}>
-                            <View style={styles.searchHeader}>
-                                <Ionicons name="people-outline" size={20} color="#111827" />
-                                <Text style={styles.searchTitle}>Search Customers</Text>
-                            </View>
-
-                            <View style={styles.searchContainerRelative}>
-                                <View style={styles.searchInputContainer}>
-                                    <Ionicons name="search-outline" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
-                                    <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Search customers..."
-                                        placeholderTextColor="#9CA3AF"
-                                        value={search}
-                                        onChangeText={setSearch}
-                                        onFocus={() => {
-                                            setShowSuggestions(true);
-                                        }}
-                                        onBlur={() => {
-                                            setTimeout(() => setShowSuggestions(false), 200);
-                                        }}
-                                    />
-                                    {search.length > 0 && (
-                                        <TouchableOpacity onPress={() => { setSearch(''); setShowSuggestions(false); }}>
-                                            <Ionicons name="close-circle" size={18} color="#9CA3AF" />
-                                        </TouchableOpacity>
+                                    {/* Autocomplete Dropdown */}
+                                    {showSuggestions && suggestions.length > 0 && (
+                                        <View style={styles.suggestionsDropdown}>
+                                            {suggestions.map((item, index) => (
+                                                <TouchableOpacity
+                                                    key={`${item.id}-${index}`}
+                                                    style={styles.suggestionItem}
+                                                    onPress={() => handleSelectSuggestion(item)}
+                                                >
+                                                    <View>
+                                                        <Text style={styles.suggestionName}>{item.name}</Text>
+                                                        <Text style={styles.suggestionPhone}>{item.phone}</Text>
+                                                    </View>
+                                                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                                                </TouchableOpacity>
+                                            ))}
+                                        </View>
                                     )}
                                 </View>
 
-                                {/* Autocomplete Dropdown */}
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <View style={styles.suggestionsDropdown}>
-                                        {suggestions.map((item, index) => (
+                                <View style={styles.resultsRow}>
+                                    <Text style={styles.resultsText}>
+                                        Showing {paginatedCustomers.length} of {filteredCustomers.length} customers
+                                    </Text>
+                                    <TouchableOpacity onPress={() => { setLoading(true); fetchData(); }} style={styles.refreshBtn}>
+                                        <Text style={styles.refreshText}>Refresh Data</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+
+                            {/* List */}
+                            {loading && !refreshing ? (
+                                <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+                            ) : (
+                                <View style={styles.listContainer}>
+                                    {paginatedCustomers.map((item, index) => (
+                                        <View key={`${item.id}-${index}`}>
+                                            {renderCustomerItem({ item })}
+                                        </View>
+                                    ))}
+                                    {paginatedCustomers.length === 0 && (
+                                        <Text style={styles.emptyText}>No customers found.</Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Pagination Card */}
+                            {totalItems > 0 && (
+                                <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: -5, marginBottom: 16, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6', zIndex: 20, overflow: 'visible' }}>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, zIndex: 10, overflow: 'visible' }}>
+                                        <Text style={{ fontSize: 13, color: '#6B7280' }}>
+                                            Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} customers</Text>
+                                        </Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, position: 'relative', zIndex: 10, overflow: 'visible' }}>
+                                            <Text style={{ fontSize: 13, color: '#6B7280' }}>Show:</Text>
                                             <TouchableOpacity
-                                                key={`${item.id}-${index}`}
-                                                style={styles.suggestionItem}
-                                                onPress={() => handleSelectSuggestion(item)}
+                                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6, gap: 4 }}
+                                                onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
                                             >
-                                                <View>
-                                                    <Text style={styles.suggestionName}>{item.name}</Text>
-                                                    <Text style={styles.suggestionPhone}>{item.phone}</Text>
-                                                </View>
-                                                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                                                <Text style={{ fontSize: 13, color: '#111827', fontWeight: '500' }}>{perPage}</Text>
+                                                <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
                                             </TouchableOpacity>
-                                        ))}
+                                            {showPerPageDropdown && (
+                                                <View style={{ position: 'absolute', bottom: '100%', right: 0, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginBottom: 4, elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, minWidth: 60, zIndex: 100 }}>
+                                                    {[5, 10, 25, 50].map(val => (
+                                                        <TouchableOpacity
+                                                            key={val}
+                                                            style={[{ paddingVertical: 8, paddingHorizontal: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }, perPage === val && { backgroundColor: '#EFF6FF' }]}
+                                                            onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
+                                                        >
+                                                            <Text style={[{ fontSize: 13, color: '#374151' }, perPage === val && { color: '#2563EB', fontWeight: '600' }]}>{val}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            )}
+                                        </View>
                                     </View>
-                                )}
-                            </View>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <TouchableOpacity
+                                            style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage <= 1 && { opacity: 0.5 }]}
+                                            onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
+                                            disabled={currentPage <= 1}
+                                        >
+                                            <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                            <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage <= 1 && { color: '#D1D5DB' }]}>Previous</Text>
+                                        </TouchableOpacity>
+                                        <View style={{ alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 11, color: '#9CA3AF' }}>Page</Text>
+                                            <Text style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>{currentPage} of {totalPages}</Text>
+                                        </View>
+                                        <TouchableOpacity
+                                            style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, gap: 4 }, currentPage >= totalPages && { opacity: 0.5 }]}
+                                            onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
+                                            disabled={currentPage >= totalPages}
+                                        >
+                                            <Text style={[{ fontSize: 13, color: '#374151', fontWeight: '500' }, currentPage >= totalPages && { color: '#D1D5DB' }]}>Next</Text>
+                                            <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            )}
 
-                            <View style={styles.resultsRow}>
-                                <Text style={styles.resultsText}>
-                                    Showing {paginatedCustomers.length} of {filteredCustomers.length} customers
-                                </Text>
-                                <TouchableOpacity onPress={() => { setLoading(true); fetchData(); }} style={styles.refreshBtn}>
-                                    <Text style={styles.refreshText}>Refresh Data</Text>
-                                </TouchableOpacity>
-                            </View>
+                            <View />
                         </View>
-
-
-                        {/* List */}
-                        {loading && !refreshing ? (
-                            <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
-                        ) : (
-                            <View style={styles.listContainer}>
-                                {paginatedCustomers.map((item, index) => (
-                                    <View key={`${item.id}-${index}`}>
-                                        {renderCustomerItem({ item })}
-                                    </View>
-                                ))}
-                                {paginatedCustomers.length === 0 && (
-                                    <Text style={styles.emptyText}>No customers found.</Text>
-                                )}
-                            </View>
-                        )}
-
-                        {/* Pagination */}
-                        {totalPages > 1 && (
-                            <View style={styles.paginationRow}>
-                                <TouchableOpacity
-                                    disabled={currentPage === 0}
-                                    onPress={() => setCurrentPage(c => Math.max(0, c - 1))}
-                                >
-                                    <Text style={[styles.pageBtn, currentPage === 0 && styles.disabledText]}>Prev</Text>
-                                </TouchableOpacity>
-                                <Text style={styles.pageText}>Page {currentPage + 1}</Text>
-                                <TouchableOpacity
-                                    disabled={currentPage >= totalPages - 1}
-                                    onPress={() => setCurrentPage(c => Math.min(totalPages - 1, c + 1))}
-                                >
-                                    <Text style={[styles.pageBtn, currentPage >= totalPages - 1 && styles.disabledText]}>Next</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-
-                        <View />
-                    </View>
-                </ScrollView>
+                    </ScrollView>
+                </TouchableWithoutFeedback>
 
                 {showFromPicker && (
                     <DateTimePicker
