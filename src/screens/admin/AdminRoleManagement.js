@@ -201,7 +201,7 @@ const AdminRoleManagement = () => {
     return (
         <View style={styles.container}>
             <ScrollView
-                contentContainerStyle={{ paddingBottom: 20 }}
+                contentContainerStyle={{ paddingBottom: 30 }}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                 }

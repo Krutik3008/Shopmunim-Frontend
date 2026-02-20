@@ -344,7 +344,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
             >
                 <TouchableWithoutFeedback onPress={() => { setShowPerPageDropdown(false); setShowSuggestions(false); Keyboard.dismiss(); }}>
                     <ScrollView
-                        contentContainerStyle={styles.scrollContent}
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: 30 }]}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         onScrollBeginDrag={() => {

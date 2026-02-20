@@ -501,7 +501,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             <SafeAreaView>
                 <TouchableWithoutFeedback onPress={() => { setShowTypeDropdown(false); setShowPerPageDropdown(false); Keyboard.dismiss(); }}>
                     <ScrollView
-                        contentContainerStyle={styles.scrollContent}
+                        contentContainerStyle={[styles.scrollContent, { paddingBottom: 30 }]}
                         keyboardShouldPersistTaps="handled"
                         onScrollBeginDrag={() => {
                             setShowTypeDropdown(false);
