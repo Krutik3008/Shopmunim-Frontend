@@ -49,8 +49,9 @@ const AdminCustomerManagement = () => {
         setShowPageSizeDropdown(false);
     };
 
-    // Filter Modal State
-    const [showFilterModal, setShowFilterModal] = useState(false);
+    // Filter State
+    const [showShopDropdown, setShowShopDropdown] = useState(false);
+    const [shopSearch, setShopSearch] = useState('');
 
     useEffect(() => {
         fetchData();
@@ -116,28 +117,6 @@ const AdminCustomerManagement = () => {
         }
     };
 
-    // Autocomplete State
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [suggestions, setSuggestions] = useState([]);
-
-    useEffect(() => {
-        let matches = [];
-        if (search.trim()) {
-            const searchLower = search.toLowerCase();
-            matches = customers.filter(c =>
-                c.name?.toLowerCase().includes(searchLower) ||
-                c.phone?.includes(search)
-            );
-        } else {
-            matches = customers;
-        }
-        setSuggestions(matches.slice(0, 50));
-    }, [search, customers]);
-
-    const handleSelectSuggestion = (customer) => {
-        setSearch(customer.name);
-        setShowSuggestions(false);
-    };
 
     const filterCustomers = () => {
         let filtered = [...customers];
@@ -291,267 +270,265 @@ const AdminCustomerManagement = () => {
     );
 
     return (
-        <View style={styles.container}>
-            <LinearGradient
-                colors={['#4c1d95', '#2563EB']}
-                style={styles.gradient}
-            >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    onScrollBeginDrag={() => {
-                        setShowPageSizeDropdown(false);
-                        setShowSuggestions(false);
-                        Keyboard.dismiss();
-                    }}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
-                    }
+        <TouchableWithoutFeedback onPress={() => {
+            setShowShopDropdown(false);
+            setShowPageSizeDropdown(false);
+            Keyboard.dismiss();
+        }}>
+            <View style={styles.container}>
+                <LinearGradient
+                    colors={['#4c1d95', '#2563EB']}
+                    style={styles.gradient}
                 >
-                    {/* Header */}
-                    <View style={styles.header}>
-                        <Text style={styles.headerTitle}>Customer Analytics</Text>
-                        <Text style={styles.headerSubtitle}>View and manage customers across all shops</Text>
-                    </View>
-
-                    {/* Stats Stack */}
-                    <View style={styles.statsContainer}>
-                        <StatsCard
-                            icon="people-outline"
-                            title="Customers"
-                            value={stats.totalCustomers}
-                            subtext="Total Registered"
-                            color="#2563EB"
-                            iconBg="#EFF6FF"
-                        />
-                        <StatsCard
-                            icon="storefront-outline"
-                            title="Active Shops"
-                            value={stats.activeShops}
-                            subtext="On Platform"
-                            color="#059669"
-                            iconBg="#D1FAE5"
-                        />
-                        <StatsCard
-                            icon="trending-down-outline"
-                            title="With Dues"
-                            value={stats.withDues}
-                            subtext="Pending Payments"
-                            color="#DC2626"
-                            iconBg="#FEE2E2"
-                        />
-                        <StatsCard
-                            icon="swap-horizontal-outline"
-                            title="Transactions"
-                            value={stats.totalTransactions}
-                            subtext="All time"
-                            color="#7C3AED"
-                            iconBg="#F3E8FF"
-                        />
-                    </View>
-
-                    {/* Bottom Content Area */}
-                    <View style={styles.bottomSheet}>
-
-                        {/* Search Card */}
-                        <View style={[styles.searchCard, { zIndex: 10 }]}>
-                            <View style={styles.searchHeader}>
-                                <Ionicons name="people-outline" size={20} color="#111827" />
-                                <Text style={styles.searchTitle}>Search Customers</Text>
-                            </View>
-
-                            <View style={styles.searchContainerRelative}>
-                                <View style={styles.searchInputContainer}>
-                                    <Ionicons name="search-outline" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
-                                    <TextInput
-                                        style={styles.searchInput}
-                                        placeholder="Search customers..."
-                                        placeholderTextColor="#9CA3AF"
-                                        value={search}
-                                        onChangeText={setSearch}
-                                        onFocus={() => {
-                                            setShowSuggestions(true);
-                                        }}
-                                        onBlur={() => {
-                                            setTimeout(() => setShowSuggestions(false), 200);
-                                        }}
-                                    />
-                                    {search.length > 0 && (
-                                        <TouchableOpacity onPress={() => { setSearch(''); setShowSuggestions(false); }}>
-                                            <Ionicons name="close-circle" size={18} color="#9CA3AF" />
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-
-                                {/* Autocomplete Dropdown */}
-                                {showSuggestions && suggestions.length > 0 && (
-                                    <View style={styles.suggestionsDropdown}>
-                                        {suggestions.map((item, index) => (
-                                            <TouchableOpacity
-                                                key={`${item.id}-${index}`}
-                                                style={styles.suggestionItem}
-                                                onPress={() => handleSelectSuggestion(item)}
-                                            >
-                                                <View>
-                                                    <Text style={styles.suggestionName}>{item.name}</Text>
-                                                    <Text style={styles.suggestionPhone}>{item.phone}</Text>
-                                                </View>
-                                                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                                            </TouchableOpacity>
-                                        ))}
-                                    </View>
-                                )}
-                            </View>
-
-                            <TouchableOpacity
-                                style={styles.shopFilterBtn}
-                                onPress={() => setShowFilterModal(true)}
-                            >
-                                <Text style={styles.shopFilterText}>
-                                    {selectedShop === 'all' ? 'All Shops' : shops.find(s => s.id === selectedShop)?.name || 'Selected Shop'}
-                                </Text>
-                                <Ionicons name="chevron-down" size={16} color="#6B7280" />
-                            </TouchableOpacity>
-
-                            <View style={styles.resultsRow}>
-                                <Text style={styles.resultsText}>
-                                    Showing {paginatedCustomers.length} of {filteredCustomers.length} customers
-                                </Text>
-                                <TouchableOpacity onPress={() => { setLoading(true); fetchData(); }} style={styles.refreshBtn}>
-                                    <Text style={styles.refreshText}>Refresh Data</Text>
-                                </TouchableOpacity>
-                            </View>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        showsVerticalScrollIndicator={false}
+                        keyboardShouldPersistTaps="handled"
+                        onScrollBeginDrag={() => {
+                            setShowPageSizeDropdown(false);
+                            setShowShopDropdown(false);
+                            Keyboard.dismiss();
+                        }}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />
+                        }
+                    >
+                        {/* Header */}
+                        <View style={styles.header}>
+                            <Text style={styles.headerTitle}>Customer Analytics</Text>
+                            <Text style={styles.headerSubtitle}>View and manage customers across all shops</Text>
                         </View>
 
+                        {/* Stats Stack */}
+                        <View style={styles.statsContainer}>
+                            <StatsCard
+                                icon="people-outline"
+                                title="Customers"
+                                value={stats.totalCustomers}
+                                subtext="Total Registered"
+                                color="#2563EB"
+                                iconBg="#EFF6FF"
+                            />
+                            <StatsCard
+                                icon="storefront-outline"
+                                title="Active Shops"
+                                value={stats.activeShops}
+                                subtext="On Platform"
+                                color="#059669"
+                                iconBg="#D1FAE5"
+                            />
+                            <StatsCard
+                                icon="trending-down-outline"
+                                title="With Dues"
+                                value={stats.withDues}
+                                subtext="Pending Payments"
+                                color="#DC2626"
+                                iconBg="#FEE2E2"
+                            />
+                            <StatsCard
+                                icon="swap-horizontal-outline"
+                                title="Transactions"
+                                value={stats.totalTransactions}
+                                subtext="All time"
+                                color="#7C3AED"
+                                iconBg="#F3E8FF"
+                            />
+                        </View>
 
-                        {/* List */}
-                        {loading && !refreshing ? (
-                            <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
-                        ) : (
-                            <View style={styles.listContainer}>
-                                {paginatedCustomers.map((item, index) => (
-                                    <View key={`${item.id}-${index}`}>
-                                        {renderCustomerItem({ item })}
-                                    </View>
-                                ))}
-                                {paginatedCustomers.length === 0 && (
-                                    <Text style={styles.emptyText}>No customers found.</Text>
-                                )}
-                            </View>
-                        )}
+                        {/* Bottom Content Area */}
+                        <View style={styles.bottomSheet}>
 
-                        {/* Pagination */}
-                        {/* Pagination - Advanced */}
-                        <View style={styles.paginationContainer}>
-                            <View style={styles.paginationTopRow}>
-                                <Text style={styles.paginationInfoText}>
-                                    Showing {paginatedCustomers.length === 0 ? 0 : currentPage * pageSize + 1} to{' '}
-                                    {Math.min((currentPage + 1) * pageSize, filteredCustomers.length)} of{' '}
-                                    <Text style={styles.paginationInfoBold}>{filteredCustomers.length} customers</Text>
-                                </Text>
+                            {/* Search Card */}
+                            <View style={[styles.searchCard, { zIndex: 10 }]}>
+                                <View style={styles.searchHeader}>
+                                    <Ionicons name="people-outline" size={20} color="#111827" />
+                                    <Text style={styles.searchTitle}>Search Customers</Text>
+                                </View>
 
-                                <View style={styles.pageSizeSelector}>
-                                    <Text style={styles.pageSizeLabel}>Show:</Text>
-                                    <View>
-                                        <TouchableOpacity
-                                            style={styles.pageSizeDropdownButton}
-                                            onPress={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
-                                        >
-                                            <Text style={styles.pageSizeDropdownText}>{pageSize}</Text>
-                                            <Ionicons name={showPageSizeDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#374151" />
-                                        </TouchableOpacity>
-                                        {showPageSizeDropdown && (
-                                            <View style={styles.pageSizeDropdownMenu}>
-                                                {PAGE_SIZE_OPTIONS.map((size) => (
-                                                    <TouchableOpacity
-                                                        key={size}
-                                                        style={[styles.pageSizeDropdownItem, pageSize === size && styles.pageSizeDropdownItemActive]}
-                                                        onPress={() => handlePageSizeChange(size)}
-                                                    >
-                                                        <Text style={[styles.pageSizeDropdownItemText, pageSize === size && styles.pageSizeDropdownItemTextActive]}>{size}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </View>
+                                <View style={styles.searchContainerRelative}>
+                                    <View style={styles.searchInputContainer}>
+                                        <Ionicons name="search-outline" size={20} color="#9CA3AF" style={{ marginRight: 8 }} />
+                                        <TextInput
+                                            style={styles.searchInput}
+                                            placeholder="Search customers..."
+                                            placeholderTextColor="#9CA3AF"
+                                            value={search}
+                                            onChangeText={setSearch}
+                                        />
+                                        {search.length > 0 && (
+                                            <TouchableOpacity onPress={() => { setSearch(''); }}>
+                                                <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                                            </TouchableOpacity>
                                         )}
                                     </View>
                                 </View>
-                            </View>
 
-                            <View style={styles.paginationDivider} />
+                                <View style={{ position: 'relative', zIndex: 10 }}>
+                                    <TouchableOpacity
+                                        style={styles.shopFilterBtn}
+                                        onPress={() => setShowShopDropdown(!showShopDropdown)}
+                                    >
+                                        <Text style={styles.shopFilterText}>
+                                            {selectedShop === 'all' ? 'All Shops' : shops.find(s => s.id === selectedShop)?.name || 'Selected Shop'}
+                                        </Text>
+                                        <Ionicons name={showShopDropdown ? "chevron-up" : "chevron-down"} size={16} color="#6B7280" />
+                                    </TouchableOpacity>
 
-                            <View style={styles.paginationBottomRow}>
-                                <TouchableOpacity
-                                    style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]}
-                                    onPress={() => setCurrentPage(c => Math.max(0, c - 1))}
-                                    disabled={currentPage === 0}
-                                >
-                                    <Ionicons name="chevron-back" size={14} color={currentPage === 0 ? '#D1D5DB' : '#374151'} />
-                                    <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Previous</Text>
-                                </TouchableOpacity>
-
-                                <View style={styles.pageInfoBox}>
-                                    <Text style={styles.pageInfoLabel}>Page</Text>
-                                    <Text style={styles.pageInfoNumber}>{currentPage + 1} of {Math.max(1, totalPages)}</Text>
+                                    {/* Inline Shop Dropdown */}
+                                    {showShopDropdown && (
+                                        <View
+                                            style={styles.shopDropdownMenu}
+                                            onStartShouldSetResponder={() => true}
+                                        >
+                                            <View style={styles.dropdownSearchContainer}>
+                                                <Ionicons name="search-outline" size={16} color="#9CA3AF" />
+                                                <TextInput
+                                                    style={styles.dropdownSearchInput}
+                                                    placeholder="Search shops..."
+                                                    placeholderTextColor="#9CA3AF"
+                                                    value={shopSearch}
+                                                    onChangeText={setShopSearch}
+                                                    autoCorrect={false}
+                                                />
+                                                {shopSearch.length > 0 && (
+                                                    <TouchableOpacity onPress={() => setShopSearch('')}>
+                                                        <Ionicons name="close-circle" size={16} color="#9CA3AF" />
+                                                    </TouchableOpacity>
+                                                )}
+                                            </View>
+                                            <ScrollView
+                                                style={styles.dropdownList}
+                                                nestedScrollEnabled={true}
+                                                keyboardShouldPersistTaps="handled"
+                                            >
+                                                <TouchableOpacity
+                                                    style={[styles.dropdownItem, selectedShop === 'all' && styles.dropdownItemActive]}
+                                                    onPress={() => { setSelectedShop('all'); setShowShopDropdown(false); setShopSearch(''); }}
+                                                >
+                                                    <Text style={[styles.dropdownItemText, selectedShop === 'all' && styles.dropdownItemTextActive]}>All Shops</Text>
+                                                    {selectedShop === 'all' && <Ionicons name="checkmark" size={16} color="#7C3AED" />}
+                                                </TouchableOpacity>
+                                                {shops
+                                                    .filter(shop =>
+                                                        shop.name?.toLowerCase().includes(shopSearch.toLowerCase()) ||
+                                                        shop.location?.toLowerCase().includes(shopSearch.toLowerCase())
+                                                    )
+                                                    .map(shop => (
+                                                        <TouchableOpacity
+                                                            key={shop.id}
+                                                            style={[styles.dropdownItem, selectedShop === shop.id && styles.dropdownItemActive]}
+                                                            onPress={() => { setSelectedShop(shop.id); setShowShopDropdown(false); setShopSearch(''); }}
+                                                        >
+                                                            <View style={{ flex: 1 }}>
+                                                                <Text style={[styles.dropdownItemText, selectedShop === shop.id && styles.dropdownItemTextActive]}>{shop.name}</Text>
+                                                                <Text style={styles.dropdownItemSubtext}>{shop.location}</Text>
+                                                            </View>
+                                                            {selectedShop === shop.id && <Ionicons name="checkmark" size={16} color="#7C3AED" />}
+                                                        </TouchableOpacity>
+                                                    ))}
+                                            </ScrollView>
+                                        </View>
+                                    )}
                                 </View>
 
-                                <TouchableOpacity
-                                    style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]}
-                                    onPress={() => setCurrentPage(c => Math.min(totalPages - 1, c + 1))}
-                                    disabled={currentPage >= totalPages - 1}
-                                >
-                                    <Text style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Next</Text>
-                                    <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages - 1 ? '#D1D5DB' : '#374151'} />
-                                </TouchableOpacity>
+                                <View style={styles.resultsRow}>
+                                    <Text style={styles.resultsText}>
+                                        Showing {paginatedCustomers.length} of {filteredCustomers.length} customers
+                                    </Text>
+                                    <TouchableOpacity onPress={() => { setLoading(true); fetchData(); }} style={styles.refreshBtn}>
+                                        <Text style={styles.refreshText}>Refresh Data</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                        </View>
 
-                        <View />
-                    </View>
-                </ScrollView>
-            </LinearGradient>
 
-            {/* Shop Filter Modal */}
-            <Modal
-                visible={showFilterModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowFilterModal(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Filter by Shop</Text>
-                            <TouchableOpacity onPress={() => setShowFilterModal(false)}>
-                                <Ionicons name="close" size={24} color="#6B7280" />
-                            </TouchableOpacity>
-                        </View>
-                        <ScrollView style={styles.shopList}>
-                            <TouchableOpacity
-                                style={[styles.shopItem, selectedShop === 'all' && styles.shopItemActive]}
-                                onPress={() => { setSelectedShop('all'); setShowFilterModal(false); }}
-                            >
-                                <Text style={[styles.shopItemText, selectedShop === 'all' && styles.shopItemTextActive]}>All Shops</Text>
-                                {selectedShop === 'all' && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
-                            </TouchableOpacity>
-                            {shops.map(shop => (
-                                <TouchableOpacity
-                                    key={shop.id}
-                                    style={[styles.shopItem, selectedShop === shop.id && styles.shopItemActive]}
-                                    onPress={() => { setSelectedShop(shop.id); setShowFilterModal(false); }}
-                                >
-                                    <View>
-                                        <Text style={[styles.shopItemText, selectedShop === shop.id && styles.shopItemTextActive]}>{shop.name}</Text>
-                                        <Text style={styles.shopItemSubtext}>{shop.location}</Text>
+                            {/* List */}
+                            {loading && !refreshing ? (
+                                <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+                            ) : (
+                                <View style={styles.listContainer}>
+                                    {paginatedCustomers.map((item, index) => (
+                                        <View key={`${item.id}-${index}`}>
+                                            {renderCustomerItem({ item })}
+                                        </View>
+                                    ))}
+                                    {paginatedCustomers.length === 0 && (
+                                        <Text style={styles.emptyText}>No customers found.</Text>
+                                    )}
+                                </View>
+                            )}
+
+                            {/* Pagination */}
+                            {/* Pagination - Advanced */}
+                            <View style={styles.paginationContainer}>
+                                <View style={styles.paginationTopRow}>
+                                    <Text style={styles.paginationInfoText}>
+                                        Showing {paginatedCustomers.length === 0 ? 0 : currentPage * pageSize + 1} to{' '}
+                                        {Math.min((currentPage + 1) * pageSize, filteredCustomers.length)} of{' '}
+                                        <Text style={styles.paginationInfoBold}>{filteredCustomers.length} customers</Text>
+                                    </Text>
+
+                                    <View style={styles.pageSizeSelector}>
+                                        <Text style={styles.pageSizeLabel}>Show:</Text>
+                                        <View>
+                                            <TouchableOpacity
+                                                style={styles.pageSizeDropdownButton}
+                                                onPress={() => setShowPageSizeDropdown(!showPageSizeDropdown)}
+                                            >
+                                                <Text style={styles.pageSizeDropdownText}>{pageSize}</Text>
+                                                <Ionicons name={showPageSizeDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#374151" />
+                                            </TouchableOpacity>
+                                            {showPageSizeDropdown && (
+                                                <View style={styles.pageSizeDropdownMenu}>
+                                                    {PAGE_SIZE_OPTIONS.map((size) => (
+                                                        <TouchableOpacity
+                                                            key={size}
+                                                            style={[styles.pageSizeDropdownItem, pageSize === size && styles.pageSizeDropdownItemActive]}
+                                                            onPress={() => handlePageSizeChange(size)}
+                                                        >
+                                                            <Text style={[styles.pageSizeDropdownItemText, pageSize === size && styles.pageSizeDropdownItemTextActive]}>{size}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
+                                                </View>
+                                            )}
+                                        </View>
                                     </View>
-                                    {selectedShop === shop.id && <Ionicons name="checkmark" size={20} color="#7C3AED" />}
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
-        </View>
+                                </View>
+
+                                <View style={styles.paginationDivider} />
+
+                                <View style={styles.paginationBottomRow}>
+                                    <TouchableOpacity
+                                        style={[styles.pageButton, currentPage === 0 && styles.pageButtonDisabled]}
+                                        onPress={() => setCurrentPage(c => Math.max(0, c - 1))}
+                                        disabled={currentPage === 0}
+                                    >
+                                        <Ionicons name="chevron-back" size={14} color={currentPage === 0 ? '#D1D5DB' : '#374151'} />
+                                        <Text style={[styles.pageButtonText, currentPage === 0 && styles.pageButtonTextDisabled]}>Previous</Text>
+                                    </TouchableOpacity>
+
+                                    <View style={styles.pageInfoBox}>
+                                        <Text style={styles.pageInfoLabel}>Page</Text>
+                                        <Text style={styles.pageInfoNumber}>{currentPage + 1} of {Math.max(1, totalPages)}</Text>
+                                    </View>
+
+                                    <TouchableOpacity
+                                        style={[styles.pageButton, currentPage >= totalPages - 1 && styles.pageButtonDisabled]}
+                                        onPress={() => setCurrentPage(c => Math.min(totalPages - 1, c + 1))}
+                                        disabled={currentPage >= totalPages - 1}
+                                    >
+                                        <Text style={[styles.pageButtonText, currentPage >= totalPages - 1 && styles.pageButtonTextDisabled]}>Next</Text>
+                                        <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages - 1 ? '#D1D5DB' : '#374151'} />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+
+                            <View />
+                        </View>
+                    </ScrollView>
+                </LinearGradient>
+            </View>
+        </TouchableWithoutFeedback>
     );
 };
 
@@ -949,79 +926,57 @@ const styles = StyleSheet.create({
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
     },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        maxHeight: '70%',
+    modalBackdrop: {
+        flex: 1,
+        backgroundColor: 'transparent',
     },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E7EB',
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#111827',
-    },
-    shopList: {
-        padding: 16,
-    },
-    shopItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
-    },
-    shopItemActive: {
-        backgroundColor: '#F5F3FF',
-        borderRadius: 8,
-        paddingHorizontal: 8,
-        borderBottomWidth: 0,
-    },
-    shopItemText: {
-        fontSize: 16,
-        color: '#374151',
-    },
-    shopItemTextActive: {
-        color: '#7C3AED',
-        fontWeight: '600',
-    },
-    shopItemSubtext: {
-        fontSize: 12,
-        color: '#9CA3AF',
-    },
-    // Search Suggestions Styling
+    // Search Container Styling
     searchContainerRelative: {
         position: 'relative',
         zIndex: 20,
     },
-    suggestionsDropdown: {
+
+    // Inline Shop Dropdown Styles
+    shopDropdownMenu: {
         position: 'absolute',
-        top: 50,
+        top: 52,
         left: 0,
         right: 0,
         backgroundColor: '#fff',
-        borderRadius: 8,
-        elevation: 10,
-        zIndex: 50,
-        maxHeight: 250,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: '#E5E7EB',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.1,
-        shadowRadius: 8,
+        shadowRadius: 10,
+        elevation: 10,
+        zIndex: 100,
+        maxHeight: 300,
     },
-    suggestionItem: {
+    dropdownSearchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        height: 44,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+        backgroundColor: '#F9FAFB',
+        borderTopLeftRadius: 11,
+        borderTopRightRadius: 11,
+    },
+    dropdownSearchInput: {
+        flex: 1,
+        fontSize: 14,
+        color: '#111827',
+        marginLeft: 8,
+        paddingVertical: 8,
+    },
+    dropdownList: {
+        maxHeight: 250,
+    },
+    dropdownItem: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -1030,14 +985,21 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F3F4F6',
     },
-    suggestionName: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#111827',
+    dropdownItemActive: {
+        backgroundColor: '#F5F3FF',
     },
-    suggestionPhone: {
+    dropdownItemText: {
+        fontSize: 14,
+        color: '#374151',
+    },
+    dropdownItemTextActive: {
+        color: '#7C3AED',
+        fontWeight: '600',
+    },
+    dropdownItemSubtext: {
         fontSize: 12,
-        color: '#6B7280',
+        color: '#9CA3AF',
+        marginTop: 2,
     },
 });
 
