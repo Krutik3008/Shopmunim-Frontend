@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -9,7 +9,8 @@ import {
     KeyboardAvoidingView,
     Platform,
     TextInput,
-    Modal
+    Modal,
+    Keyboard
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -47,6 +48,35 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
     const [note, setNote] = useState('');
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
     const [customerSearchQuery, setCustomerSearchQuery] = useState('');
+
+    // Keyboard handling
+    const scrollViewRef = useRef(null);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const showSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            () => setKeyboardVisible(true)
+        );
+        const hideSub = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setKeyboardVisible(false)
+        );
+        return () => {
+            showSub.remove();
+            hideSub.remove();
+        };
+    }, []);
+
+    // Helper to scroll to a focused input
+    const scrollToInput = (event) => {
+        if (scrollViewRef.current) {
+            const { y } = event.nativeEvent.layout;
+            setTimeout(() => {
+                scrollViewRef.current.scrollTo({ y: y - 80, animated: true });
+            }, 300);
+        }
+    };
 
     // Filter customers based on search query
     const filterCustomers = () => {
@@ -202,21 +232,30 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
         >
             <KeyboardAvoidingView
                 style={styles.modalOverlay}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
-                <View style={styles.modalContent}>
+                <View style={[styles.modalContent, keyboardVisible && styles.modalContentKeyboard]}>
                     {/* Header */}
                     <View style={styles.modalHeader}>
                         <View>
                             <Text style={styles.modalTitle}>Add Transaction</Text>
-                            <Text style={styles.modalSubtitle}>Select products and quantities</Text>
+                            {!keyboardVisible && (
+                                <Text style={styles.modalSubtitle}>Select products and quantities</Text>
+                            )}
                         </View>
                         <TouchableOpacity onPress={onClose} style={styles.modalClose}>
                             <Ionicons name="close" size={24} color="#666" />
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView style={styles.scrollContent} keyboardShouldPersistTaps="handled">
+                    <ScrollView
+                        ref={scrollViewRef}
+                        style={styles.scrollContent}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={true}
+                        contentContainerStyle={styles.scrollContentContainer}
+                    >
                         <View style={styles.formContent}>
 
                             {/* Custom Customer Select with Search */}
@@ -341,7 +380,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
 
                             {/* Content based on method */}
                             {method === 'manual' ? (
-                                <View style={styles.manualInputContainer}>
+                                <View style={styles.manualInputContainer} onLayout={scrollToInput}>
                                     <Input
                                         label="Amount *"
                                         placeholder="Enter amount (₹)"
@@ -349,6 +388,13 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                                         onChangeText={setManualAmount}
                                         keyboardType="numeric"
                                         prefix="₹"
+                                        onFocus={(e) => {
+                                            if (scrollViewRef.current) {
+                                                setTimeout(() => {
+                                                    scrollViewRef.current.scrollToEnd({ animated: true });
+                                                }, 300);
+                                            }
+                                        }}
                                     />
                                 </View>
                             ) : (
@@ -463,6 +509,13 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                                     multiline
                                     numberOfLines={3}
                                     textAlignVertical="top"
+                                    onFocus={() => {
+                                        if (scrollViewRef.current) {
+                                            setTimeout(() => {
+                                                scrollViewRef.current.scrollToEnd({ animated: true });
+                                            }, 300);
+                                        }
+                                    }}
                                 />
                             </View>
 
@@ -495,19 +548,23 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
-        padding: 20,
+        padding: 16,
     },
     modalContent: {
         backgroundColor: '#fff',
-        borderRadius: 12,
-        maxHeight: '90%', // Keep max height but centered
+        borderRadius: 16,
+        maxHeight: '90%',
         overflow: 'hidden',
+    },
+    modalContentKeyboard: {
+        maxHeight: '95%',
     },
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        padding: 20,
+        paddingHorizontal: 20,
+        paddingVertical: 14,
         borderBottomWidth: 1,
         borderBottomColor: '#E5E5E5',
     },
@@ -525,10 +582,14 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     scrollContent: {
-        padding: 20,
+        paddingHorizontal: 20,
+    },
+    scrollContentContainer: {
+        paddingVertical: 16,
+        paddingBottom: 30,
     },
     formContent: {
-        marginBottom: 20,
+        marginBottom: 10,
     },
     sectionLabel: {
         fontSize: fontSize.sm,
@@ -574,7 +635,7 @@ const styles = StyleSheet.create({
         marginBottom: spacing.xs,
     },
     productsContainer: {
-        marginBottom: spacing.md,
+        marginBottom: spacing.xs,
     },
     productsGrid: {
         flexDirection: 'row',
@@ -617,7 +678,7 @@ const styles = StyleSheet.create({
         padding: spacing.lg,
     },
     noteContainer: {
-        marginBottom: spacing.lg,
+        marginBottom: spacing.sm,
     },
     noteInput: {
         borderWidth: 1,

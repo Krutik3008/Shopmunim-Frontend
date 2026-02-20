@@ -55,10 +55,7 @@ const Modal = ({
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.overlay}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                        style={styles.keyboardView}
-                    >
+                    <View style={styles.keyboardView}>
                         <TouchableWithoutFeedback onPress={() => { }}>
                             <View style={styles.container}>
                                 {/* Header */}
@@ -79,13 +76,13 @@ const Modal = ({
                                     style={styles.content}
                                     showsVerticalScrollIndicator={false}
                                     keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 100 : 20 }}
+                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 20 : 20 }}
                                 >
                                     {children}
                                 </ScrollView>
                             </View>
                         </TouchableWithoutFeedback>
-                    </KeyboardAvoidingView>
+                    </View>
                 </View>
             </TouchableWithoutFeedback>
         </RNModal>
@@ -96,13 +93,13 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: colors.overlay || 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         alignItems: 'center',
-        paddingTop: Dimensions.get('window').height * 0.1,
     },
     keyboardView: {
         width: '100%',
         alignItems: 'center',
+        justifyContent: 'center',
     },
     container: {
         backgroundColor: colors.white,
