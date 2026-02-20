@@ -1,5 +1,5 @@
 // Customer Dashboard Screen - Matching reference design
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     View,
     Text,
@@ -9,6 +9,7 @@ import {
     ActivityIndicator,
     RefreshControl,
     Platform,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -23,6 +24,51 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import ShopLedgerDetailScreen from './ShopLedgerDetailScreen';
+
+// Cached download directory URI - persisted so user only picks folder ONCE
+let _savedDirUri = null;
+
+const saveFileToDevice = async (fileName, base64Content, mimeType) => {
+    // Load cached directory URI from config file
+    if (!_savedDirUri) {
+        try {
+            const configFile = FileSystem.documentDirectory + '_download_dir.txt';
+            const info = await FileSystem.getInfoAsync(configFile);
+            if (info.exists) {
+                _savedDirUri = await FileSystem.readAsStringAsync(configFile);
+            }
+        } catch (e) { }
+    }
+
+    // Try saving with cached directory
+    if (_savedDirUri) {
+        try {
+            const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+                _savedDirUri, fileName, mimeType
+            );
+            await FileSystem.writeAsStringAsync(fileUri, base64Content, { encoding: 'base64' });
+            return { success: true };
+        } catch (e) {
+            _savedDirUri = null;
+        }
+    }
+
+    // First time: ask user to pick Download folder (one time only)
+    const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+    if (!permissions.granted) return { success: false };
+
+    _savedDirUri = permissions.directoryUri;
+    try {
+        const configFile = FileSystem.documentDirectory + '_download_dir.txt';
+        await FileSystem.writeAsStringAsync(configFile, _savedDirUri);
+    } catch (e) { }
+
+    const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+        _savedDirUri, fileName, mimeType
+    );
+    await FileSystem.writeAsStringAsync(fileUri, base64Content, { encoding: 'base64' });
+    return { success: true };
+};
 
 const CustomerDashboardScreen = () => {
     const navigation = useNavigation();
@@ -45,6 +91,31 @@ const CustomerDashboardScreen = () => {
     const [showShopFilterDropdown, setShowShopFilterDropdown] = useState(false);
     const [transactionType, setTransactionType] = useState('all');
     const [showTypeFilterDropdown, setShowTypeFilterDropdown] = useState(false);
+
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    const showToast = (message) => {
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
 
 
 
@@ -233,7 +304,19 @@ const CustomerDashboardScreen = () => {
             const fileName = `My_Report_${user?.name || 'Customer'}.pdf`;
             const fileUri = FileSystem.cacheDirectory + fileName;
             await FileSystem.moveAsync({ from: uri, to: fileUri });
-            await Sharing.shareAsync(fileUri);
+
+            if (Platform.OS === 'android') {
+                const base64Content = await FileSystem.readAsStringAsync(fileUri, { encoding: 'base64' });
+                const result = await saveFileToDevice(fileName, base64Content, 'application/pdf');
+                if (result.success) {
+                    showToast('Download Successful');
+                }
+            } else {
+                // iOS: save to app's document directory
+                const iosPath = FileSystem.documentDirectory + fileName;
+                await FileSystem.moveAsync({ from: fileUri, to: iosPath });
+                showToast('Download Successful');
+            }
         } catch (error) {
             console.error('PDF export error:', error);
             alert('Failed to generate PDF');
@@ -278,7 +361,18 @@ const CustomerDashboardScreen = () => {
             const fileName = `My_Report_${user?.name || 'Customer'}.xlsx`;
             const fileUri = FileSystem.cacheDirectory + fileName;
             await FileSystem.writeAsStringAsync(fileUri, wbout, { encoding: 'base64' });
-            await Sharing.shareAsync(fileUri);
+
+            if (Platform.OS === 'android') {
+                const result = await saveFileToDevice(fileName, wbout, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                if (result.success) {
+                    showToast('Download Successful');
+                }
+            } else {
+                // iOS: save to app's document directory
+                const iosPath = FileSystem.documentDirectory + fileName;
+                await FileSystem.writeAsStringAsync(iosPath, wbout, { encoding: 'base64' });
+                showToast('Download Successful');
+            }
         } catch (error) {
             console.error('Excel export error:', error);
             alert('Failed to generate Excel');
@@ -787,6 +881,32 @@ const CustomerDashboardScreen = () => {
                 handleRoleSwitch={handleRoleSwitch}
             />
             <View style={styles.content}>{renderContent()}</View>
+
+            {/* Toast Notification */}
+            {toastVisible && (
+                <Animated.View
+                    style={[
+                        styles.toastContainer,
+                        {
+                            opacity: toastAnim,
+                            transform: [{
+                                translateY: toastAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [80, 0],
+                                }),
+                            }],
+                        },
+                    ]}
+                >
+                    <View style={styles.toastContent}>
+                        <View style={styles.toastIcon}>
+                            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                        </View>
+                        <Text style={styles.toastText}>{toastMessage}</Text>
+                    </View>
+                </Animated.View>
+            )}
+
             <CustomerBottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
             {/* DateTime Pickers */}
@@ -1040,6 +1160,12 @@ const styles = StyleSheet.create({
     customerDetailDropdownOptionActive: { backgroundColor: '#F9FAFB' },
     customerDetailDropdownOptionText: { fontSize: 13, color: '#374151' },
     customerDetailDropdownOptionTextActive: { color: '#2563EB', fontWeight: '600' },
+
+    // Toast notification styles
+    toastContainer: { position: 'absolute', bottom: 90, right: 16, zIndex: 999, alignItems: 'flex-end' },
+    toastContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12, gap: 10, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, borderWidth: 1, borderColor: '#E5E7EB' },
+    toastIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center' },
+    toastText: { fontSize: 14, fontWeight: '500', color: '#1F2937' },
 
 
 });
