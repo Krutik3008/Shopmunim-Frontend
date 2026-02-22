@@ -52,6 +52,7 @@ const Modal = ({
             transparent
             animationType="fade"
             onRequestClose={onClose}
+            statusBarTranslucent={true}
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.overlay}>
@@ -76,7 +77,7 @@ const Modal = ({
                                     style={styles.content}
                                     showsVerticalScrollIndicator={false}
                                     keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 20 : 20 }}
+                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 40 : 20 }}
                                 >
                                     {children}
                                 </ScrollView>

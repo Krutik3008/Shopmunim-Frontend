@@ -504,6 +504,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     transparent={true}
                     animationType="fade"
                     onRequestClose={() => setShowEditCustomerModal(false)}
+                    statusBarTranslucent={true}
                 >
                     <KeyboardAvoidingView
                         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}

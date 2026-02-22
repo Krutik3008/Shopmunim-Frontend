@@ -460,6 +460,7 @@ const AdminCustomerManagement = () => {
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => setShowShopDropdown(false)}
+                statusBarTranslucent={true}
             >
                 <View style={styles.modalOverlay}>
                     <TouchableOpacity

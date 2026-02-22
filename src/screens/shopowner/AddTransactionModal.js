@@ -229,6 +229,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             transparent={true}
             animationType="fade"
             onRequestClose={onClose}
+            statusBarTranslucent={true}
         >
             <KeyboardAvoidingView
                 style={styles.modalOverlay}
