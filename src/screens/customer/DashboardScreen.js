@@ -885,16 +885,11 @@ const CustomerDashboardScreen = () => {
                     <Text style={styles.settingText}>Notifications</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={() => navigation.navigate('PrivacySecurity')}>
+                <TouchableOpacity style={[styles.settingItem, styles.settingItem]} onPress={() => navigation.navigate('PrivacySecurity')}>
                     <Ionicons name="lock-closed-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Privacy & Security</Text>
                 </TouchableOpacity>
 
-
-            </View>
-
-            {/* Help & About Section */}
-            <View style={styles.settingsCard}>
                 <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
                     <Ionicons name="help-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
                     <Text style={styles.settingText}>Help & Support</Text>
