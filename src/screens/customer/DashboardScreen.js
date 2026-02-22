@@ -24,6 +24,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import ShopLedgerDetailScreen from './ShopLedgerDetailScreen';
+import { colors, shadows } from '../../theme';
 
 // Cached download directory URI - persisted so user only picks folder ONCE
 let _savedDirUri = null;
@@ -909,7 +910,7 @@ const CustomerDashboardScreen = () => {
             {/* Footer */}
             <View style={styles.footer}>
                 <Text style={styles.footerBrand}>ShopMunim</Text>
-                <Text style={styles.footerVersion}>Version 1.0.0</Text>
+                <Text style={styles.footerVersion}>Version 1.2.4</Text>
                 <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
                 <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
@@ -1173,29 +1174,57 @@ const styles = StyleSheet.create({
     historyEmptySubtext: { fontSize: 14, color: '#666' },
 
     // Profile Card
-    profileCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center', marginBottom: 16 },
+    profileCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        alignItems: 'center',
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
+    },
     avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-    profileName: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-    profilePhone: { fontSize: 14, color: '#666', marginTop: 4 },
-    roleBadge: { backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
-    roleBadgeText: { fontSize: 14, color: '#666' },
+    profileName: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
+    profilePhone: { fontSize: 14, color: '#6B7280', marginTop: 4 },
+    roleBadge: { backgroundColor: '#F3F4FB', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
+    roleBadgeText: { fontSize: 14, color: '#6366F1', fontWeight: '600' },
 
     // Settings Card
-    settingsCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 16 },
-    settingsTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-    settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    settingsCard: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
+    },
+    settingsTitle: { fontSize: 13, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
+    settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
     settingItemLast: { borderBottomWidth: 0 },
 
-    settingText: { flex: 1, fontSize: 15, color: '#333' },
+    settingText: { flex: 1, fontSize: 15, color: '#111827', fontWeight: '500' },
     logoutText: { color: '#EF4444' },
 
     // Footer
     accountScrollContent: { flexGrow: 1, paddingBottom: 140 },
-    footer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, alignItems: 'center', marginTop: 'auto', marginBottom: 16 },
+    footer: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        alignItems: 'center',
+        marginTop: 8,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
+    },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
-    footerVersion: { fontSize: 12, color: '#999', marginTop: 4 },
-    footerTagline: { fontSize: 12, color: '#999', marginTop: 2 },
-    footerCopyright: { fontSize: 12, color: '#9CA3AF', marginTop: 6, textAlign: 'center' },
+    footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
+    footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+    footerCopyright: { fontSize: 11, color: '#D1D5DB', marginTop: 8, textAlign: 'center' },
 
 
     // Filter & Export

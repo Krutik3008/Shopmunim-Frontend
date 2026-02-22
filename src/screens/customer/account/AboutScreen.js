@@ -97,30 +97,30 @@ const AboutScreen = () => {
                         title="Privacy Protocol"
                         subtitle="Your identity protection standards"
                         onPress={() => navigation.navigate('Policies', { type: 'privacy' })}
-                        iconColor={colors.gray[500]}
+                        iconColor={colors.primary.indigo}
                     />
                     <InfoRow
                         icon="information-circle-outline"
                         title="Terms of Service"
                         subtitle="Usage and legal agreements"
                         onPress={() => navigation.navigate('Policies', { type: 'terms' })}
-                        iconColor={colors.gray[500]}
+                        iconColor={colors.warning}
                     />
                     <InfoRow
                         icon="globe-outline"
                         title="Official Hub"
                         subtitle="www.shopmunim.com"
                         onPress={() => Linking.openURL('https://shopmunim.com')}
-                        iconColor={colors.gray[500]}
+                        iconColor={colors.primary.blue}
                         showBorder={false}
                     />
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.versionText}>ShopMunim Labs India</Text>
+                    <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
                     <View style={styles.secureConnection}>
-                        <Ionicons name="shield-checkmark" size={12} color={colors.gray[400]} />
-                        <Text style={styles.secureText}>End-to-End Secure Connection</Text>
+                        <Ionicons name="shield-checkmark" size={14} color="#10B981" />
+                        <Text style={styles.secureText}>End-to-End secure Connection</Text>
                     </View>
                 </View>
                 <View style={{ height: 40 }} />
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
         ...shadows.sm,
     },
     logoText: { color: '#fff', fontSize: 20, fontWeight: '900' },
-    statusHint: { fontSize: 14, color: colors.gray[600], lineHeight: 22 },
+    statusHint: { fontSize: 14, color: colors.gray[700], lineHeight: 22, fontWeight: '500' },
 
     // Sections
     sectionLabel: { fontSize: 13, fontWeight: '700', color: colors.gray[400], textTransform: 'uppercase', marginBottom: 10, marginLeft: 4, letterSpacing: 0.5 },
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
         ...shadows.sm,
     },
     missionCard: { padding: 18 },
-    missionText: { fontSize: 14, color: colors.gray[600], lineHeight: 22, fontWeight: '500' },
+    missionText: { fontSize: 14, color: colors.gray[700], lineHeight: 22, fontWeight: '500' },
 
     row: {
         flexDirection: 'row',
@@ -205,10 +205,10 @@ const styles = StyleSheet.create({
     rowSubtitle: { fontSize: 13, color: colors.gray[500], marginTop: 3 },
 
     // Footer
-    footer: { alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 10 },
+    footer: { alignItems: 'center', gap: 6, marginTop: 24, marginBottom: 32 },
     versionText: { fontSize: 12, color: colors.gray[400], fontWeight: '600' },
-    secureConnection: { flexDirection: 'row', alignItems: 'center' },
-    secureText: { fontSize: 11, color: colors.gray[400], fontWeight: '500', marginLeft: 4 },
+    secureConnection: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    secureText: { fontSize: 11, color: colors.gray[400], fontWeight: '500' },
 });
 
 export default AboutScreen;

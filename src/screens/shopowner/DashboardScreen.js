@@ -33,6 +33,7 @@ import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { colors, shadows } from '../../theme';
 
 
 const TransactionCard = ({ transaction, showNote = true }) => {
@@ -1168,7 +1169,7 @@ const ShopOwnerDashboardScreen = () => {
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>ShopMunim</Text>
-                    <Text style={styles.footerVersion}>Version 1.0.0</Text>
+                    <Text style={styles.footerVersion}>Version 1.2.4</Text>
                     <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
                     <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
@@ -1583,15 +1584,13 @@ const styles = StyleSheet.create({
 
     profileCard: {
         backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 24,
         alignItems: 'center',
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
     },
     avatar: {
         width: 80,
@@ -1604,26 +1603,25 @@ const styles = StyleSheet.create({
     },
     profileName: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
     profilePhone: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-    roleBadge: { backgroundColor: '#F3F4F6', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
-    roleBadgeText: { fontSize: 14, color: '#374151' },
+    roleBadge: { backgroundColor: '#F3F4FB', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
+    roleBadgeText: { fontSize: 14, color: '#6366F1', fontWeight: '600' },
 
 
     settingsCard: {
         backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
+        borderRadius: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16,
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
     },
-    settingsTitle: { fontSize: 16, fontWeight: '600', color: '#111827', marginBottom: 8 },
-    settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+    settingsTitle: { fontSize: 13, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', marginTop: 16, marginBottom: 8, letterSpacing: 0.5 },
+    settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
     settingItemLast: { borderBottomWidth: 0 },
 
-    settingText: { flex: 1, fontSize: 15, color: '#374151' },
+    settingText: { flex: 1, fontSize: 15, color: '#111827', fontWeight: '500' },
     logoutTextRed: { color: '#EF4444' },
 
 
@@ -1898,15 +1896,13 @@ const styles = StyleSheet.create({
     // Share Card Styles
     shareCard: {
         backgroundColor: '#fff',
-        borderRadius: 12,
+        borderRadius: 16,
         padding: 16,
         marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-        overflow: 'hidden', // Ensure content stays inside
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
+        overflow: 'hidden',
     },
     shareHeader: {
         flexDirection: 'row',
@@ -2993,21 +2989,19 @@ const styles = StyleSheet.create({
     // Footer Styles (Local Implementation)
     footer: {
         backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 20,
+        borderRadius: 16,
+        padding: 24,
         alignItems: 'center',
-        marginBottom: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
-        marginTop: 20,
+        marginTop: 8,
+        marginBottom: 24,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        ...shadows.sm,
     },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
     footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
     footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-    footerCopyright: { fontSize: 12, color: '#9CA3AF', marginTop: 6, textAlign: 'center' },
+    footerCopyright: { fontSize: 11, color: '#D1D5DB', marginTop: 8, textAlign: 'center' },
 });
 
 export default ShopOwnerDashboardScreen;
