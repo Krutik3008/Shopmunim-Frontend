@@ -10,7 +10,7 @@ import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
-    Dimensions,
+    useWindowDimensions,
     Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +25,7 @@ const Modal = ({
     showCloseButton = true,
 }) => {
     const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const { height: windowHeight } = useWindowDimensions();
 
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
@@ -52,7 +53,7 @@ const Modal = ({
             transparent
             animationType="fade"
             onRequestClose={onClose}
-            statusBarTranslucent={true}
+            statusBarTranslucent={false}
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.overlay}>
@@ -61,7 +62,13 @@ const Modal = ({
                         style={styles.keyboardView}
                     >
                         <TouchableWithoutFeedback onPress={() => { }}>
-                            <View style={styles.container}>
+                            <View style={[
+                                styles.container,
+                                {
+                                    maxHeight: keyboardVisible ? windowHeight * 0.5 : windowHeight * 0.85,
+                                    marginTop: keyboardVisible ? 60 : 0
+                                }
+                            ]}>
                                 {/* Header */}
                                 <View style={styles.header}>
                                     <View style={styles.headerText}>
@@ -80,7 +87,7 @@ const Modal = ({
                                     style={styles.content}
                                     showsVerticalScrollIndicator={false}
                                     keyboardShouldPersistTaps="handled"
-                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 40 : 20 }}
+                                    contentContainerStyle={{ paddingBottom: keyboardVisible ? 50 : 20 }}
                                 >
                                     {children}
                                 </ScrollView>
@@ -109,7 +116,6 @@ const styles = StyleSheet.create({
         backgroundColor: colors.white,
         borderRadius: 16,
         width: '90%',
-        maxHeight: Dimensions.get('window').height * 0.8,
         ...shadows.lg,
         overflow: 'hidden',
     },

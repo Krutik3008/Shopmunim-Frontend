@@ -10,7 +10,8 @@ import {
     Platform,
     TextInput,
     Modal,
-    Keyboard
+    Keyboard,
+    useWindowDimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -52,6 +53,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
     // Keyboard handling
     const scrollViewRef = useRef(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
+    const { height: windowHeight } = useWindowDimensions();
 
     useEffect(() => {
         const showSub = Keyboard.addListener(
@@ -236,7 +238,14 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
             >
-                <View style={[styles.modalContent, keyboardVisible && styles.modalContentKeyboard]}>
+                <View style={[
+                    styles.modalContent,
+                    {
+                        maxHeight: keyboardVisible ? windowHeight * 0.5 : '90%',
+                        marginTop: keyboardVisible ? 60 : 0
+                    },
+                    keyboardVisible && styles.modalContentKeyboard
+                ]}>
                     {/* Header */}
                     <View style={styles.modalHeader}>
                         <View>
@@ -255,7 +264,10 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                         style={styles.scrollContent}
                         keyboardShouldPersistTaps="handled"
                         showsVerticalScrollIndicator={true}
-                        contentContainerStyle={styles.scrollContentContainer}
+                        contentContainerStyle={[
+                            styles.scrollContentContainer,
+                            { paddingBottom: keyboardVisible ? 7 : 30 }
+                        ]}
                     >
                         <View style={styles.formContent}>
 
