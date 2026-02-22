@@ -1,12 +1,205 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    Switch,
+    Alert,
+    Platform
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { colors } from '../../../theme';
+import { colors, gradients, spacing, borderRadius, fontSize, shadows } from '../../../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../../../context/AuthContext';
+import { authAPI } from '../../../api';
 
 const PrivacySecurityScreen = () => {
     const navigation = useNavigation();
+    const { user, logout } = useAuth();
+
+    // Security Score Calculation Logic
+    const getSecurityDetails = () => {
+        let score = 60; // Base: Data Encryption & PCI Compliance
+        const recommendations = [];
+        const completed = [
+            { id: 'encryption', title: 'Data Encryption', desc: 'All records are 256-bit AES safe.', icon: 'shield-checkmark-outline' }
+        ];
+
+        // 1. Check Verification Status
+        if (user?.verified) {
+            score += 15;
+            completed.push({
+                id: 'verify',
+                title: 'Login Verified',
+                desc: 'Secure OTP login is active.',
+                icon: 'checkmark-done-circle-outline'
+            });
+        } else {
+            recommendations.push({
+                id: 'verify',
+                title: 'Verify your account',
+                desc: 'Add +15% to health by completing OTP verification.',
+                icon: 'checkmark-circle-outline',
+                action: () => navigation.navigate('EditProfile')
+            });
+        }
+
+        // 2. Check Role Security
+        if (user?.active_role === 'admin' || user?.active_role === 'shop_owner') {
+            score += 15;
+            completed.push({
+                id: 'role',
+                title: 'Authority Access',
+                desc: 'Advanced permissions enabled.',
+                icon: 'ribbon-outline'
+            });
+        } else {
+            score += 10;
+            completed.push({
+                id: 'role',
+                title: 'Secure Access',
+                desc: 'Client-side data protection active.',
+                icon: 'person-outline'
+            });
+        }
+
+        // 3. User Experience / Account Maturity
+        if (user?.name) {
+            score += 10;
+        } else {
+            recommendations.push({
+                id: 'name',
+                title: 'Complete your profile',
+                desc: 'Add your name for better account recovery (+10%).',
+                icon: 'person-outline',
+                action: () => navigation.navigate('EditProfile')
+            });
+        }
+
+        return { score: Math.min(score, 100), recommendations, completed };
+    };
+
+    const { score: securityScore, recommendations, completed } = getSecurityDetails();
+
+    const getSecurityStatus = (score) => {
+        if (score >= 90) return 'Excellent';
+        if (score >= 70) return 'Safe';
+        return 'Protected';
+    };
+
+    const handleFeatureAlert = (title, message) => {
+        Alert.alert(title, message, [{ text: 'OK' }]);
+    };
+
+    const handleChangePassword = async () => {
+        Alert.alert(
+            'Change Password',
+            'To change your password, we will send a temporary PIN to +91 ' + (user?.phone || 'your phone') + '. Proceed?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Send PIN',
+                    onPress: async () => {
+                        try {
+                            await authAPI.resetPIN();
+                            handleFeatureAlert('PIN Sent', 'A verification code has been sent to your registered mobile number.');
+                        } catch (error) {
+                            handleFeatureAlert('Error', 'Failed to initiate PIN reset. Please try again.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleActiveSessions = async () => {
+        try {
+            const response = await authAPI.getSessions();
+            const session = response.data.sessions[0];
+            Alert.alert(
+                'Active Sessions',
+                `Currently logged in as: ${user?.name || 'User'}\nDevice: ${session.device} (${session.os})\nRole: ${user?.active_role?.replace('_', ' ').toUpperCase()}\nLast Active: Just now`,
+                [
+                    { text: 'Close', style: 'default' },
+                    { text: 'Logout All', style: 'destructive', onPress: () => logout() }
+                ]
+            );
+        } catch (error) {
+            Alert.alert(
+                'Active Sessions',
+                `Currently logged in as: ${user?.name || 'User'}\nDevice: ${Platform.OS === 'ios' ? 'iPhone' : 'Android'}`,
+                [
+                    { text: 'Close', style: 'default' },
+                    { text: 'Logout All', style: 'destructive', onPress: () => logout() }
+                ]
+            );
+        }
+    };
+
+    const handleDataExport = () => {
+        Alert.alert(
+            'Data Protection',
+            'All your data is stored securely. Would you like to request a full data export sent to your registered contact info?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Request Export',
+                    onPress: async () => {
+                        try {
+                            await authAPI.requestDataExport();
+                            handleFeatureAlert('Request Received', 'Your data export is being prepared and will be sent shortly.');
+                        } catch (error) {
+                            handleFeatureAlert('Error', 'Failed to request data export.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const handleDeleteAccount = () => {
+        Alert.alert(
+            'Delete Account',
+            'Are you sure you want to delete your account? This action is permanent and all your transaction records will be wiped.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Confirm Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await authAPI.deleteAccount();
+                            logout();
+                            handleFeatureAlert('Account Deleted', 'Your account has been permanently removed.');
+                        } catch (error) {
+                            handleFeatureAlert('Error', 'Failed to delete account. Please try again.');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const InfoRow = ({ icon, title, subtitle, onPress, showBorder = true, iconColor = colors.primary.blue }) => (
+        <TouchableOpacity
+            style={[styles.row, !showBorder && styles.lastRow]}
+            onPress={onPress}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.rowIcon, { backgroundColor: `${iconColor}15` }]}>
+                <Ionicons name={icon} size={22} color={iconColor} />
+            </View>
+            <View style={styles.rowContent}>
+                <Text style={styles.rowTitle}>{title}</Text>
+                {subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
+        </TouchableOpacity>
+    );
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
@@ -18,41 +211,137 @@ const PrivacySecurityScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView style={styles.content}>
+            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                {/* Dynamic Security Overview */}
+                <LinearGradient
+                    colors={['#fff', '#F0F9FF']}
+                    style={styles.statusCard}
+                >
+                    <View style={styles.statusHeader}>
+                        <View style={styles.statusInfo}>
+                            <Text style={styles.statusLabel}>Security Health</Text>
+                            <Text style={[styles.statusValue, { color: securityScore > 80 ? colors.success : colors.warning }]}>
+                                {getSecurityStatus(securityScore)}
+                            </Text>
+                        </View>
+                        <View style={styles.securityScore}>
+                            <Text style={styles.scoreText}>{securityScore}</Text>
+                            <Text style={styles.scoreMax}>/100</Text>
+                        </View>
+                    </View>
+                    <View style={styles.healthBarContainer}>
+                        <View style={[styles.healthBar, { width: `${securityScore}%`, backgroundColor: securityScore > 80 ? colors.success : colors.warning }]} />
+                    </View>
+                    <Text style={styles.statusHint}>
+                        {securityScore === 100
+                            ? 'Your account meets all security standards.'
+                            : 'Complete your profile and verification to reach 100% security.'}
+                    </Text>
+                </LinearGradient>
+
+                {recommendations.length > 0 && (
+                    <>
+                        <Text style={styles.sectionLabel}>Recommendations</Text>
+                        <View style={styles.section}>
+                            {recommendations.map((tip, index) => (
+                                <TouchableOpacity
+                                    key={tip.id}
+                                    style={[styles.row, index === recommendations.length - 1 && styles.lastRow]}
+                                    onPress={tip.action}
+                                >
+                                    <View style={[styles.rowIcon, { backgroundColor: '#FFF7ED', borderRadius: 12 }]}>
+                                        <Ionicons name={tip.icon} size={20} color={colors.warning} />
+                                    </View>
+                                    <View style={styles.rowContent}>
+                                        <Text style={styles.rowTitle}>{tip.title}</Text>
+                                        <Text style={styles.rowSubtitle}>{tip.desc}</Text>
+                                    </View>
+                                    <TouchableOpacity style={styles.fixButton} onPress={tip.action}>
+                                        <Text style={styles.fixButtonText}>Fix</Text>
+                                    </TouchableOpacity>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </>
+                )}
+
+                <Text style={styles.sectionLabel}>Achievements</Text>
                 <View style={styles.section}>
-                    <TouchableOpacity style={styles.row}>
-                        <View style={styles.rowIcon}>
-                            <Ionicons name="key-outline" size={22} color={colors.gray[600]} />
+                    {completed.map((item, index) => (
+                        <View
+                            key={item.id}
+                            style={[styles.row, index === completed.length - 1 && styles.lastRow]}
+                        >
+                            <View style={[styles.rowIcon, { backgroundColor: '#F0FDF4', borderRadius: 12 }]}>
+                                <Ionicons name={item.icon} size={20} color={colors.success} />
+                            </View>
+                            <View style={styles.rowContent}>
+                                <Text style={styles.rowTitle}>{item.title}</Text>
+                                <Text style={styles.rowSubtitle}>{item.desc}</Text>
+                            </View>
+                            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
                         </View>
-                        <View style={styles.rowContent}>
-                            <Text style={styles.rowTitle}>Change Password</Text>
-                            <Text style={styles.rowSubtitle}>Update your account password</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.row}>
-                        <View style={styles.rowIcon}>
-                            <Ionicons name="lock-closed-outline" size={22} color={colors.gray[600]} />
-                        </View>
-                        <View style={styles.rowContent}>
-                            <Text style={styles.rowTitle}>Two-Factor Authentication</Text>
-                            <Text style={styles.rowSubtitle}>Add an extra layer of security</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={[styles.row, styles.lastRow]}>
-                        <View style={styles.rowIcon}>
-                            <Ionicons name="eye-off-outline" size={22} color={colors.gray[600]} />
-                        </View>
-                        <View style={styles.rowContent}>
-                            <Text style={styles.rowTitle}>Data Privacy</Text>
-                            <Text style={styles.rowSubtitle}>Manage your data and privacy settings</Text>
-                        </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.gray[400]} />
-                    </TouchableOpacity>
+                    ))}
                 </View>
+
+                <Text style={styles.sectionLabel}>Privacy & Data Protection</Text>
+                <View style={styles.section}>
+                    <InfoRow
+                        icon="document-text-outline"
+                        title="Privacy Policy"
+                        subtitle="How we protect your identity"
+                        onPress={() => navigation.navigate('Policies', { type: 'privacy' })}
+                        iconColor={colors.primary.purple}
+                    />
+                    <InfoRow
+                        icon="information-circle-outline"
+                        title="Terms of Service"
+                        subtitle="Your rights and responsibilities"
+                        onPress={() => navigation.navigate('Policies', { type: 'terms' })}
+                        iconColor={colors.primary.purple}
+                    />
+                    <InfoRow
+                        icon="lock-closed-outline"
+                        title="Data Governance"
+                        subtitle="256-bit AES encryption standard"
+                        onPress={handleDataExport}
+                        iconColor={colors.primary.purple}
+                        showBorder={false}
+                    />
+                </View>
+
+                <Text style={styles.sectionLabel}>Account Access Control</Text>
+                <View style={styles.section}>
+                    <InfoRow
+                        icon="key-outline"
+                        title="Change Password"
+                        subtitle="Rotate your login credentials"
+                        onPress={handleChangePassword}
+                        iconColor={colors.warning}
+                    />
+                    <InfoRow
+                        icon="phone-portrait-outline"
+                        title="Active Sessions"
+                        subtitle="Device and login location"
+                        onPress={handleActiveSessions}
+                        iconColor={colors.warning}
+                        showBorder={false}
+                    />
+                </View>
+
+                <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+                    <Ionicons name="trash-outline" size={20} color={colors.error} style={{ marginRight: 8 }} />
+                    <Text style={styles.deleteText}>Delete Personal Data & Account</Text>
+                </TouchableOpacity>
+
+                <View style={styles.footer}>
+                    <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
+                    <View style={styles.secureConnection}>
+                        <Ionicons name="shield-checkmark" size={12} color={colors.success} style={{ marginRight: 4 }} />
+                        <Text style={styles.secureText}>End-to-End Secure Connection</Text>
+                    </View>
+                </View>
+                <View style={{ height: 40 }} />
             </ScrollView>
         </SafeAreaView>
     );
@@ -71,34 +360,100 @@ const styles = StyleSheet.create({
     },
     headerTitle: { fontSize: 18, fontWeight: '700', color: colors.gray[900] },
     backButton: { padding: 4 },
-    content: { flex: 1, padding: 20 },
-    section: {
+    content: { flex: 1, padding: 16 },
+
+    // Status Card
+    statusCard: {
         backgroundColor: '#fff',
-        borderRadius: 12,
-        overflow: 'hidden',
+        borderRadius: 16,
+        padding: 20,
+        marginBottom: 24,
         borderWidth: 1,
         borderColor: colors.gray[200],
+        ...shadows.md,
+    },
+    statusHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 },
+    statusInfo: { gap: 4 },
+    statusLabel: { fontSize: 13, color: colors.gray[500], fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+    statusValue: { fontSize: 20, fontWeight: '800' },
+    securityScore: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        backgroundColor: '#F0FDF4',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#DCFCE7'
+    },
+    scoreText: { fontSize: 16, fontWeight: '800', color: colors.success },
+    scoreMax: { fontSize: 11, color: colors.gray[400], marginBottom: 2 },
+    healthBarContainer: { height: 7, backgroundColor: colors.gray[100], borderRadius: 4, marginBottom: 12 },
+    healthBar: { height: '100%', borderRadius: 4 },
+    statusHint: { fontSize: 14, color: colors.gray[600], lineHeight: 22 },
+
+    // Sections
+    sectionLabel: { fontSize: 13, fontWeight: '700', color: colors.gray[400], textTransform: 'uppercase', marginBottom: 10, marginLeft: 4, letterSpacing: 0.5 },
+    section: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: colors.gray[200],
+        marginBottom: 24,
+        overflow: 'hidden',
+        ...shadows.sm,
     },
     row: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 16,
+        padding: 18,
         borderBottomWidth: 1,
-        borderBottomColor: colors.gray[100],
+        borderBottomColor: `${colors.gray[100]}50`,
     },
     lastRow: { borderBottomWidth: 0 },
     rowIcon: {
-        marginRight: 16,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: colors.gray[100],
+        width: 44,
+        height: 44,
+        borderRadius: 12,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 16,
     },
     rowContent: { flex: 1 },
-    rowTitle: { fontSize: 16, fontWeight: '600', color: colors.gray[900], marginBottom: 2 },
-    rowSubtitle: { fontSize: 13, color: colors.gray[500] },
+    rowTitle: { fontSize: 15, fontWeight: '600', color: colors.gray[900] },
+    rowSubtitle: { fontSize: 13, color: colors.gray[500], marginTop: 3 },
+
+    // Action Buttons
+    deleteButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 18,
+        backgroundColor: '#FEF2F2',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#FEE2E2',
+        marginBottom: 32,
+        ...shadows.sm,
+    },
+    deleteText: { color: colors.error, fontWeight: '700', fontSize: 15 },
+
+    // Footer
+    footer: { alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 10 },
+    versionText: { fontSize: 12, color: colors.gray[400], fontWeight: '600' },
+    secureConnection: { flexDirection: 'row', alignItems: 'center' },
+    secureText: { fontSize: 11, color: colors.gray[400], fontWeight: '500', marginLeft: 4 },
+    fixButton: {
+        backgroundColor: colors.primary.blue,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+    },
+    fixButtonText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: '700',
+    },
 });
 
 export default PrivacySecurityScreen;

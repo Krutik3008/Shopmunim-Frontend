@@ -19,6 +19,7 @@ import NotificationsScreen from '../screens/customer/account/NotificationsScreen
 import PrivacySecurityScreen from '../screens/customer/account/PrivacySecurityScreen';
 import HelpSupportScreen from '../screens/customer/account/HelpSupportScreen';
 import AboutScreen from '../screens/customer/account/AboutScreen';
+import PoliciesScreen from '../screens/customer/account/PoliciesScreen';
 import AdminPanelScreen from '../screens/admin/AdminPanelScreen';
 import AdminCustomerDetailScreen from '../screens/admin/AdminCustomerDetailScreen';
 import AdminShopDetailsScreen from '../screens/admin/AdminShopDetailsScreen';
@@ -66,6 +67,7 @@ const MainNavigator = ({ initialRoute }) => (
         <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
         <Stack.Screen name="HelpSupport" component={HelpSupportScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="Policies" component={PoliciesScreen} />
 
         {/* Admin Screens */}
         <Stack.Screen name="AdminPanel" component={AdminPanelScreen} />

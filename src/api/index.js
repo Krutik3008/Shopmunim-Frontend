@@ -78,6 +78,12 @@ export const authAPI = {
     switchRole: (role) => api.post('/auth/switch-role', { role }),
 
     updateProfile: (data) => api.put('/auth/me', data),
+
+    // Security & Privacy
+    getSessions: () => api.get('/auth/sessions'),
+    requestDataExport: () => api.post('/auth/request-data-export'),
+    resetPIN: () => api.post('/auth/reset-pin'),
+    deleteAccount: () => api.delete('/auth/me'),
 };
 
 // ============ SHOP APIs ============
