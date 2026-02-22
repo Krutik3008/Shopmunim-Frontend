@@ -25,7 +25,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.krutik3008.ShopMunimApp",
+      "package": "com.krutik3011.ShopMunimApp",
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "adjustPan"
     },
@@ -44,7 +44,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "c68a7099-421e-4452-a345-206f1701e86a"
+        "projectId": "0f15d0e5-177c-4ce0-88e0-ee26c4b0bc10"
       }
     }
   }
