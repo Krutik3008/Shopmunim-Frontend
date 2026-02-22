@@ -45,12 +45,9 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
 
     // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const [perPage, setPerPage] = useState(2);
+    const [perPage, setPerPage] = useState(10);
     const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
 
-    // Autocomplete State
-    const [showSuggestions, setShowSuggestions] = useState(false);
-    const [suggestions, setSuggestions] = useState([]);
 
     useEffect(() => {
         if (shopId) {
@@ -128,24 +125,6 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
         setToDate(null);
     };
 
-    useEffect(() => {
-        let matches = [];
-        if (search.trim()) {
-            const searchLower = search.toLowerCase();
-            matches = customers.filter(c =>
-                c.name?.toLowerCase().includes(searchLower) ||
-                c.phone?.includes(search)
-            );
-        } else {
-            matches = customers;
-        }
-        setSuggestions(matches.slice(0, 50));
-    }, [search, customers]);
-
-    const handleSelectSuggestion = (customer) => {
-        setSearch(customer.name);
-        setShowSuggestions(false);
-    };
 
     const fetchData = async () => {
         try {
@@ -342,13 +321,12 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                 colors={['#4c1d95', '#2563EB']}
                 style={styles.gradient}
             >
-                <TouchableWithoutFeedback onPress={() => { setShowPerPageDropdown(false); setShowSuggestions(false); Keyboard.dismiss(); }}>
+                <TouchableWithoutFeedback onPress={() => { setShowPerPageDropdown(false); Keyboard.dismiss(); }}>
                     <ScrollView
                         contentContainerStyle={[styles.scrollContent, { paddingBottom: 30 }]}
                         showsVerticalScrollIndicator={false}
                         keyboardShouldPersistTaps="handled"
                         onScrollBeginDrag={() => {
-                            setShowSuggestions(false);
                             setShowPerPageDropdown(false);
                             Keyboard.dismiss();
                         }}
@@ -474,38 +452,14 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                             placeholderTextColor="#9CA3AF"
                                             value={search}
                                             onChangeText={setSearch}
-                                            onFocus={() => {
-                                                setShowSuggestions(true);
-                                            }}
-                                            onBlur={() => {
-                                                setTimeout(() => setShowSuggestions(false), 200);
-                                            }}
                                         />
                                         {search.length > 0 && (
-                                            <TouchableOpacity onPress={() => { setSearch(''); setShowSuggestions(false); }}>
+                                            <TouchableOpacity onPress={() => { setSearch(''); }}>
                                                 <Ionicons name="close-circle" size={18} color="#9CA3AF" />
                                             </TouchableOpacity>
                                         )}
                                     </View>
 
-                                    {/* Autocomplete Dropdown */}
-                                    {showSuggestions && suggestions.length > 0 && (
-                                        <View style={styles.suggestionsDropdown}>
-                                            {suggestions.map((item, index) => (
-                                                <TouchableOpacity
-                                                    key={`${item.id}-${index}`}
-                                                    style={styles.suggestionItem}
-                                                    onPress={() => handleSelectSuggestion(item)}
-                                                >
-                                                    <View>
-                                                        <Text style={styles.suggestionName}>{item.name}</Text>
-                                                        <Text style={styles.suggestionPhone}>{item.phone}</Text>
-                                                    </View>
-                                                    <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-                                                </TouchableOpacity>
-                                            ))}
-                                        </View>
-                                    )}
                                 </View>
 
                                 <View style={styles.resultsRow}>
@@ -596,28 +550,32 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                     </ScrollView>
                 </TouchableWithoutFeedback>
 
-                {showFromPicker && (
-                    <DateTimePicker
-                        value={fromDate || new Date()}
-                        mode="date"
-                        display="default"
-                        onChange={onFromDateChange}
-                        positiveButton={{ label: 'Set', textColor: '#2563EB' }}
-                        negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
-                    />
-                )}
-                {showToPicker && (
-                    <DateTimePicker
-                        value={toDate || new Date()}
-                        mode="date"
-                        display="default"
-                        onChange={onToDateChange}
-                        positiveButton={{ label: 'Set', textColor: '#2563EB' }}
-                        negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
-                    />
-                )}
-            </LinearGradient>
-        </View>
+                {
+                    showFromPicker && (
+                        <DateTimePicker
+                            value={fromDate || new Date()}
+                            mode="date"
+                            display="default"
+                            onChange={onFromDateChange}
+                            positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                            negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                        />
+                    )
+                }
+                    {
+                        showToPicker && (
+                <DateTimePicker
+                    value={toDate || new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={onToDateChange}
+                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                />
+                        )
+                    }
+            </LinearGradient >
+        </View >
     );
 };
 

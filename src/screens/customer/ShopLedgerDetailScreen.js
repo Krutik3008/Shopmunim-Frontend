@@ -761,25 +761,27 @@ const ShopLedgerDetailScreen = ({
                             <View style={styles.divider} />
 
                             {/* Detailed Transaction History */}
-                            <View style={styles.flatHistorySection}>
-                                <View style={styles.historyTextHeader}>
-                                    <Text style={styles.historyTitle}>Detailed Transaction History</Text>
-                                    <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
-                                </View>
+                            {(() => {
+                                const totalItems = filteredTransactions.length;
+                                const totalPages = Math.ceil(totalItems / perPage);
+                                const startIdx = (currentPage - 1) * perPage;
+                                const endIdx = Math.min(startIdx + perPage, totalItems);
+                                const paginatedTx = filteredTransactions.slice(startIdx, endIdx);
 
-                                {(() => {
-                                    const totalItems = filteredTransactions.length;
-                                    const totalPages = Math.ceil(totalItems / perPage);
-                                    const startIdx = (currentPage - 1) * perPage;
-                                    const endIdx = Math.min(startIdx + perPage, totalItems);
-                                    const paginatedTx = filteredTransactions.slice(startIdx, endIdx);
+                                return (
+                                    <>
+                                        <View style={styles.sectionCard}>
+                                            <View style={styles.historyTextHeader}>
+                                                <Text style={styles.historyTitle}>Detailed Transaction History</Text>
+                                                <Text style={styles.historyCount}>Showing {filteredTransactions.length} transactions</Text>
+                                            </View>
 
-                                    return (
-                                        <>
                                             {totalItems === 0 ? (
                                                 <View style={styles.emptyState}>
-                                                    <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
-                                                    <Text style={styles.emptyText}>No transactions found</Text>
+                                                    <View style={styles.emptyStateBox}>
+                                                        <Ionicons name="document-text-outline" size={48} color="#D1D5DB" />
+                                                        <Text style={styles.emptyText}>No transactions found</Text>
+                                                    </View>
                                                 </View>
                                             ) : (
                                                 paginatedTx.map((transaction) => {
@@ -844,66 +846,66 @@ const ShopLedgerDetailScreen = ({
                                                     );
                                                 })
                                             )}
+                                        </View>
 
-                                            {/* Pagination Card */}
-                                            {totalItems > 0 && (
-                                                <View style={styles.paginationCard}>
-                                                    <View style={styles.paginationTopRow}>
-                                                        <Text style={styles.paginationInfo}>
-                                                            Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
-                                                        </Text>
-                                                        <View style={styles.paginationShowRow}>
-                                                            <Text style={styles.paginationShowLabel}>Show:</Text>
-                                                            <TouchableOpacity
-                                                                style={styles.perPageDropdown}
-                                                                onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
-                                                            >
-                                                                <Text style={styles.perPageDropdownText}>{perPage}</Text>
-                                                                <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
-                                                            </TouchableOpacity>
-                                                            {showPerPageDropdown && (
-                                                                <View style={styles.perPageDropdownOptions}>
-                                                                    {[5, 10, 25, 50].map(val => (
-                                                                        <TouchableOpacity
-                                                                            key={val}
-                                                                            style={[styles.perPageOption, perPage === val && styles.perPageOptionActive]}
-                                                                            onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
-                                                                        >
-                                                                            <Text style={[styles.perPageOptionText, perPage === val && styles.perPageOptionTextActive]}>{val}</Text>
-                                                                        </TouchableOpacity>
-                                                                    ))}
-                                                                </View>
-                                                            )}
-                                                        </View>
-                                                    </View>
-                                                    <View style={styles.paginationBottomRow}>
+                                        {/* Pagination Card */}
+                                        {totalItems > 0 && (
+                                            <View style={styles.paginationCard}>
+                                                <View style={styles.paginationTopRow}>
+                                                    <Text style={styles.paginationInfo}>
+                                                        Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
+                                                    </Text>
+                                                    <View style={styles.paginationShowRow}>
+                                                        <Text style={styles.paginationShowLabel}>Show:</Text>
                                                         <TouchableOpacity
-                                                            style={[styles.paginationBtn, currentPage <= 1 && styles.paginationBtnDisabled]}
-                                                            onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
-                                                            disabled={currentPage <= 1}
+                                                            style={styles.perPageDropdown}
+                                                            onPress={() => setShowPerPageDropdown(!showPerPageDropdown)}
                                                         >
-                                                            <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
-                                                            <Text style={[styles.paginationBtnText, currentPage <= 1 && styles.paginationBtnTextDisabled]}>Previous</Text>
+                                                            <Text style={styles.perPageDropdownText}>{perPage}</Text>
+                                                            <Ionicons name={showPerPageDropdown ? 'chevron-up' : 'chevron-down'} size={14} color="#6B7280" />
                                                         </TouchableOpacity>
-                                                        <View style={styles.paginationCenter}>
-                                                            <Text style={styles.paginationPageLabel}>Page</Text>
-                                                            <Text style={styles.paginationPageNum}>{currentPage} of {totalPages}</Text>
-                                                        </View>
-                                                        <TouchableOpacity
-                                                            style={[styles.paginationBtn, currentPage >= totalPages && styles.paginationBtnDisabled]}
-                                                            onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
-                                                            disabled={currentPage >= totalPages}
-                                                        >
-                                                            <Text style={[styles.paginationBtnText, currentPage >= totalPages && styles.paginationBtnTextDisabled]}>Next</Text>
-                                                            <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
-                                                        </TouchableOpacity>
+                                                        {showPerPageDropdown && (
+                                                            <View style={styles.perPageDropdownOptions}>
+                                                                {[5, 10, 25, 50].map(val => (
+                                                                    <TouchableOpacity
+                                                                        key={val}
+                                                                        style={[styles.perPageOption, perPage === val && styles.perPageOptionActive]}
+                                                                        onPress={() => { setPerPage(val); setCurrentPage(1); setShowPerPageDropdown(false); }}
+                                                                    >
+                                                                        <Text style={[styles.perPageOptionText, perPage === val && styles.perPageOptionTextActive]}>{val}</Text>
+                                                                    </TouchableOpacity>
+                                                                ))}
+                                                            </View>
+                                                        )}
                                                     </View>
                                                 </View>
-                                            )}
-                                        </>
-                                    );
-                                })()}
-                            </View>
+                                                <View style={styles.paginationBottomRow}>
+                                                    <TouchableOpacity
+                                                        style={[styles.paginationBtn, currentPage <= 1 && styles.paginationBtnDisabled]}
+                                                        onPress={() => { if (currentPage > 1) setCurrentPage(currentPage - 1); }}
+                                                        disabled={currentPage <= 1}
+                                                    >
+                                                        <Ionicons name="chevron-back" size={14} color={currentPage <= 1 ? '#D1D5DB' : '#374151'} />
+                                                        <Text style={[styles.paginationBtnText, currentPage <= 1 && styles.paginationBtnTextDisabled]}>Previous</Text>
+                                                    </TouchableOpacity>
+                                                    <View style={styles.paginationCenter}>
+                                                        <Text style={styles.paginationPageLabel}>Page</Text>
+                                                        <Text style={styles.paginationPageNum}>{currentPage} of {totalPages}</Text>
+                                                    </View>
+                                                    <TouchableOpacity
+                                                        style={[styles.paginationBtn, currentPage >= totalPages && styles.paginationBtnDisabled]}
+                                                        onPress={() => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); }}
+                                                        disabled={currentPage >= totalPages}
+                                                    >
+                                                        <Text style={[styles.paginationBtnText, currentPage >= totalPages && styles.paginationBtnTextDisabled]}>Next</Text>
+                                                        <Ionicons name="chevron-forward" size={14} color={currentPage >= totalPages ? '#D1D5DB' : '#374151'} />
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+                                        )}
+                                    </>
+                                );
+                            })()}
 
                             <View style={{ height: 50 }} />
                         </>
@@ -1000,14 +1002,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1 }
     },
 
-    flatHistorySection: {
-        backgroundColor: '#fff',
-        paddingVertical: 10,
-    },
-    historyTextHeader: {
-        paddingHorizontal: 20,
-        marginBottom: 10,
-    },
     sectionHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1164,17 +1158,36 @@ const styles = StyleSheet.create({
         color: '#111827',
     },
     historyTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '700',
         color: '#111827',
-        marginBottom: 4,
-        marginLeft: -20,
+        marginBottom: 2,
     },
     historyCount: {
         fontSize: 12,
         color: '#6B7280',
-        marginBottom: 12,
-        marginLeft: -20,
+        marginBottom: 16,
+    },
+    emptyState: {
+        alignItems: 'center',
+        paddingVertical: 10,
+    },
+    emptyStateBox: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 40,
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        borderStyle: 'solid',
+    },
+    emptyText: {
+        fontSize: 15,
+        color: '#9CA3AF',
+        marginTop: 12,
+        fontWeight: '500',
     },
     customerNameMain: { fontSize: 22, fontWeight: 'bold', color: '#111827', marginBottom: 4 },
     customerPhone: { fontSize: 14, color: '#6B7280', marginBottom: 20 },
@@ -1201,14 +1214,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 1 }
     },
 
-    flatHistorySection: {
-        backgroundColor: '#fff',
-        paddingVertical: 10,
-    },
-    historyTextHeader: {
-        paddingHorizontal: 20,
-        marginBottom: 10,
-    },
     flatTransactionRow: {
         backgroundColor: '#fff',
         borderRadius: 16,

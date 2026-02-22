@@ -502,7 +502,7 @@ const CustomerDashboardScreen = () => {
                 </>
             )}
             {/* Spacer for bottom nav */}
-            <View style={{ height: 70 }} />
+            <View style={{ height: 30 }} />
         </ScrollView>
     );
 
@@ -695,7 +695,7 @@ const CustomerDashboardScreen = () => {
                     </View>
                 </View>
 
-                <View style={{ height: 50 }} />
+                <View style={{ height: 20 }} />
             </ScrollView >
         );
     };
@@ -851,7 +851,7 @@ const CustomerDashboardScreen = () => {
                         );
                     })()}
                 </View>
-                <View style={{ height: 30 }} />
+                <View style={{ height: 5 }} />
             </ScrollView >
         );
     };
@@ -919,7 +919,6 @@ const CustomerDashboardScreen = () => {
                 <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
             </View>
-            {/* <View style={{ height: 50 }} /> */}
         </ScrollView>
     );
 
