@@ -2999,9 +2999,9 @@ const styles = StyleSheet.create({
         ...shadows.sm,
     },
     footerBrand: { fontSize: 18, fontWeight: 'bold', color: '#3B82F6' },
-    footerVersion: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
-    footerTagline: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
-    footerCopyright: { fontSize: 11, color: '#D1D5DB', marginTop: 8, textAlign: 'center' },
+    footerVersion: { fontSize: 12, color: '#6B7280', marginTop: 4 },
+    footerTagline: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+    footerCopyright: { fontSize: 11, color: '#6B7280', marginTop: 8, textAlign: 'center' },
 });
 
 export default ShopOwnerDashboardScreen;
