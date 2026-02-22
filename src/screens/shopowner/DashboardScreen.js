@@ -24,6 +24,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { Modal } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import AddTransactionModal from './AddTransactionModal';
@@ -33,7 +34,7 @@ import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { colors, shadows } from '../../theme';
 
 
@@ -943,26 +944,45 @@ const ShopOwnerDashboardScreen = () => {
 
     // Account Tab Content - Matching reference exactly
     const renderAccountContent = () => {
+        if (!user) {
+            return (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#8B5CF6" />
+                </View>
+            );
+        }
         const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
 
         return (
             <ScrollView style={styles.tabContent} contentContainerStyle={styles.accountScrollContent}>
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
-                    <View style={styles.avatar}>
-                        {user?.profile_photo ? (
-                            <Image
-                                source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
-                                style={{ width: 80, height: 80, borderRadius: 40 }}
-                            />
-                        ) : (
-                            <Ionicons name="person" size={40} color="#8B5CF6" />
-                        )}
-                    </View>
-                    <Text style={styles.profileName}>{user?.name || 'User'}</Text>
-                    <Text style={styles.profilePhone}>+91 {user?.phone || '1234567890'}</Text>
-                    <View style={styles.roleBadge}>
-                        <Text style={styles.roleBadgeText}>Shop Owner</Text>
+                    <LinearGradient
+                        colors={['#8B5CF6', '#6366F1']}
+                        style={styles.profileAccent}
+                    />
+                    <View style={styles.profileHeader}>
+                        <View style={styles.avatarBorder}>
+                            <View style={styles.avatar}>
+                                {user?.profile_photo ? (
+                                    <Image
+                                        source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
+                                        style={{ width: 60, height: 60, borderRadius: 30 }}
+                                    />
+                                ) : (
+                                    <Ionicons name="person" size={30} color="#8B5CF6" />
+                                )}
+                            </View>
+                        </View>
+
+                        <View style={styles.profileInfo}>
+                            <Text style={styles.profileNamePrimary} numberOfLines={1}>{user?.name || 'User'}</Text>
+                            <Text style={styles.profilePhoneText}>+91 {user?.phone || '1234567890'}</Text>
+                        </View>
+
+                        <View style={styles.rightRoleBadge}>
+                            <Text style={styles.rightRoleBadgeText}>Shop Owner</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -1585,28 +1605,67 @@ const styles = StyleSheet.create({
 
     profileCard: {
         backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 24,
-        alignItems: 'center',
-        marginBottom: 16,
+        borderRadius: 20,
+        marginBottom: 20,
+        overflow: 'hidden',
         borderWidth: 1,
         borderColor: '#E5E7EB',
         ...shadows.sm,
     },
+    profileAccent: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        width: 4,
+    },
+    profileHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+    },
+    avatarBorder: {
+        padding: 3,
+        borderRadius: 35,
+        borderWidth: 1.5,
+        borderColor: '#F3E8FF',
+        marginRight: 16,
+    },
     avatar: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: '#EDE9FE',
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: '#F5F3FF',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
-        overflow: 'hidden',
+        overflow: 'hidden'
     },
-    profileName: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
-    profilePhone: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-    roleBadge: { backgroundColor: '#F3F4FB', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
-    roleBadgeText: { fontSize: 14, color: '#6366F1', fontWeight: '600' },
+    profileInfo: { flex: 1 },
+    profileNamePrimary: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 2 },
+    profilePhoneText: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
+    rightRoleBadge: {
+        backgroundColor: '#F5F3FF',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E9E3FF',
+    },
+    rightRoleBadgeText: {
+        fontSize: 10,
+        color: '#8B5CF6',
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+    modifyBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F5F3FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
 
 
     settingsCard: {
@@ -1623,8 +1682,15 @@ const styles = StyleSheet.create({
     settingItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
     settingItemLast: { borderBottomWidth: 0 },
 
-    settingText: { flex: 1, fontSize: 15, color: '#111827', fontWeight: '500' },
+    settingText: { flex: 1, fontSize: 16, color: '#374151', fontWeight: '500' },
     logoutTextRed: { color: '#EF4444' },
+    logoutBtn: {
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        padding: 16,
+        alignItems: 'center',
+        marginTop: 20,
+    },
 
 
 
