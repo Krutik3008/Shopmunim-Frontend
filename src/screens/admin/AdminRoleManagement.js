@@ -120,11 +120,9 @@ const AdminRoleManagement = () => {
     const canManageUser = (targetUserRoles) => {
         const isSuperAdmin = currentUserRoles.includes('super_admin');
         const isAdmin = currentUserRoles.includes('admin');
-        const targetIsSuperAdmin = targetUserRoles.includes('super_admin');
 
-        if (isSuperAdmin) return true;
-        if (isAdmin && !targetIsSuperAdmin) return true;
-        return false;
+        // Both Super Admin and Admin can see the Manage button
+        return isSuperAdmin || isAdmin;
     };
 
     const renderUserItem = ({ item }) => {
@@ -264,7 +262,13 @@ const AdminRoleManagement = () => {
                     <View style={styles.guidelineItem}>
                         <View style={[styles.guidelineDot, { backgroundColor: '#111827' }]} />
                         <Text style={styles.guidelineText}>
-                            <Text style={styles.guidelineBold}>Admin:</Text> Can access admin panel, manage users, shops, and transactions
+                            <Text style={styles.guidelineBold}>Super Admin:</Text> Can access admin panel, manage users, shops, and transactions
+                        </Text>
+                    </View>
+                     <View style={styles.guidelineItem}>
+                        <View style={[styles.guidelineDot, { backgroundColor: '#111827' }]} />
+                       <Text style={styles.guidelineText}>
+                            <Text style={styles.guidelineBold}>Admin:</Text> Can access admin panel, show users, shops, and transactions
                         </Text>
                     </View>
                     <View style={styles.guidelineItem}>
@@ -316,22 +320,31 @@ const AdminRoleManagement = () => {
                                     </View>
                                     <Text style={styles.actionDesc}>Can access admin panel and manage users/shops.</Text>
 
-                                    {selectedUser.admin_roles.includes('admin') ? (
-                                        <TouchableOpacity
-                                            style={[styles.actionButton, styles.buttonRed]}
-                                            onPress={() => handleAssignRole(selectedUser.id, ['admin'], 'revoke')}
-                                            disabled={updatingRole}
-                                        >
-                                            <Text style={styles.buttonTextWhite}>Revoke Admin Access</Text>
-                                        </TouchableOpacity>
-                                    ) : (
-                                        <TouchableOpacity
-                                            style={[styles.actionButton, styles.buttonBlue]}
-                                            onPress={() => handleAssignRole(selectedUser.id, ['admin'], 'grant')}
-                                            disabled={updatingRole}
-                                        >
-                                            <Text style={styles.buttonTextWhite}>Grant Admin Access</Text>
-                                        </TouchableOpacity>
+                                    {currentUserRoles.includes('super_admin') && (
+                                        selectedUser.admin_roles.includes('admin') ? (
+                                            <TouchableOpacity
+                                                style={[styles.actionButton, styles.buttonRed]}
+                                                onPress={() => handleAssignRole(selectedUser.id, ['admin'], 'revoke')}
+                                                disabled={updatingRole}
+                                            >
+                                                <Text style={styles.buttonTextWhite}>Revoke Admin Access</Text>
+                                            </TouchableOpacity>
+                                        ) : (
+                                            <TouchableOpacity
+                                                style={[styles.actionButton, styles.buttonBlue]}
+                                                onPress={() => handleAssignRole(selectedUser.id, ['admin'], 'grant')}
+                                                disabled={updatingRole}
+                                            >
+                                                <Text style={styles.buttonTextWhite}>Grant Admin Access</Text>
+                                            </TouchableOpacity>
+                                        )
+                                    )}
+                                    {!currentUserRoles.includes('super_admin') && (
+                                        <View style={{ backgroundColor: '#FEF3C7', padding: 8, borderRadius: 4 }}>
+                                            <Text style={{ fontSize: 12, color: '#92400E' }}>
+                                                Only Super Admin can manage admin access.
+                                            </Text>
+                                        </View>
                                     )}
                                 </View>
 

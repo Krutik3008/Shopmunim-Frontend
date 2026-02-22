@@ -198,12 +198,14 @@ npx expo start --tunnel
 - Search users by name or phone
 - **Show Test Users** toggle (hides default "User" named accounts)
 - User cards with role badges:
-  - 🛡️ **Admin** — Blue solid badge with shield icon
-  - 🏅 **Super Admin** — Amber solid badge with ribbon icon
+  - 🛡️ **Admin** — Blue solid badge with shield icon (View only)
+  - 🏅 **Super Admin** — Amber solid badge with ribbon icon (Full management)
   - 🏪 **Shop Owner** — Green outlined badge with storefront icon
   - 🛒 **Customer** — Orange outlined badge with cart icon
   - ✅ **Verified** — Green solid badge with checkmark icon
-- **Manage Roles** modal — Grant/revoke admin access
+- **Manage Roles** modal:
+  - **Super Admin**: Can grant/revoke admin access and promote users.
+  - **Admin**: Can view current roles but management actions are disabled.
 - **Role Management Guidelines** card with usage instructions
 
 #### 🧭 Admin Bottom Navigation
