@@ -79,6 +79,10 @@ export const authAPI = {
 
     updateProfile: (data) => api.put('/auth/me', data),
 
+    // Profile Photo methods
+    uploadProfilePhoto: (photoBase64) => api.post('/auth/me/photo', { photo: photoBase64 }, { timeout: 60000 }),
+    removeProfilePhoto: () => api.delete('/auth/me/photo'),
+
     // Security & Privacy
     getSessions: () => api.get('/auth/sessions'),
     requestDataExport: () => api.post('/auth/request-data-export'),

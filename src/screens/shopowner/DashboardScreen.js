@@ -18,6 +18,7 @@ import {
     Switch,
     Keyboard,
     Pressable,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -441,13 +442,6 @@ const ShopOwnerDashboardScreen = () => {
             if (activeTab === 'home') loadTransactions(shopId);
         }
     };
-
-
-
-
-
-
-
 
     const handleShareQr = async () => {
         try {
@@ -956,7 +950,14 @@ const ShopOwnerDashboardScreen = () => {
                 {/* Profile Card */}
                 <View style={styles.profileCard}>
                     <View style={styles.avatar}>
-                        <Ionicons name="person" size={40} color="#8B5CF6" />
+                        {user?.profile_photo ? (
+                            <Image
+                                source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
+                                style={{ width: 80, height: 80, borderRadius: 40 }}
+                            />
+                        ) : (
+                            <Ionicons name="person" size={40} color="#8B5CF6" />
+                        )}
                     </View>
                     <Text style={styles.profileName}>{user?.name || 'User'}</Text>
                     <Text style={styles.profilePhone}>+91 {user?.phone || '1234567890'}</Text>
@@ -1599,7 +1600,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#EDE9FE',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12
+        marginBottom: 12,
+        overflow: 'hidden',
     },
     profileName: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
     profilePhone: { fontSize: 14, color: '#6B7280', marginTop: 4 },

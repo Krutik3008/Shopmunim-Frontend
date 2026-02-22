@@ -10,6 +10,7 @@ import {
     RefreshControl,
     Platform,
     Animated,
+    Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -863,7 +864,14 @@ const CustomerDashboardScreen = () => {
             {/* Profile Card */}
             <View style={styles.profileCard}>
                 <View style={styles.avatar}>
-                    <Ionicons name="person" size={40} color="#8B5CF6" />
+                    {user?.profile_photo ? (
+                        <Image
+                            source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
+                            style={{ width: 80, height: 80, borderRadius: 40 }}
+                        />
+                    ) : (
+                        <Ionicons name="person" size={40} color="#8B5CF6" />
+                    )}
                 </View>
                 <Text style={styles.profileName}>{user?.name || 'User'}</Text>
                 <Text style={styles.profilePhone}>+91 {user?.phone}</Text>
@@ -1184,7 +1192,7 @@ const styles = StyleSheet.create({
         borderColor: '#E5E7EB',
         ...shadows.sm,
     },
-    avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+    avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#EDE9FE', alignItems: 'center', justifyContent: 'center', marginBottom: 12, overflow: 'hidden' },
     profileName: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
     profilePhone: { fontSize: 14, color: '#6B7280', marginTop: 4 },
     roleBadge: { backgroundColor: '#F3F4FB', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
