@@ -56,7 +56,10 @@ const Modal = ({
         >
             <TouchableWithoutFeedback onPress={onClose}>
                 <View style={styles.overlay}>
-                    <View style={styles.keyboardView}>
+                    <KeyboardAvoidingView
+                        behavior="padding"
+                        style={styles.keyboardView}
+                    >
                         <TouchableWithoutFeedback onPress={() => { }}>
                             <View style={styles.container}>
                                 {/* Header */}
@@ -83,7 +86,7 @@ const Modal = ({
                                 </ScrollView>
                             </View>
                         </TouchableWithoutFeedback>
-                    </View>
+                    </KeyboardAvoidingView>
                 </View>
             </TouchableWithoutFeedback>
         </RNModal>

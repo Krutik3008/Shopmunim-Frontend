@@ -508,7 +508,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 >
                     <KeyboardAvoidingView
                         style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}
-                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                        behavior="padding"
                     >
                         <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
