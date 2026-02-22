@@ -120,7 +120,7 @@ const AboutScreen = () => {
                     <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
                     <View style={styles.secureConnection}>
                         <Ionicons name="shield-checkmark" size={14} color="#10B981" />
-                        <Text style={styles.secureText}>End-to-End secure Connection</Text>
+                        <Text style={styles.secureText}>End-to-End Secure Connection</Text>
                     </View>
                 </View>
                 <View style={{ height: 40 }} />
