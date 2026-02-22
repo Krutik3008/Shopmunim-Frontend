@@ -694,7 +694,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 120 }} />
+                <View style={{ height: 100 }} />
             </ScrollView>
         );
     };
@@ -818,7 +818,7 @@ const ShopOwnerDashboardScreen = () => {
                     </View>
                 )}
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 130 }} />
+                <View style={{ height: 90 }} />
             </ScrollView>
         );
     };
@@ -881,7 +881,7 @@ const ShopOwnerDashboardScreen = () => {
 
                             {/* Pagination Card */}
                             {totalItems > 0 && (
-                                <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 16, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6' }}>
+                                <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 16, marginTop: 8, marginHorizontal: 2, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, borderWidth: 1, borderColor: '#F3F4F6' }}>
                                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                                         <Text style={{ fontSize: 13, color: '#6B7280' }}>
                                             Showing {startIdx + 1} to {endIdx} of <Text style={{ fontWeight: '700' }}>{totalItems} transactions</Text>
@@ -938,7 +938,7 @@ const ShopOwnerDashboardScreen = () => {
                     )}
 
                     {/* Spacer for bottom nav */}
-                    <View style={{ height: 120 }} />
+                    <View style={{ height: 100 }} />
                 </Pressable>
             </ScrollView>
         );
