@@ -174,7 +174,7 @@ const CreateShopScreen = ({ navigation, route }) => {
         <TouchableWithoutFeedback onPress={() => navigation.goBack()}>
             <View style={styles.overlay}>
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.keyboardView}
                 >
                     <TouchableWithoutFeedback onPress={() => { setShowCategoryDropdown(false); setShowAreaDropdown(false); }}>
@@ -192,7 +192,7 @@ const CreateShopScreen = ({ navigation, route }) => {
                                 showsVerticalScrollIndicator={false}
                                 bounces={false}
                                 overScrollMode="never"
-                                contentContainerStyle={{ paddingBottom: keyboardVisible ? 100 : 20 }}
+                                contentContainerStyle={{ paddingBottom: keyboardVisible ? 40 : 20 }}
                             >
                                 <Pressable style={{ flex: 1 }} onPress={() => { setShowCategoryDropdown(false); setShowAreaDropdown(false); }}>
                                     {/* Shop Name */}
