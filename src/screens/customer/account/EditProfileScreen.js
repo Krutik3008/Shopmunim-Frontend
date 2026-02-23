@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, ActionSheetIOS, Platform, Modal, Animated, Dimensions, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, ActionSheetIOS, Platform, Modal, Animated, Dimensions, Pressable, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../../context/AuthContext';
@@ -19,9 +19,27 @@ const EditProfileScreen = () => {
     const [loading, setLoading] = useState(false);
     const [profilePhoto, setProfilePhoto] = useState(null);
     const [showPhotoSheet, setShowPhotoSheet] = useState(false);
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
     const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const scrollViewRef = useRef(null);
     const existingPhoto = user?.profile_photo || null;
+
+    useEffect(() => {
+        const showSubscription = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+            () => setKeyboardVisible(true)
+        );
+        const hideSubscription = Keyboard.addListener(
+            Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+            () => setKeyboardVisible(false)
+        );
+
+        return () => {
+            showSubscription.remove();
+            hideSubscription.remove();
+        };
+    }, []);
 
     const openSheet = () => {
         setShowPhotoSheet(true);
@@ -169,7 +187,7 @@ const EditProfileScreen = () => {
     const avatarSource = getAvatarSource();
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={colors.gray[800]} />
@@ -178,75 +196,115 @@ const EditProfileScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Avatar Section */}
-                <View style={styles.avatarSection}>
-                    <TouchableOpacity style={styles.avatarWrapper} onPress={showImageOptions} activeOpacity={0.8}>
-                        <View style={styles.avatar}>
-                            {avatarSource ? (
-                                <Image source={avatarSource} style={styles.avatarImage} />
-                            ) : (
-                                <Ionicons name="person" size={42} color={colors.primary.purple} />
-                            )}
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : null}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={0}
+            >
+                <ScrollView
+                    ref={scrollViewRef}
+                    style={styles.scrollView}
+                    contentContainerStyle={[
+                        styles.scrollContent,
+                        isKeyboardVisible && { paddingBottom: Platform.OS === 'ios' ? 120 : 280 }
+                    ]}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.content}>
+                        {/* Avatar Section */}
+                        <View style={styles.avatarSection}>
+                            <TouchableOpacity style={styles.avatarWrapper} onPress={showImageOptions} activeOpacity={0.8}>
+                                <View style={styles.avatar}>
+                                    {avatarSource ? (
+                                        <Image source={avatarSource} style={styles.avatarImage} />
+                                    ) : (
+                                        <Ionicons name="person" size={42} color={colors.primary.purple} />
+                                    )}
+                                </View>
+                                <View style={styles.editBadge}>
+                                    <Ionicons name="camera" size={14} color="#fff" />
+                                </View>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={showImageOptions} activeOpacity={0.7}>
+                                <Text style={styles.avatarLabel}>Tap to change photo</Text>
+                            </TouchableOpacity>
                         </View>
-                        <View style={styles.editBadge}>
-                            <Ionicons name="camera" size={14} color="#fff" />
-                        </View>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={showImageOptions} activeOpacity={0.7}>
-                        <Text style={styles.avatarLabel}>Tap to change photo</Text>
-                    </TouchableOpacity>
-                </View>
 
-                {/* Profile Card */}
-                <Text style={styles.sectionLabel}>PERSONAL DETAILS</Text>
-                <View style={styles.profileCard}>
-                    <View style={styles.inputGroup}>
-                        <Text style={styles.fieldLabel}>Display Name</Text>
-                        <View style={styles.inputWrapper}>
-                            <Ionicons name="person-outline" size={18} color={colors.gray[400]} />
-                            <TextInput
-                                style={styles.input}
-                                value={name}
-                                onChangeText={setName}
-                                placeholder="Your full name"
-                                placeholderTextColor={colors.gray[400]}
-                            />
+                        {/* Profile Card */}
+                        <Text style={styles.sectionLabel}>PERSONAL DETAILS</Text>
+                        <View style={styles.profileCard}>
+                            <View style={styles.inputGroup}>
+                                <Text style={styles.fieldLabel}>Display Name</Text>
+                                <View style={styles.inputWrapper}>
+                                    <Ionicons name="person-outline" size={18} color={colors.gray[400]} />
+                                    <TextInput
+                                        style={styles.input}
+                                        value={name}
+                                        onChangeText={setName}
+                                        placeholder="Your full name"
+                                        placeholderTextColor={colors.gray[400]}
+                                    />
+                                </View>
+                            </View>
+
+                            <View style={[styles.inputGroup, { borderBottomWidth: 0, marginBottom: 0 }]}>
+                                <Text style={styles.fieldLabel}>Verified Phone</Text>
+                                <View style={[styles.inputWrapper, styles.disabledWrapper]}>
+                                    <Ionicons name="call-outline" size={18} color={colors.gray[300]} />
+                                    <TextInput
+                                        style={[styles.input, styles.disabledInput]}
+                                        value={phone}
+                                        editable={false}
+                                    />
+                                    <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                                </View>
+                                <Text style={styles.helperText}>This cannot be modified for security reasons.</Text>
+                            </View>
                         </View>
                     </View>
 
-                    <View style={[styles.inputGroup, { borderBottomWidth: 0, marginBottom: 0 }]}>
-                        <Text style={styles.fieldLabel}>Verified Phone</Text>
-                        <View style={[styles.inputWrapper, styles.disabledWrapper]}>
-                            <Ionicons name="call-outline" size={18} color={colors.gray[300]} />
-                            <TextInput
-                                style={[styles.input, styles.disabledInput]}
-                                value={phone}
-                                editable={false}
-                            />
-                            <Ionicons name="checkmark-circle" size={18} color={colors.success} />
+                    {/* Scrollable footer shown ONLY when keyboard is open */}
+                    {isKeyboardVisible && (
+                        <View style={styles.footer}>
+                            <TouchableOpacity onPress={handleSave} disabled={loading} activeOpacity={0.8}>
+                                <LinearGradient
+                                    colors={loading ? [colors.gray[300], colors.gray[300]] : gradients.primary}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={styles.saveButton}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator color="#fff" />
+                                    ) : (
+                                        <Text style={styles.saveButtonText}>Apply Changes</Text>
+                                    )}
+                                </LinearGradient>
+                            </TouchableOpacity>
                         </View>
-                        <Text style={styles.helperText}>This cannot be modified for security reasons.</Text>
-                    </View>
-                </View>
-            </ScrollView>
+                    )}
+                </ScrollView>
 
-            <View style={styles.footer}>
-                <TouchableOpacity onPress={handleSave} disabled={loading} activeOpacity={0.8}>
-                    <LinearGradient
-                        colors={loading ? [colors.gray[300], colors.gray[300]] : gradients.primary}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.saveButton}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.saveButtonText}>Apply Changes</Text>
-                        )}
-                    </LinearGradient>
-                </TouchableOpacity>
-            </View>
+                {/* Fixed footer shown ONLY when keyboard is closed */}
+                {!isKeyboardVisible && (
+                    <View style={styles.footer}>
+                        <TouchableOpacity onPress={handleSave} disabled={loading} activeOpacity={0.8}>
+                            <LinearGradient
+                                colors={loading ? [colors.gray[300], colors.gray[300]] : gradients.primary}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={styles.saveButton}
+                            >
+                                {loading ? (
+                                    <ActivityIndicator color="#fff" />
+                                ) : (
+                                    <Text style={styles.saveButtonText}>Apply Changes</Text>
+                                )}
+                            </LinearGradient>
+                        </TouchableOpacity>
+                    </View>
+                )}
+            </KeyboardAvoidingView>
 
             {/* Custom Bottom Sheet for Photo Options */}
             <Modal visible={showPhotoSheet} transparent animationType="none" onRequestClose={() => closeSheet()}>
@@ -344,7 +402,9 @@ const styles = StyleSheet.create({
     },
     headerTitle: { fontSize: 18, fontWeight: '700', color: colors.gray[900] },
     backButton: { padding: 4 },
-    content: { flex: 1, padding: 16 },
+    scrollView: { flex: 1 },
+    scrollContent: { flexGrow: 1 },
+    content: { padding: 16 },
 
     // Avatar
     avatarSection: { alignItems: 'center', marginTop: 12, marginBottom: 32 },
@@ -429,6 +489,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderTopWidth: 1,
         borderTopColor: '#E5E7EB',
+    },
+    inlineFooter: {
+        paddingVertical: 32,
+        paddingHorizontal: 4,
+        marginTop: 12,
     },
     saveButton: {
         paddingVertical: 16,
