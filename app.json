@@ -4,10 +4,6 @@
     "slug": "ShopMunimApp",
     "owner": "krutik3011",
     "version": "1.0.0",
-    "cli": {
-      "version": ">= 7.0.0",
-      "appVersionSource": "remote"
-    },
     "orientation": "portrait",
     "icon": "./assets/icon-v3.png",
     "userInterfaceStyle": "light",
@@ -26,8 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.krutik3011.ShopMunimApp",
-      "versionCode": 1,
-      "softwareKeyboardLayoutMode": "adjustPan"
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png",

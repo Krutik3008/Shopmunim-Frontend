@@ -11,9 +11,18 @@
         "preview": {
             "android": {
                 "buildType": "apk"
+            },
+            "env": {
+                "EAS_BUILD_NPM_INSTALL_FLAGS": "--legacy-peer-deps",
+                "npm_config_legacy_peer_deps": "true"
             }
         },
-        "production": {}
+        "production": {
+            "env": {
+                "EAS_BUILD_NPM_INSTALL_FLAGS": "--legacy-peer-deps",
+                "npm_config_legacy_peer_deps": "true"
+            }
+        }
     },
     "submit": {
         "production": {}
