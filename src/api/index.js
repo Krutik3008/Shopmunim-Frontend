@@ -60,8 +60,8 @@ api.interceptors.response.use(
 // ============ AUTH APIs ============
 
 export const authAPI = {
-    sendOTP: (phone, name) => {
-        const data = { phone };
+    sendOTP: (phone, name, is_login = false) => {
+        const data = { phone, is_login };
         if (name) data.name = name;
         return api.post('/auth/send-otp', data);
     },

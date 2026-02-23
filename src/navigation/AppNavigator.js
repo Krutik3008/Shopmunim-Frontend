@@ -8,6 +8,7 @@ import { colors } from '../theme';
 
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
+import SignUpScreen from '../screens/auth/SignUpScreen';
 import ShopOwnerDashboard from '../screens/shopowner/DashboardScreen';
 import CustomerDetailScreen from '../screens/shopowner/CustomerDetailScreen';
 import ProductsScreen from '../screens/shopowner/ProductsScreen';
@@ -39,6 +40,7 @@ const LoadingScreen = () => (
 const AuthNavigator = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
+        <Stack.Screen name="SignUp" component={SignUpScreen} />
     </Stack.Navigator>
 );
 

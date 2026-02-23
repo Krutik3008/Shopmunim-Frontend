@@ -1,4 +1,4 @@
-// Login Screen with Phone + OTP authentication
+// Sign Up Screen with Phone + OTP authentication
 import React, { useState } from 'react';
 import {
     View,
@@ -20,7 +20,7 @@ import { isValidPhone, isValidOTP } from '../../utils/helpers';
 import { useRef } from 'react';
 import { Animated } from 'react-native';
 
-const LoginScreen = ({ navigation }) => {
+const SignUpScreen = ({ navigation }) => {
     const { login } = useAuth();
     const [step, setStep] = useState('phone');
     const [phone, setPhone] = useState('');
@@ -68,15 +68,14 @@ const LoginScreen = ({ navigation }) => {
         setLoading(true);
         try {
             console.log('Sending OTP to:', phone);
-            const response = await authAPI.sendOTP(phone, name, true);
+            const response = await authAPI.sendOTP(phone, name, false);
             console.log('OTP Response:', response.data);
             const otpCode = response.data.mock_otp || '123456';
             setMockOtp(otpCode);
             setStep('otp');
         } catch (error) {
             console.log('OTP Error:', error.response?.data || error.message);
-            const errorMessage = error.response?.data?.detail || 'Failed to send OTP';
-            showToast(errorMessage);
+            showToast(error.response?.data?.detail || 'Failed to send OTP');
         } finally {
             setLoading(false);
         }
@@ -91,7 +90,7 @@ const LoginScreen = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const response = await authAPI.verifyOTP(phone, otp, name || undefined);
+            const response = await authAPI.verifyOTP(phone, otp, name);
             await login(response.data.token, response.data.user);
         } catch (error) {
             showToast(error.response?.data?.detail || 'Invalid OTP');
@@ -149,10 +148,10 @@ const LoginScreen = ({ navigation }) => {
 
                     {/* Auth Card */}
                     <Card style={styles.card}>
-                        <Text style={styles.cardTitle}>Welcome</Text>
+                        <Text style={styles.cardTitle}>Create Account</Text>
                         <Text style={styles.cardDescription}>
                             {step === 'phone'
-                                ? 'Enter your phone number to get started'
+                                ? 'Join ShopMunim to manage your ledgers digitally'
                                 : 'Enter the OTP sent to your phone'}
                         </Text>
 
@@ -160,7 +159,7 @@ const LoginScreen = ({ navigation }) => {
                             <View style={styles.form}>
                                 <Input
                                     label="Name"
-                                    placeholder="Enter your name"
+                                    placeholder="Enter your full name"
                                     value={name}
                                     onChangeText={setName}
                                     required
@@ -177,12 +176,12 @@ const LoginScreen = ({ navigation }) => {
                                     style={styles.input}
                                 />
                                 <Button
-                                    title="Send OTP"
+                                    title="Create Account"
                                     onPress={handleSendOTP}
                                     loading={loading}
-                                    disabled={!phone}
+                                    disabled={!phone || !name}
                                     size="md"
-                                    icon={<Ionicons name="send" size={16} color="#fff" />}
+                                    icon={<Ionicons name="person-add" size={16} color="#fff" />}
                                     style={styles.button}
                                 />
                             </View>
@@ -202,7 +201,7 @@ const LoginScreen = ({ navigation }) => {
                                     <Text style={styles.mockOtp}>Mock OTP: {mockOtp}</Text>
                                 )}
                                 <Button
-                                    title="Verify & Continue"
+                                    title="Verify & Join"
                                     onPress={handleVerifyOTP}
                                     loading={loading}
                                     disabled={!otp}
@@ -224,11 +223,11 @@ const LoginScreen = ({ navigation }) => {
                         )}
 
                         <View style={styles.footerLinkContainer}>
-                            <Text style={styles.footerText}>New user? </Text>
+                            <Text style={styles.footerText}>Already have an account? </Text>
                             <Button
-                                title="Sign Up"
+                                title="Login"
                                 variant="link"
-                                onPress={() => navigation.navigate('SignUp')}
+                                onPress={() => navigation.navigate('Login')}
                                 style={styles.linkButton}
                                 textStyle={styles.linkButtonText}
                             />
@@ -311,10 +310,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 12,
-    },
-    title: {
-        fontSize: 32,
-        fontWeight: 'bold',
     },
     subtitle: {
         fontSize: 14,
@@ -452,4 +447,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginScreen;
+export default SignUpScreen;
