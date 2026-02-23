@@ -574,7 +574,7 @@ const ShopOwnerDashboardScreen = () => {
                         <Text style={[styles.statNumber, { color: '#F59E0B' }]}>
                             {customers.filter(c => c.balance < 0).length}
                         </Text>
-                        <Text style={styles.statLabel}>With Dues</Text>
+                        <Text style={styles.statLabel2}>Total Customers With Dues</Text>
                     </View>
                 </View>
 
@@ -1369,7 +1369,6 @@ const ShopOwnerDashboardScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#F8F9FA' },
-    container: { flex: 1, backgroundColor: '#F8F9FA' },
     content: { flex: 1, overflow: 'hidden' },
 
 
@@ -1418,6 +1417,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
+        minWidth: 160,
         borderWidth: 1,
         borderColor: '#E5E7EB',
         shadowColor: '#000',
@@ -1428,6 +1428,7 @@ const styles = StyleSheet.create({
     },
     statNumber: { fontSize: 24, fontWeight: 'bold', color: '#111827', marginVertical: 4 },
     statLabel: { fontSize: 12, color: '#6B7280' },
+    statLabel2: { fontSize: 12, color: '#6B7280',marginTop:6,maxWidth:100,textAlign:'center' },
     rupeeCircle: {
         width: 36,
         height: 36,
