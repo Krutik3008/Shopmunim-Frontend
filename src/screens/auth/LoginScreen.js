@@ -36,6 +36,7 @@ const LoginScreen = ({ navigation }) => {
     const toastTimer = useRef(null);
 
     const showToast = (message) => {
+        Keyboard.dismiss();
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setToastMessage(message);
         setToastVisible(true);
@@ -57,11 +58,11 @@ const LoginScreen = ({ navigation }) => {
     const handleSendOTP = async () => {
         Keyboard.dismiss();
         if (!name.trim()) {
-            showToast('Please enter your name');
+            showToast('Please Enter Your Name');
             return;
         }
         if (!isValidPhone(phone)) {
-            showToast('Please enter a valid 10-digit phone number');
+            showToast('Please Enter a Valid Phone Number');
             return;
         }
 
@@ -85,7 +86,7 @@ const LoginScreen = ({ navigation }) => {
     const handleVerifyOTP = async () => {
         Keyboard.dismiss();
         if (!isValidOTP(otp)) {
-            Alert.alert('Error', 'Please enter a valid 6-digit OTP');
+            showToast('Please enter a valid 6-digit OTP');
             return;
         }
 
@@ -416,8 +417,8 @@ const styles = StyleSheet.create({
     },
     toastContainer: {
         position: 'absolute',
-        bottom: 90,
-        right: 16,
+        bottom: 40,
+        right: 10,
         zIndex: 999,
         alignItems: 'flex-end',
     },

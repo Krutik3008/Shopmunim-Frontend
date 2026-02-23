@@ -19,6 +19,7 @@ import {
     Keyboard,
     Pressable,
     Image,
+    Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -169,6 +170,32 @@ const ShopOwnerDashboardScreen = () => {
     const [editingProduct, setEditingProduct] = useState(null);
 
     const viewShotRef = useRef();
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+
+    const showToast = (message) => {
+        Keyboard.dismiss();
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
 
 
 
@@ -234,11 +261,11 @@ const ShopOwnerDashboardScreen = () => {
 
     const handleAddProduct = async () => {
         if (!newProductName.trim()) {
-            Alert.alert('Error', 'Please enter product name');
+            showToast('Please enter product name');
             return;
         }
         if (!newProductPrice.trim()) {
-            Alert.alert('Error', 'Please enter product price');
+            showToast('Please enter product price');
             return;
         }
 
@@ -256,14 +283,14 @@ const ShopOwnerDashboardScreen = () => {
                     name: newProductName.trim(),
                     price: parseFloat(newProductPrice)
                 });
-                Alert.alert('Success', 'Product updated successfully');
+                showToast('Product updated successfully');
             } else {
                 // CREATE new product
                 await productAPI.create(shopId, {
                     name: newProductName.trim(),
                     price: parseFloat(newProductPrice)
                 });
-                Alert.alert('Success', 'Product added successfully');
+                showToast('Product added successfully');
             }
 
             setShowAddProductModal(false);
@@ -274,7 +301,7 @@ const ShopOwnerDashboardScreen = () => {
             loadDashboardStats(shopId); // Update stats (product count)
         } catch (error) {
             console.log('Failed to save product:', error);
-            Alert.alert('Error', getAPIErrorMessage(error));
+            showToast(getAPIErrorMessage(error));
         } finally {
             setAddingProduct(false);
         }
@@ -365,11 +392,11 @@ const ShopOwnerDashboardScreen = () => {
 
     const handleAddCustomer = async () => {
         if (!newCustomerName.trim()) {
-            Alert.alert('Error', 'Please enter customer name');
+            showToast('Please enter customer name');
             return;
         }
         if (!newCustomerPhone.trim() || newCustomerPhone.length !== 10) {
-            Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+            showToast('Please enter a valid 10-digit phone number');
             return;
         }
 
@@ -387,7 +414,7 @@ const ShopOwnerDashboardScreen = () => {
                 nickname: newCustomerNickname.trim() || null
             });
 
-            Alert.alert('Success', 'Customer added successfully');
+            showToast('Customer added successfully');
             setShowAddCustomerModal(false);
             setNewCustomerName('');
             setNewCustomerPhone('');
@@ -396,7 +423,7 @@ const ShopOwnerDashboardScreen = () => {
             loadDashboardStats(shopId); // Refresh home stats
         } catch (error) {
             console.log('Failed to add customer:', error);
-            Alert.alert('Error', getAPIErrorMessage(error));
+            showToast(getAPIErrorMessage(error));
         } finally {
             setAddingCustomer(false);
         }
@@ -470,7 +497,7 @@ const ShopOwnerDashboardScreen = () => {
 
         const link = `https://shopmunim.com/connect/${shopName}/${shopCode}`;
         await Clipboard.setStringAsync(link);
-        Alert.alert('Success', 'Link copied to clipboard!');
+        showToast('Link copied to clipboard!');
     };
 
     const handleShareLink = async (type) => {
@@ -1361,6 +1388,31 @@ const ShopOwnerDashboardScreen = () => {
                     }
                 }}
             />
+
+            {/* Custom Toast Notification */}
+            {toastVisible && (
+                <Animated.View
+                    style={[
+                        styles.toastContainer,
+                        {
+                            opacity: toastAnim,
+                            transform: [{
+                                translateY: toastAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [20, 0]
+                                })
+                            }]
+                        }
+                    ]}
+                >
+                    <View style={styles.toastContent}>
+                        <View style={styles.toastIcon}>
+                            <Ionicons name="information-circle" size={18} color="#fff" />
+                        </View>
+                        <Text style={styles.toastText}>{toastMessage}</Text>
+                    </View>
+                </Animated.View>
+            )}
         </SafeAreaView >
     );
 };
@@ -1428,7 +1480,7 @@ const styles = StyleSheet.create({
     },
     statNumber: { fontSize: 24, fontWeight: 'bold', color: '#111827', marginVertical: 4 },
     statLabel: { fontSize: 12, color: '#6B7280' },
-    statLabel2: { fontSize: 12, color: '#6B7280',marginTop:6,maxWidth:100,textAlign:'center' },
+    statLabel2: { fontSize: 12, color: '#6B7280', marginTop: 6, maxWidth: 100, textAlign: 'center' },
     rupeeCircle: {
         width: 36,
         height: 36,
@@ -3071,6 +3123,44 @@ const styles = StyleSheet.create({
     footerVersion: { fontSize: 12, color: '#6B7280', marginTop: 4 },
     footerTagline: { fontSize: 12, color: '#6B7280', marginTop: 2 },
     footerCopyright: { fontSize: 11, color: '#6B7280', marginTop: 8, textAlign: 'center' },
+
+    // Toast Styles
+    toastContainer: {
+        position: 'absolute',
+        bottom: 40,
+        right: 10,
+        zIndex: 9999,
+        alignItems: 'flex-end',
+    },
+    toastContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 12,
+        gap: 10,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    toastIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#111827',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toastText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1F2937',
+    },
 });
 
 export default ShopOwnerDashboardScreen;

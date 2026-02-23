@@ -15,7 +15,9 @@ import {
     Pressable,
     Dimensions,
     Keyboard,
+    Animated,
 } from 'react-native';
+import { useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { shopAPI } from '../../api';
 
@@ -44,6 +46,32 @@ const CreateShopScreen = ({ navigation, route }) => {
     const [showAreaDropdown, setShowAreaDropdown] = useState(false);
     const [creating, setCreating] = useState(false);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    const showToast = (message) => {
+        Keyboard.dismiss();
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
 
     // If editing, availableAreas might need to be fetched or just set area as text
     // For now, if we have area, we can just set it. We won't re-fetch postal APIs on load unless user changes pincode.
@@ -90,7 +118,7 @@ const CreateShopScreen = ({ navigation, route }) => {
                     setArea(areas[0]);
                 }
             } else {
-                Alert.alert('Error', 'Invalid Pincode');
+                showToast('Invalid Pincode');
                 setCity('');
                 setState('');
                 setAvailableAreas([]);
@@ -98,7 +126,7 @@ const CreateShopScreen = ({ navigation, route }) => {
             }
         } catch (error) {
             console.error('Error fetching pincode details:', error);
-            Alert.alert('Error', 'Failed to fetch location details');
+            showToast('Failed to fetch location details');
         } finally {
             setIsLoadingPincode(false);
         }
@@ -120,20 +148,21 @@ const CreateShopScreen = ({ navigation, route }) => {
     };
 
     const handleCreate = async () => {
+        Keyboard.dismiss();
         if (!shopName.trim()) {
-            Alert.alert('Error', 'Please enter shop name');
+            showToast('Please enter shop name');
             return;
         }
         if (!shopCategory) {
-            Alert.alert('Error', 'Please select a category');
+            showToast('Please select a category');
             return;
         }
         if (!pincode || pincode.length !== 6) {
-            Alert.alert('Error', 'Please enter a valid 6-digit pincode');
+            showToast('Please enter a valid 6-digit pincode');
             return;
         }
         if (!area) {
-            Alert.alert('Error', 'Please select an area');
+            showToast('Please select an area');
             return;
         }
 
@@ -152,19 +181,17 @@ const CreateShopScreen = ({ navigation, route }) => {
 
             if (editingShop) {
                 await shopAPI.update(editingShop.id, shopData);
-                Alert.alert('Success', 'Shop updated successfully!', [
-                    { text: 'OK', onPress: () => navigation.goBack() }
-                ]);
+                showToast('Shop updated successfully!');
+                setTimeout(() => navigation.goBack(), 1500);
             } else {
                 await shopAPI.create(shopData);
-                Alert.alert('Success', 'Shop created successfully!', [
-                    { text: 'OK', onPress: () => navigation.goBack() }
-                ]);
+                showToast('Shop created successfully!');
+                setTimeout(() => navigation.goBack(), 1500);
             }
         } catch (error) {
             console.error('Shop save error:', error);
             const msg = error.response?.data?.detail || 'Failed to save shop';
-            Alert.alert('Error', msg);
+            showToast(msg);
         } finally {
             setCreating(false);
         }
@@ -368,6 +395,31 @@ const CreateShopScreen = ({ navigation, route }) => {
                         </View>
                     </TouchableWithoutFeedback>
                 </KeyboardAvoidingView>
+
+                {/* Custom Toast Notification */}
+                {toastVisible && (
+                    <Animated.View
+                        style={[
+                            styles.toastContainer,
+                            {
+                                opacity: toastAnim,
+                                transform: [{
+                                    translateY: toastAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [20, 0]
+                                    })
+                                }]
+                            }
+                        ]}
+                    >
+                        <View style={styles.toastContent}>
+                            <View style={styles.toastIcon}>
+                                <Ionicons name="information-circle" size={18} color="#fff" />
+                            </View>
+                            <Text style={styles.toastText}>{toastMessage}</Text>
+                        </View>
+                    </Animated.View>
+                )}
             </View>
         </TouchableWithoutFeedback>
     );
@@ -511,6 +563,42 @@ const styles = StyleSheet.create({
     readOnlyInput: {
         backgroundColor: '#F3F4F6',
         color: '#6B7280',
+    },
+    toastContainer: {
+        position: 'absolute',
+        bottom: 40,
+        right: 10,
+        zIndex: 9999,
+        alignItems: 'flex-end',
+    },
+    toastContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 12,
+        gap: 10,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    toastIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#111827',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toastText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1F2937',
     },
 });
 
