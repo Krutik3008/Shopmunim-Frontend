@@ -39,6 +39,7 @@ const CreateShopScreen = ({ navigation, route }) => {
     const [state, setState] = useState(editingShop?.state || '');
     const [country, setCountry] = useState(editingShop?.country || '');
     const [area, setArea] = useState(editingShop?.area || '');
+    const [upiId, setUpiId] = useState(editingShop?.upi_id || '');
     const [availableAreas, setAvailableAreas] = useState([]);
     const [isLoadingPincode, setIsLoadingPincode] = useState(false);
 
@@ -173,6 +174,15 @@ const CreateShopScreen = ({ navigation, route }) => {
             return;
         }
 
+        // UPI ID Validation (Optional but must be correct if provided)
+        if (upiId.trim()) {
+            const upiRegex = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/;
+            if (!upiRegex.test(upiId.trim())) {
+                showToast('UPI ID not correct');
+                return;
+            }
+        }
+
         setCreating(true);
         try {
             const shopData = {
@@ -183,12 +193,14 @@ const CreateShopScreen = ({ navigation, route }) => {
                 state: state,
                 country: country,
                 area: area,
-                location: `${area}, ${city}, ${state}, ${pincode}` // For backward compatibility
+                location: `${area}, ${city}, ${state}, ${pincode}`, // For backward compatibility
+                upi_id: upiId.trim()
             };
 
             if (editingShop) {
                 await shopAPI.update(editingShop.id, shopData);
                 navigation.navigate('ShopOwnerDashboard', {
+                    tab: 'account',
                     successMessage: 'Shop updated successfully!',
                     refresh: true
                 });
@@ -283,6 +295,23 @@ const CreateShopScreen = ({ navigation, route }) => {
                                                 ))}
                                             </View>
                                         )}
+                                    </View>
+
+                                    {/* UPI ID */}
+                                    <View style={styles.inputGroup}>
+                                        <Text style={styles.label}>UPI ID (For Payments)</Text>
+                                        <TextInput
+                                            style={styles.textInput}
+                                            placeholder="e.g. shopname@okicici"
+                                            placeholderTextColor="#9CA3AF"
+                                            value={upiId}
+                                            onChangeText={setUpiId}
+                                            onFocus={() => { setShowCategoryDropdown(false); setShowAreaDropdown(false); }}
+                                            autoCapitalize="none"
+                                        />
+                                        <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 4 }}>
+                                            This will be used to generate payment links for customers.
+                                        </Text>
                                     </View>
 
                                     {/* Pincode */}

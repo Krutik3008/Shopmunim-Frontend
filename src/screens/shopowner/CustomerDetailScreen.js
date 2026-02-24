@@ -15,7 +15,9 @@ import {
     ActivityIndicator,
     TouchableWithoutFeedback,
     Keyboard,
-    Animated
+    Animated,
+    Share,
+    Linking
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -439,13 +441,37 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             showToast('No pending dues for this customer');
             return;
         }
-        const amount = Math.abs(customer?.balance || 0);
+
+        const shopName = shopDetails?.name || 'Our Shop';
+        const upiId = shopDetails?.upi_id || '';
+        const phone = customer?.phone;
+
+        if (!phone) {
+            showToast('Customer phone number is missing');
+            return;
+        }
+
+        const amount = Math.abs(customer.balance).toFixed(2);
+
+        // Professional message template with explicit labels
+        const message = upiId
+            ? `Hello! My shop name is ${shopName}. Your pending payment is ₹${amount}. My UPI ID is ${upiId}. Please pay as soon as possible for a quick settlement. Thank you!`
+            : `Hello! My shop name is ${shopName}. Your pending payment is ₹${amount}. Please settle this as soon as possible. Thank you!`;
+
         try {
-            await Share.share({
-                message: `Please pay ₹${amount.toFixed(2)} via UPI`,
-                title: 'Payment Request'
-            });
+            const whatsappUrl = `whatsapp://send?phone=+91${phone}&text=${encodeURIComponent(message)}`;
+            const canOpen = await Linking.canOpenURL(whatsappUrl);
+
+            if (canOpen) {
+                await Linking.openURL(whatsappUrl);
+            } else {
+                await Share.share({
+                    message: message,
+                    title: 'Payment Request'
+                });
+            }
         } catch (error) {
+            console.error('Share error:', error);
             showToast('Failed to share UPI link');
         }
     };
