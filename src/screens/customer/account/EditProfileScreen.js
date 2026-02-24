@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useState, useRef, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useAuth } from '../../../context/AuthContext';
 import { authAPI } from '../../../api';
 import { colors, gradients, shadows } from '../../../theme';
@@ -116,6 +117,7 @@ const EditProfileScreen = () => {
     const pickImage = async (source) => {
         try {
             let result;
+            const isAndroid = Platform.OS === 'android';
 
             if (source === 'camera') {
                 const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -125,10 +127,10 @@ const EditProfileScreen = () => {
                 }
                 result = await ImagePicker.launchCameraAsync({
                     mediaTypes: ['images'],
-                    allowsEditing: true,
+                    allowsEditing: !isAndroid,
                     aspect: [1, 1],
-                    quality: 0.5,
-                    base64: true,
+                    quality: 1,
+                    exif: false,
                 });
             } else {
                 const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -138,15 +140,32 @@ const EditProfileScreen = () => {
                 }
                 result = await ImagePicker.launchImageLibraryAsync({
                     mediaTypes: ['images'],
-                    allowsEditing: true,
+                    allowsEditing: !isAndroid,
                     aspect: [1, 1],
-                    quality: 0.5,
-                    base64: true,
+                    quality: 1,
+                    exif: false,
                 });
             }
 
             if (!result.canceled && result.assets?.[0]) {
-                setProfilePhoto(result.assets[0]);
+                const asset = result.assets[0];
+                // On Android, crop to square manually since system cropper is buggy
+                const width = asset.width || 400;
+                const height = asset.height || 400;
+                const size = Math.min(width, height);
+                const originX = Math.floor((width - size) / 2);
+                const originY = Math.floor((height - size) / 2);
+
+                const manipulated = await ImageManipulator.manipulateAsync(
+                    asset.uri,
+                    [
+                        { crop: { originX, originY, width: size, height: size } },
+                        { resize: { width: 400, height: 400 } },
+                    ],
+                    { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+                );
+
+                setProfilePhoto({ uri: manipulated.uri, base64: manipulated.base64 });
             }
         } catch (error) {
             console.error('Image picker error:', error);
