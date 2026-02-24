@@ -209,6 +209,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
     };
 
     const handleSubmit = async () => {
+        Keyboard.dismiss();
         if (!customerId) {
             showToast('Please select a customer');
             return;
@@ -271,6 +272,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             title="Add Transaction"
             description={!keyboardVisible ? "Select products and quantities" : ""}
             toast={toastVisible ? renderToast() : null}
+            keyboardShouldPersistTaps="handled"
         >
             <View style={styles.formContent}>
                 <View style={styles.inputContainer}>
@@ -533,7 +535,13 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                         {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Add Transaction</Text>}
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                    <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => {
+                            Keyboard.dismiss();
+                            onClose();
+                        }}
+                    >
                         <Text style={styles.cancelBtnText}>Cancel</Text>
                     </TouchableOpacity>
                 </View>

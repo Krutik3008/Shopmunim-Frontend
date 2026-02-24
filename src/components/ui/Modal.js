@@ -24,6 +24,7 @@ const Modal = ({
     children,
     showCloseButton = true,
     toast = null,
+    keyboardShouldPersistTaps = 'handled',
 }) => {
     const [keyboardVisible, setKeyboardVisible] = useState(false);
     const { height: windowHeight } = useWindowDimensions();
@@ -77,7 +78,13 @@ const Modal = ({
                                         {description && <Text style={styles.description}>{description}</Text>}
                                     </View>
                                     {showCloseButton && (
-                                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                Keyboard.dismiss();
+                                                onClose();
+                                            }}
+                                            style={styles.closeButton}
+                                        >
                                             <Ionicons name="close" size={24} color={colors.gray[500]} />
                                         </TouchableOpacity>
                                     )}
@@ -87,7 +94,7 @@ const Modal = ({
                                 <ScrollView
                                     style={styles.content}
                                     showsVerticalScrollIndicator={false}
-                                    keyboardShouldPersistTaps="handled"
+                                    keyboardShouldPersistTaps={keyboardShouldPersistTaps}
                                     contentContainerStyle={{ paddingBottom: keyboardVisible ? 50 : 20 }}
                                 >
                                     {children}
