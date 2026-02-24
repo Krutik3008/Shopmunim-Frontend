@@ -1347,9 +1347,10 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginTop: 12,
         gap: 8,
+        alignSelf: 'flex-start',
     },
     paymentStatusText: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#059669',
         fontWeight: '500',
     },

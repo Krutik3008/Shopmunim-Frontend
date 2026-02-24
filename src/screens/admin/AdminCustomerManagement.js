@@ -14,7 +14,9 @@ import {
     RefreshControl,
     TouchableWithoutFeedback,
     Keyboard,
-    Dimensions
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -472,109 +474,117 @@ const AdminCustomerManagement = ({ showToast }) => {
                 visible={showShopDropdown}
                 transparent={true}
                 animationType="slide"
-                onRequestClose={() => setShowShopDropdown(false)}
+                onRequestClose={() => { Keyboard.dismiss(); setShowShopDropdown(false); }}
                 statusBarTranslucent={true}
             >
-                <View style={styles.modalOverlay}>
-                    <TouchableOpacity
-                        style={styles.modalBackdrop}
-                        activeOpacity={1}
-                        onPress={() => setShowShopDropdown(false)}
-                    />
-                    <View style={styles.modalContent}>
-                        <View style={styles.modalHeader}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <View style={styles.modalIconContainer}>
-                                    <Ionicons name="storefront-outline" size={20} color="#7C3AED" />
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                    style={{ flex: 1 }}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -100}
+                >
+                    <View style={styles.modalOverlay}>
+                        <TouchableOpacity
+                            style={styles.modalBackdrop}
+                            activeOpacity={1}
+                            onPress={() => { Keyboard.dismiss(); setShowShopDropdown(false); }}
+                        />
+                        <View style={styles.modalContent}>
+                            <View style={styles.modalHeader}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <View style={styles.modalIconContainer}>
+                                        <Ionicons name="storefront-outline" size={20} color="#7C3AED" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.modalTitle}>Select Shop</Text>
+                                        <Text style={styles.modalSubtitle}>Filter customers by shop location</Text>
+                                    </View>
                                 </View>
-                                <View>
-                                    <Text style={styles.modalTitle}>Select Shop</Text>
-                                    <Text style={styles.modalSubtitle}>Filter customers by shop location</Text>
-                                </View>
+                                <TouchableOpacity onPress={() => { Keyboard.dismiss(); setShowShopDropdown(false); }} style={styles.closeBtn}>
+                                    <Ionicons name="close" size={24} color="#6B7280" />
+                                </TouchableOpacity>
                             </View>
-                            <TouchableOpacity onPress={() => setShowShopDropdown(false)} style={styles.closeBtn}>
-                                <Ionicons name="close" size={24} color="#6B7280" />
-                            </TouchableOpacity>
-                        </View>
 
-                        <View style={styles.modalSearchContainer}>
-                            <Ionicons name="search-outline" size={20} color="#9CA3AF" />
-                            <TextInput
-                                style={styles.modalSearchInput}
-                                placeholder="Search by shop name..."
-                                placeholderTextColor="#9CA3AF"
-                                value={shopSearch}
-                                onChangeText={setShopSearch}
-                                autoCorrect={false}
-                            />
-                            {shopSearch.length > 0 && (
-                                <TouchableOpacity onPress={() => setShopSearch('')}>
-                                    <Ionicons name="close-circle" size={18} color="#9CA3AF" />
-                                </TouchableOpacity>
-                            )}
-                        </View>
+                            <View style={styles.modalSearchContainer}>
+                                <Ionicons name="search-outline" size={20} color="#9CA3AF" />
+                                <TextInput
+                                    style={styles.modalSearchInput}
+                                    placeholder="Search by shop name..."
+                                    placeholderTextColor="#9CA3AF"
+                                    value={shopSearch}
+                                    onChangeText={setShopSearch}
+                                    autoCorrect={false}
+                                />
+                                {shopSearch.length > 0 && (
+                                    <TouchableOpacity onPress={() => setShopSearch('')}>
+                                        <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
 
-                        <ScrollView
-                            style={styles.modalList}
-                            keyboardShouldPersistTaps="handled"
-                            showsVerticalScrollIndicator={false}
-                        >
-                            {shopSearch.length === 0 && (
-                                <TouchableOpacity
-                                    style={[styles.modalItem, selectedShop === 'all' && styles.modalItemActive]}
-                                    onPress={() => {
-                                        setSelectedShop('all');
-                                        setShowShopDropdown(false);
-                                        setShopSearch('');
-                                    }}
-                                >
-                                    <View style={[styles.modalItemIcon, selectedShop === 'all' && { backgroundColor: '#F5F3FF' }]}>
-                                        <Ionicons name="apps-outline" size={20} color={selectedShop === 'all' ? '#7C3AED' : '#6B7280'} />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={[styles.modalItemText, selectedShop === 'all' && styles.modalItemTextActive]}>All Shops</Text>
-                                        <Text style={styles.modalItemSubtext}>View aggregation of all shops</Text>
-                                    </View>
-                                    {selectedShop === 'all' && <Ionicons name="checkmark-circle" size={22} color="#7C3AED" />}
-                                </TouchableOpacity>
-                            )}
-
-                            {shops
-                                .filter(shop =>
-                                    shop.name?.toLowerCase().includes(shopSearch.toLowerCase())
-                                )
-                                .map(shop => (
+                            <ScrollView
+                                style={styles.modalList}
+                                keyboardShouldPersistTaps="handled"
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {shopSearch.length === 0 && (
                                     <TouchableOpacity
-                                        key={shop.id}
-                                        style={[styles.modalItem, selectedShop === shop.id && styles.modalItemActive]}
+                                        style={[styles.modalItem, selectedShop === 'all' && styles.modalItemActive]}
                                         onPress={() => {
-                                            setSelectedShop(shop.id);
+                                            setSelectedShop('all');
                                             setShowShopDropdown(false);
                                             setShopSearch('');
+                                            Keyboard.dismiss();
                                         }}
                                     >
-                                        <View style={[styles.modalItemIcon, selectedShop === shop.id && { backgroundColor: '#F5F3FF' }]}>
-                                            <Ionicons name="storefront-outline" size={20} color={selectedShop === shop.id ? '#7C3AED' : '#6B7280'} />
+                                        <View style={[styles.modalItemIcon, selectedShop === 'all' && { backgroundColor: '#F5F3FF' }]}>
+                                            <Ionicons name="apps-outline" size={20} color={selectedShop === 'all' ? '#7C3AED' : '#6B7280'} />
                                         </View>
                                         <View style={{ flex: 1 }}>
-                                            <Text style={[styles.modalItemText, selectedShop === shop.id && styles.modalItemTextActive]}>{shop.name}</Text>
-                                            <Text style={styles.modalItemSubtext}>{shop.location || 'No location set'}</Text>
+                                            <Text style={[styles.modalItemText, selectedShop === 'all' && styles.modalItemTextActive]}>All Shops</Text>
+                                            <Text style={styles.modalItemSubtext}>View aggregation of all shops</Text>
                                         </View>
-                                        {selectedShop === shop.id && <Ionicons name="checkmark-circle" size={22} color="#7C3AED" />}
+                                        {selectedShop === 'all' && <Ionicons name="checkmark-circle" size={22} color="#7C3AED" />}
                                     </TouchableOpacity>
-                                ))}
-
-                            {shops.filter(shop =>
-                                shop.name?.toLowerCase().includes(shopSearch.toLowerCase())
-                            ).length === 0 && (
-                                    <View style={styles.modalEmptyState}>
-                                        <Ionicons name="search-outline" size={48} color="#E5E7EB" />
-                                        <Text style={styles.modalEmptyText}>No shops matching "{shopSearch}"</Text>
-                                    </View>
                                 )}
-                        </ScrollView>
+
+                                {shops
+                                    .filter(shop =>
+                                        shop.name?.toLowerCase().includes(shopSearch.toLowerCase())
+                                    )
+                                    .map(shop => (
+                                        <TouchableOpacity
+                                            key={shop.id}
+                                            style={[styles.modalItem, selectedShop === shop.id && styles.modalItemActive]}
+                                            onPress={() => {
+                                                setSelectedShop(shop.id);
+                                                setShowShopDropdown(false);
+                                                setShopSearch('');
+                                                Keyboard.dismiss();
+                                            }}
+                                        >
+                                            <View style={[styles.modalItemIcon, selectedShop === shop.id && { backgroundColor: '#F5F3FF' }]}>
+                                                <Ionicons name="storefront-outline" size={20} color={selectedShop === shop.id ? '#7C3AED' : '#6B7280'} />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[styles.modalItemText, selectedShop === shop.id && styles.modalItemTextActive]}>{shop.name}</Text>
+                                                <Text style={styles.modalItemSubtext}>{shop.location || 'No location set'}</Text>
+                                            </View>
+                                            {selectedShop === shop.id && <Ionicons name="checkmark-circle" size={22} color="#7C3AED" />}
+                                        </TouchableOpacity>
+                                    ))}
+
+                                {shops.filter(shop =>
+                                    shop.name?.toLowerCase().includes(shopSearch.toLowerCase())
+                                ).length === 0 && (
+                                        <View style={styles.modalEmptyState}>
+                                            <Ionicons name="search-outline" size={48} color="#E5E7EB" />
+                                            <Text style={styles.modalEmptyText}>No shops matching "{shopSearch}"</Text>
+                                        </View>
+                                    )}
+                            </ScrollView>
+                        </View>
                     </View>
-                </View>
+                </KeyboardAvoidingView>
             </Modal>
         </View>
     );
