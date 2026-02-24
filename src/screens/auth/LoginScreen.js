@@ -73,11 +73,11 @@ const LoginScreen = ({ navigation }) => {
             console.log('OTP Response:', response.data);
             const otpCode = response.data.mock_otp || '123456';
             setMockOtp(otpCode);
+            showToast('OTP Sent Successfully');
             setStep('otp');
         } catch (error) {
             console.log('OTP Error:', error.response?.data || error.message);
-            const errorMessage = error.response?.data?.detail || 'Failed to send OTP';
-            showToast(errorMessage);
+            showToast('OTP Not Sent');
         } finally {
             setLoading(false);
         }
@@ -224,16 +224,18 @@ const LoginScreen = ({ navigation }) => {
                             </View>
                         )}
 
-                        <View style={styles.footerLinkContainer}>
-                            <Text style={styles.footerText}>New user? </Text>
-                            <Button
-                                title="Sign Up"
-                                variant="link"
-                                onPress={() => navigation.navigate('SignUp')}
-                                style={styles.linkButton}
-                                textStyle={styles.linkButtonText}
-                            />
-                        </View>
+                        {step === 'phone' && (
+                            <View style={styles.footerLinkContainer}>
+                                <Text style={styles.footerText}>New user? </Text>
+                                <Button
+                                    title="Sign Up"
+                                    variant="link"
+                                    onPress={() => navigation.navigate('SignUp')}
+                                    style={styles.linkButton}
+                                    textStyle={styles.linkButtonText}
+                                />
+                            </View>
+                        )}
                     </Card>
 
                     {/* Features */}

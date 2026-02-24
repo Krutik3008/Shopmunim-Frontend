@@ -73,10 +73,16 @@ const SignUpScreen = ({ navigation }) => {
             console.log('OTP Response:', response.data);
             const otpCode = response.data.mock_otp || '123456';
             setMockOtp(otpCode);
+            showToast('OTP Sent Successfully');
             setStep('otp');
         } catch (error) {
             console.log('OTP Error:', error.response?.data || error.message);
-            showToast(error.response?.data?.detail || 'Failed to send OTP');
+            const errorDetail = error.response?.data?.detail;
+            if (errorDetail === 'User already exists') {
+                showToast('User already exists');
+            } else {
+                showToast('OTP Not Sent');
+            }
         } finally {
             setLoading(false);
         }
@@ -223,16 +229,18 @@ const SignUpScreen = ({ navigation }) => {
                             </View>
                         )}
 
-                        <View style={styles.footerLinkContainer}>
-                            <Text style={styles.footerText}>Already have an account? </Text>
-                            <Button
-                                title="Login"
-                                variant="link"
-                                onPress={() => navigation.navigate('Login')}
-                                style={styles.linkButton}
-                                textStyle={styles.linkButtonText}
-                            />
-                        </View>
+                        {step === 'phone' && (
+                            <View style={styles.footerLinkContainer}>
+                                <Text style={styles.footerText}>Already have an account? </Text>
+                                <Button
+                                    title="Login"
+                                    variant="link"
+                                    onPress={() => navigation.navigate('Login')}
+                                    style={styles.linkButton}
+                                    textStyle={styles.linkButtonText}
+                                />
+                            </View>
+                        )}
                     </Card>
 
                     {/* Features */}
