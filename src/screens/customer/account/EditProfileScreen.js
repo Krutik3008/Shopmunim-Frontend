@@ -25,6 +25,60 @@ const EditProfileScreen = () => {
     const scrollViewRef = useRef(null);
     const existingPhoto = user?.profile_photo || null;
 
+    // Toast State
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    const showToast = (message) => {
+        Keyboard.dismiss();
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
+
+    const renderToast = () => {
+        if (!toastVisible) return null;
+        return (
+            <Animated.View
+                style={[
+                    styles.toastContainer,
+                    {
+                        opacity: toastAnim,
+                        transform: [{
+                            translateY: toastAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [20, 0]
+                            })
+                        }]
+                    }
+                ]}
+            >
+                <View style={styles.toastContent}>
+                    <View style={styles.toastIcon}>
+                        <Ionicons name="information-circle" size={18} color="#fff" />
+                    </View>
+                    <Text style={styles.toastText}>{toastMessage}</Text>
+                </View>
+            </Animated.View>
+        );
+    };
+
     useEffect(() => {
         const showSubscription = Keyboard.addListener(
             Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
@@ -66,7 +120,7 @@ const EditProfileScreen = () => {
             if (source === 'camera') {
                 const { status } = await ImagePicker.requestCameraPermissionsAsync();
                 if (status !== 'granted') {
-                    Alert.alert('Permission Denied', 'Camera access is required to take a photo.');
+                    showToast('Camera access is required to take a photo.');
                     return;
                 }
                 result = await ImagePicker.launchCameraAsync({
@@ -79,7 +133,7 @@ const EditProfileScreen = () => {
             } else {
                 const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
                 if (status !== 'granted') {
-                    Alert.alert('Permission Denied', 'Gallery access is required to choose a photo.');
+                    showToast('Gallery access is required to choose a photo.');
                     return;
                 }
                 result = await ImagePicker.launchImageLibraryAsync({
@@ -96,7 +150,7 @@ const EditProfileScreen = () => {
             }
         } catch (error) {
             console.error('Image picker error:', error);
-            Alert.alert('Error', 'Failed to pick image. Please try again.');
+            showToast('Failed to pick image');
         }
     };
 
@@ -125,11 +179,11 @@ const EditProfileScreen = () => {
             if (result.data?.user) {
                 await updateUser(result.data.user);
                 setProfilePhoto(null);
-                Alert.alert('Success', 'Profile photo removed successfully');
+                showToast('Profile photo removed');
             }
         } catch (error) {
             console.error('Photo removal failed:', error.response?.data || error.message);
-            Alert.alert('Error', 'Failed to remove photo: ' + (error.response?.data?.detail || error.message));
+            showToast('Failed to remove photo');
         } finally {
             setLoading(false);
         }
@@ -137,7 +191,7 @@ const EditProfileScreen = () => {
 
     const handleSave = async () => {
         if (!name.trim()) {
-            Alert.alert('Error', 'Name cannot be empty');
+            showToast('Name cannot be empty');
             return;
         }
 
@@ -156,7 +210,7 @@ const EditProfileScreen = () => {
                 } catch (photoError) {
                     console.error('Photo upload failed:', photoError.response?.data || photoError.message);
                     setLoading(false);
-                    Alert.alert('Error', 'Failed to upload photo: ' + (photoError.response?.data?.detail || photoError.message));
+                    showToast('Failed to upload photo');
                     return;
                 }
             }
@@ -166,15 +220,18 @@ const EditProfileScreen = () => {
             setLoading(false);
 
             if (result.success) {
-                Alert.alert('Success', 'Profile updated successfully');
-                navigation.goBack();
+                const targetDashboard = user?.active_role === 'shop_owner' ? 'ShopOwnerDashboard' : 'CustomerDashboard';
+                navigation.navigate(targetDashboard, {
+                    successMessage: 'Profile updated successfully',
+                    tab: 'account'
+                });
             } else {
-                Alert.alert('Error', result.message);
+                showToast(result.message);
             }
         } catch (error) {
             setLoading(false);
             console.error('Save error:', error.response?.data || error.message);
-            Alert.alert('Error', 'Failed to save changes. Please try again.');
+            showToast('Failed to save changes');
         }
     };
 
@@ -304,6 +361,7 @@ const EditProfileScreen = () => {
                         </TouchableOpacity>
                     </View>
                 )}
+                {renderToast()}
             </KeyboardAvoidingView>
 
             {/* Custom Bottom Sheet for Photo Options */}
@@ -382,6 +440,7 @@ const EditProfileScreen = () => {
                     <TouchableOpacity style={styles.sheetCancel} activeOpacity={0.7} onPress={() => closeSheet()}>
                         <Text style={styles.sheetCancelText}>Cancel</Text>
                     </TouchableOpacity>
+                    {renderToast()}
                 </Animated.View>
             </Modal>
         </SafeAreaView>
@@ -595,6 +654,43 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '600',
         color: colors.gray[500],
+    },
+    // Toast Styles
+    toastContainer: {
+        position: 'absolute',
+        bottom: 40,
+        right: 10,
+        zIndex: 9999,
+        alignItems: 'flex-end',
+    },
+    toastContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 12,
+        gap: 10,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    toastIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#111827',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toastText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1F2937',
     },
 });
 
