@@ -373,6 +373,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const handleTransactionSuccess = () => {
         loadData();
+        showToast('Transaction added successfully');
     };
 
     const calculateStats = () => {
@@ -2166,9 +2167,9 @@ const styles = StyleSheet.create({
     // Toast notification styles
     toastContainer: {
         position: 'absolute',
-        bottom: 90,
-        right: 16,
-        zIndex: 999,
+        bottom: 40,
+        right: 10,
+        zIndex: 9999,
         alignItems: 'flex-end',
     },
     toastContent: {

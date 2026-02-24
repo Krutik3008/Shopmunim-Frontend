@@ -5,16 +5,17 @@ import {
     StyleSheet,
     TouchableOpacity,
     ScrollView,
-    Alert,
     KeyboardAvoidingView,
     Platform,
     TextInput,
-    Modal,
     Keyboard,
-    useWindowDimensions
+    useWindowDimensions,
+    Animated,
+    ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import Modal from '../../components/ui/Modal';
 import Select from '../../components/ui/Select';
 import Input from '../../components/ui/Input';
 import { colors, spacing, borderRadius, fontSize } from '../../theme';
@@ -50,6 +51,59 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
     const [customerSearchQuery, setCustomerSearchQuery] = useState('');
 
+    // Toast State
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    const showToast = (message) => {
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
+
+    const renderToast = () => {
+        if (!toastVisible) return null;
+        return (
+            <Animated.View
+                style={[
+                    styles.toastContainer,
+                    {
+                        opacity: toastAnim,
+                        transform: [{
+                            translateY: toastAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [20, 0]
+                            })
+                        }]
+                    }
+                ]}
+            >
+                <View style={styles.toastContent}>
+                    <View style={styles.toastIcon}>
+                        <Ionicons name="information-circle" size={18} color="#fff" />
+                    </View>
+                    <Text style={styles.toastText}>{toastMessage}</Text>
+                </View>
+            </Animated.View>
+        );
+    };
+
     // Keyboard handling
     const scrollViewRef = useRef(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -69,16 +123,6 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             hideSub.remove();
         };
     }, []);
-
-    // Helper to scroll to a focused input
-    const scrollToInput = (event) => {
-        if (scrollViewRef.current) {
-            const { y } = event.nativeEvent.layout;
-            setTimeout(() => {
-                scrollViewRef.current.scrollTo({ y: y - 80, animated: true });
-            }, 300);
-        }
-    };
 
     // Filter customers based on search query
     const filterCustomers = () => {
@@ -120,7 +164,6 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             setProducts(prodRes.data || []);
         } catch (error) {
             console.log('AddTransactionModal: Failed to load data:', error);
-            // Alert.alert('Error', 'Failed to load customers or products');
         } finally {
             setPageLoading(false);
         }
@@ -167,13 +210,13 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
 
     const handleSubmit = async () => {
         if (!customerId) {
-            Alert.alert('Error', 'Please select a customer');
+            showToast('Please select a customer');
             return;
         }
 
         const amount = calculateTotal();
         if (amount <= 0) {
-            Alert.alert('Error', 'Transaction amount must be greater than zero');
+            showToast('Amount must be greater than zero');
             return;
         }
 
@@ -199,408 +242,291 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                 });
 
                 if (items.length === 0) {
-                    Alert.alert('Error', 'Please select at least one product');
+                    showToast('Please select at least one product');
                     setLoading(false);
                     return;
                 }
                 transactionData.products = items;
             }
 
-            console.log('Submitting Transaction Data:', JSON.stringify(transactionData, null, 2));
-
             await transactionAPI.create(shopId, transactionData);
 
-            Alert.alert('Success', 'Transaction added successfully');
-            if (onSuccess) onSuccess();
             onClose();
+            if (onSuccess) onSuccess();
         } catch (error) {
             console.log('Failed to create transaction:', error);
-            Alert.alert('Error', getAPIErrorMessage(error));
+            showToast(getAPIErrorMessage(error));
         } finally {
             setLoading(false);
         }
     };
 
     const selectedCustomer = customers.find(c => c.id === customerId);
-
     const totalAmount = calculateTotal();
 
     return (
         <Modal
             visible={visible}
-            transparent={true}
-            animationType="fade"
-            onRequestClose={onClose}
-            statusBarTranslucent={true}
+            onClose={onClose}
+            title="Add Transaction"
+            description={!keyboardVisible ? "Select products and quantities" : ""}
+            toast={toastVisible ? renderToast() : null}
         >
-            <KeyboardAvoidingView
-                style={styles.modalOverlay}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
-            >
-                <View style={[
-                    styles.modalContent,
-                    {
-                        maxHeight: keyboardVisible ? windowHeight * 0.5 : '90%',
-                        marginTop: keyboardVisible ? 60 : 0
-                    },
-                    keyboardVisible && styles.modalContentKeyboard
-                ]}>
-                    {/* Header */}
-                    <View style={styles.modalHeader}>
-                        <View>
-                            <Text style={styles.modalTitle}>Add Transaction</Text>
-                            {!keyboardVisible && (
-                                <Text style={styles.modalSubtitle}>Select products and quantities</Text>
-                            )}
+            <View style={styles.formContent}>
+                {/* Custom Customer Select with Search */}
+                <View style={styles.inputContainer}>
+                    <Text style={styles.sectionLabel}>Select Customer *</Text>
+
+                    {customerId ? (
+                        <View style={styles.selectedCustomerCard}>
+                            <View>
+                                <Text style={styles.selectedCustomerName}>
+                                    {selectedCustomer?.name}
+                                    {selectedCustomer?.nickname ? ` (${selectedCustomer.nickname})` : ''}
+                                </Text>
+                                <Text style={styles.selectedCustomerPhone}>+91 {selectedCustomer?.phone}</Text>
+                            </View>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setCustomerId('');
+                                    setCustomerSearchQuery('');
+                                    setShowCustomerDropdown(true);
+                                }}
+                                style={styles.changeCustomerBtn}
+                            >
+                                <Text style={styles.changeCustomerText}>Change</Text>
+                            </TouchableOpacity>
                         </View>
-                        <TouchableOpacity onPress={onClose} style={styles.modalClose}>
-                            <Ionicons name="close" size={24} color="#666" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <ScrollView
-                        ref={scrollViewRef}
-                        style={styles.scrollContent}
-                        keyboardShouldPersistTaps="handled"
-                        showsVerticalScrollIndicator={true}
-                        contentContainerStyle={[
-                            styles.scrollContentContainer,
-                            { paddingBottom: keyboardVisible ? 7 : 30 }
-                        ]}
-                    >
-                        <View style={styles.formContent}>
-
-                            {/* Custom Customer Select with Search */}
-                            <View style={styles.inputContainer}>
-                                <Text style={styles.sectionLabel}>Select Customer *</Text>
-
-                                {customerId ? (
-                                    <View style={styles.selectedCustomerCard}>
-                                        <View>
-                                            <Text style={styles.selectedCustomerName}>
-                                                {selectedCustomer?.name}
-                                                {selectedCustomer?.nickname ? ` (${selectedCustomer.nickname})` : ''}
-                                            </Text>
-                                            <Text style={styles.selectedCustomerPhone}>+91 {selectedCustomer?.phone}</Text>
-                                        </View>
-                                        <TouchableOpacity
-                                            onPress={() => {
-                                                setCustomerId('');
-                                                setCustomerSearchQuery(''); // Clear query when unselecting
-                                                setShowCustomerDropdown(true);
-                                            }}
-                                            style={styles.changeCustomerBtn}
-                                        >
-                                            <Text style={styles.changeCustomerText}>Change</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                ) : (
-                                    <>
-                                        <View style={styles.searchContainer}>
-                                            <TextInput
-                                                style={styles.searchInput}
-                                                placeholder="Search customer"
-                                                placeholderTextColor={colors.gray[400]}
-                                                value={customerSearchQuery}
-                                                onChangeText={(text) => {
-                                                    setCustomerSearchQuery(text);
-                                                    setShowCustomerDropdown(true);
-                                                }}
-                                                onFocus={() => setShowCustomerDropdown(true)}
-                                            />
-                                            {customerSearchQuery.length > 0 && (
-                                                <TouchableOpacity onPress={() => setCustomerSearchQuery('')} style={styles.clearSearchBtn}>
-                                                    <Ionicons name="close-circle" size={18} color={colors.gray[400]} />
-                                                </TouchableOpacity>
-                                            )}
-                                            <Ionicons name="search-outline" size={20} color={colors.gray[400]} style={styles.searchIcon} />
-                                        </View>
-
-                                        {showCustomerDropdown && customerSearchQuery.length > 0 && (
-                                            <View style={styles.dropdownList}>
-                                                {filterCustomers().length === 0 ? (
-                                                    <Text style={styles.dropdownEmpty}>
-                                                        {customerSearchQuery ? 'No matching customers found' : 'Start typing to search...'}
-                                                    </Text>
-                                                ) : (
-                                                    <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
-                                                        {filterCustomers().map((customer) => (
-                                                            <TouchableOpacity
-                                                                key={customer.id}
-                                                                style={styles.dropdownItem}
-                                                                onPress={() => {
-                                                                    setCustomerId(customer.id);
-                                                                    setCustomerSearchQuery(''); // Clear after selection
-                                                                    setShowCustomerDropdown(false);
-                                                                }}
-                                                            >
-                                                                <Text style={styles.dropdownItemText}>
-                                                                    {customer.name}
-                                                                    {customer.nickname ? ` (${customer.nickname})` : ''}
-                                                                    <Text style={styles.phoneText}> (+91 {customer.phone})</Text>
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                        ))}
-                                                    </ScrollView>
-                                                )}
-                                            </View>
-                                        )}
-                                    </>
+                    ) : (
+                        <>
+                            <View style={styles.searchContainer}>
+                                <TextInput
+                                    style={styles.searchInput}
+                                    placeholder="Search customer"
+                                    placeholderTextColor={colors.gray[400]}
+                                    value={customerSearchQuery}
+                                    onChangeText={(text) => {
+                                        setCustomerSearchQuery(text);
+                                        setShowCustomerDropdown(true);
+                                    }}
+                                    onFocus={() => setShowCustomerDropdown(true)}
+                                />
+                                {customerSearchQuery.length > 0 && (
+                                    <TouchableOpacity onPress={() => setCustomerSearchQuery('')} style={styles.clearSearchBtn}>
+                                        <Ionicons name="close-circle" size={18} color={colors.gray[400]} />
+                                    </TouchableOpacity>
                                 )}
+                                <Ionicons name="search-outline" size={20} color={colors.gray[400]} style={styles.searchIcon} />
                             </View>
 
-                            {/* Transaction Type */}
-                            <Select
-                                label="Transaction Type *"
-                                options={[
-                                    { label: 'Credit (Give Udhaar)', value: 'credit' },
-                                    { label: 'Debit (Take Payment)', value: 'debit' }
-                                ]}
-                                value={transactionType}
-                                onValueChange={(value) => {
-                                    setTransactionType(value);
-                                    if (value === 'debit') {
-                                        setMethod('manual');
-                                    } else {
-                                        setMethod('products');
-                                    }
-                                }}
-                            />
-
-                            {/* Method Switcher */}
-                            {transactionType === 'credit' && (
-                                <>
-                                    <Text style={styles.sectionLabel}>Transaction Method</Text>
-                                    <View style={styles.methodToggle}>
-                                        <TouchableOpacity
-                                            style={[styles.methodOption, method === 'products' && styles.methodActive]}
-                                            onPress={() => setMethod('products')}
-                                        >
-                                            <Ionicons name="cube-outline" size={18} color={method === 'products' ? colors.primary.blue : colors.gray[600]} />
-                                            <Text style={[styles.methodText, method === 'products' && styles.methodTextActive]}>Products</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.methodOption, method === 'manual' && styles.methodActive]}
-                                            onPress={() => setMethod('manual')}
-                                        >
-                                            <Ionicons name="calculator-outline" size={18} color={method === 'manual' ? colors.primary.blue : colors.gray[600]} />
-                                            <Text style={[styles.methodText, method === 'manual' && styles.methodTextActive]}>Manual</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </>
-                            )}
-
-                            {/* Content based on method */}
-                            {method === 'manual' ? (
-                                <View style={styles.manualInputContainer} onLayout={scrollToInput}>
-                                    <Input
-                                        label="Amount *"
-                                        placeholder="Enter amount (₹)"
-                                        value={manualAmount}
-                                        onChangeText={setManualAmount}
-                                        keyboardType="numeric"
-                                        prefix="₹"
-                                        onFocus={(e) => {
-                                            if (scrollViewRef.current) {
-                                                setTimeout(() => {
-                                                    scrollViewRef.current.scrollToEnd({ animated: true });
-                                                }, 300);
-                                            }
-                                        }}
-                                    />
+                            {showCustomerDropdown && customerSearchQuery.length > 0 && (
+                                <View style={styles.dropdownList}>
+                                    {filterCustomers().length === 0 ? (
+                                        <Text style={styles.dropdownEmpty}>
+                                            {customerSearchQuery ? 'No matching customers found' : 'Start typing to search...'}
+                                        </Text>
+                                    ) : (
+                                        <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                                            {filterCustomers().map((customer) => (
+                                                <TouchableOpacity
+                                                    key={customer.id}
+                                                    style={styles.dropdownItem}
+                                                    onPress={() => {
+                                                        setCustomerId(customer.id);
+                                                        setCustomerSearchQuery('');
+                                                        setShowCustomerDropdown(false);
+                                                    }}
+                                                >
+                                                    <Text style={styles.dropdownItemText}>
+                                                        {customer.name}
+                                                        {customer.nickname ? ` (${customer.nickname})` : ''}
+                                                        <Text style={styles.phoneText}> (+91 {customer.phone})</Text>
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+                                    )}
                                 </View>
+                            )}
+                        </>
+                    )}
+                </View>
+
+                {/* Transaction Type */}
+                <Select
+                    label="Transaction Type *"
+                    options={[
+                        { label: 'Credit (Give Udhaar)', value: 'credit' },
+                        { label: 'Debit (Take Payment)', value: 'debit' }
+                    ]}
+                    value={transactionType}
+                    onValueChange={(value) => {
+                        setTransactionType(value);
+                        if (value === 'debit') {
+                            setMethod('manual');
+                        } else {
+                            setMethod('products');
+                        }
+                    }}
+                />
+
+                {/* Method Switcher */}
+                {transactionType === 'credit' && (
+                    <>
+                        <Text style={styles.sectionLabel}>Transaction Method</Text>
+                        <View style={styles.methodToggle}>
+                            <TouchableOpacity
+                                style={[styles.methodOption, method === 'products' && styles.methodActive]}
+                                onPress={() => setMethod('products')}
+                            >
+                                <Ionicons name="cube-outline" size={18} color={method === 'products' ? colors.primary.blue : colors.gray[600]} />
+                                <Text style={[styles.methodText, method === 'products' && styles.methodTextActive]}>Products</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.methodOption, method === 'manual' && styles.methodActive]}
+                                onPress={() => setMethod('manual')}
+                            >
+                                <Ionicons name="calculator-outline" size={18} color={method === 'manual' ? colors.primary.blue : colors.gray[600]} />
+                                <Text style={[styles.methodText, method === 'manual' && styles.methodTextActive]}>Manual</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>
+                )}
+
+                {/* Content based on method */}
+                {method === 'manual' ? (
+                    <View style={styles.manualInputContainer}>
+                        <Input
+                            label="Amount *"
+                            placeholder="Enter amount (₹)"
+                            value={manualAmount}
+                            onChangeText={setManualAmount}
+                            keyboardType="numeric"
+                            prefix="₹"
+                        />
+                    </View>
+                ) : (
+                    <View style={styles.productsContainer}>
+                        <Text style={styles.sectionLabel}>Select Products</Text>
+                        <View style={styles.productsGrid}>
+                            {products.length === 0 ? (
+                                <Text style={styles.emptyText}>No products added yet.</Text>
                             ) : (
-                                <View style={styles.productsContainer}>
-                                    <Text style={styles.sectionLabel}>Select Products</Text>
-                                    {/* Products Grid */}
-                                    <View style={styles.productsGrid}>
-                                        {products.length === 0 ? (
-                                            <Text style={styles.emptyText}>No products added yet.</Text>
-                                        ) : (
-                                            products.map(product => {
-                                                // Safe access to selectedProducts using optional chaining or logical OR in toggle already handles it
-                                                const qty = selectedProducts && selectedProducts[product.id] ? selectedProducts[product.id] : 0;
-                                                const isSelected = qty > 0;
+                                products.map(product => {
+                                    const qty = selectedProducts && selectedProducts[product.id] ? selectedProducts[product.id] : 0;
+                                    const isSelected = qty > 0;
 
-                                                return (
-                                                    <TouchableOpacity
-                                                        key={product.id}
-                                                        style={[styles.productCard, isSelected && styles.productCardSelected]}
-                                                        onPress={() => handleProductToggle(product.id)}
-                                                    >
-                                                        <View style={styles.productCardContent}>
-                                                            <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
-                                                            <Text style={styles.productPrice}>₹{product.price}</Text>
-                                                        </View>
-                                                    </TouchableOpacity>
-                                                );
-                                            })
-                                        )}
-                                    </View>
-
-                                    {/* Selected Items Section (Web "Cart" style) */}
-                                    {safeEntries(selectedProducts).length > 0 && (
-                                        <View style={styles.selectedItemsCard}>
-                                            <View style={styles.selectedItemsHeader}>
-                                                <Ionicons name="cart-outline" size={20} color="#6B7280" style={{ marginRight: 8 }} />
-                                                <Text style={styles.selectedItemsTitle}>Selected Items</Text>
+                                    return (
+                                        <TouchableOpacity
+                                            key={product.id}
+                                            style={[styles.productCard, isSelected && styles.productCardSelected]}
+                                            onPress={() => handleProductToggle(product.id)}
+                                        >
+                                            <View style={styles.productCardContent}>
+                                                <Text style={styles.productName} numberOfLines={1}>{product.name}</Text>
+                                                <Text style={styles.productPrice}>₹{product.price}</Text>
                                             </View>
-                                            <View style={styles.selectedItemsContent}>
-                                                {safeEntries(selectedProducts).map(([pid, qty]) => {
-                                                    const product = products.find(p => p.id === pid);
-                                                    if (!product) return null;
-                                                    const subtotal = product.price * qty;
+                                        </TouchableOpacity>
+                                    );
+                                })
+                            )}
+                        </View>
 
-                                                    return (
-                                                        <View key={pid} style={styles.selectedItemRow}>
-                                                            <View style={styles.itemTopRow}>
-                                                                <View style={styles.selectedItemInfo}>
-                                                                    <Text style={styles.selectedItemName}>{product.name}</Text>
-                                                                    <Text style={styles.selectedItemPrice}>₹{parseFloat(product.price).toFixed(2)} each</Text>
-                                                                </View>
-                                                                <TouchableOpacity
-                                                                    onPress={() => updateQuantity(pid, -qty)} // Remove
-                                                                    style={styles.removeButtonRef}
-                                                                >
-                                                                    <Text style={styles.removeButtonText}>Remove</Text>
-                                                                </TouchableOpacity>
-                                                            </View>
+                        {safeEntries(selectedProducts).length > 0 && (
+                            <View style={styles.selectedItemsCard}>
+                                <View style={styles.selectedItemsHeader}>
+                                    <Ionicons name="cart-outline" size={20} color="#6B7280" style={{ marginRight: 8 }} />
+                                    <Text style={styles.selectedItemsTitle}>Selected Items</Text>
+                                </View>
+                                <View style={styles.selectedItemsContent}>
+                                    {safeEntries(selectedProducts).map(([pid, qty]) => {
+                                        const product = products.find(p => p.id === pid);
+                                        if (!product) return null;
+                                        const subtotal = product.price * qty;
 
-                                                            <View style={styles.itemBottomRow}>
-                                                                <View style={styles.qtyControlsRef}>
-                                                                    <TouchableOpacity
-                                                                        style={styles.qtyBtnRef}
-                                                                        onPress={() => updateQuantity(pid, -1)}
-                                                                    >
-                                                                        <Ionicons name="remove" size={16} color="#374151" />
-                                                                    </TouchableOpacity>
-                                                                    <View style={styles.qtyTextContainer}>
-                                                                        <Text style={styles.qtyTextRef}>{qty}</Text>
-                                                                    </View>
-                                                                    <TouchableOpacity
-                                                                        style={styles.qtyBtnRef}
-                                                                        onPress={() => updateQuantity(pid, 1)}
-                                                                    >
-                                                                        <Ionicons name="add" size={16} color="#374151" />
-                                                                    </TouchableOpacity>
-                                                                </View>
-                                                                <Text style={styles.itemSubtotalRef}>₹{subtotal.toFixed(2)}</Text>
-                                                            </View>
+                                        return (
+                                            <View key={pid} style={styles.selectedItemRow}>
+                                                <View style={styles.itemTopRow}>
+                                                    <View style={styles.selectedItemInfo}>
+                                                        <Text style={styles.selectedItemName}>{product.name}</Text>
+                                                        <Text style={styles.selectedItemPrice}>₹{parseFloat(product.price).toFixed(2)} each</Text>
+                                                    </View>
+                                                    <TouchableOpacity
+                                                        onPress={() => updateQuantity(pid, -qty)}
+                                                        style={styles.removeButtonRef}
+                                                    >
+                                                        <Text style={styles.removeButtonText}>Remove</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+
+                                                <View style={styles.itemBottomRow}>
+                                                    <View style={styles.qtyControlsRef}>
+                                                        <TouchableOpacity
+                                                            style={styles.qtyBtnRef}
+                                                            onPress={() => updateQuantity(pid, -1)}
+                                                        >
+                                                            <Ionicons name="remove" size={16} color="#374151" />
+                                                        </TouchableOpacity>
+                                                        <View style={styles.qtyTextContainer}>
+                                                            <Text style={styles.qtyTextRef}>{qty}</Text>
                                                         </View>
-                                                    );
-                                                })}
-
-                                                {/* Total Amount Banner */}
-                                                <View style={styles.totalBanner}>
-                                                    <Text style={styles.totalBannerLabel}>Total Amount:</Text>
-                                                    <Text style={styles.totalBannerAmount}>₹{totalAmount.toFixed(2)}</Text>
+                                                        <TouchableOpacity
+                                                            style={styles.qtyBtnRef}
+                                                            onPress={() => updateQuantity(pid, 1)}
+                                                        >
+                                                            <Ionicons name="add" size={16} color="#374151" />
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                    <Text style={styles.itemSubtotalRef}>₹{subtotal.toFixed(2)}</Text>
                                                 </View>
                                             </View>
-                                        </View>
-                                    )}
+                                        );
+                                    })}
 
+                                    <View style={styles.totalBanner}>
+                                        <Text style={styles.totalBannerLabel}>Total Amount:</Text>
+                                        <Text style={styles.totalBannerAmount}>₹{totalAmount.toFixed(2)}</Text>
+                                    </View>
                                 </View>
-                            )}
-
-                            {/* Note */}
-                            <View style={styles.noteContainer}>
-                                {/* ... rest unchanged ... */}
                             </View>
+                        )}
+                    </View>
+                )}
 
-                            {/* ... manual copy if needed, but replace tool handles replacement ... */}
-
-
-                            {/* Note */}
-                            <View style={styles.noteContainer}>
-                                <Text style={styles.sectionLabel}>Note (Optional)</Text>
-                                <TextInput
-                                    style={styles.noteInput}
-                                    placeholder="Add a note for this transaction"
-                                    value={note}
-                                    onChangeText={setNote}
-                                    multiline
-                                    numberOfLines={3}
-                                    textAlignVertical="top"
-                                    onFocus={() => {
-                                        if (scrollViewRef.current) {
-                                            setTimeout(() => {
-                                                scrollViewRef.current.scrollToEnd({ animated: true });
-                                            }, 300);
-                                        }
-                                    }}
-                                />
-                            </View>
-
-                            {/* Total & Action */}
-                            <View style={styles.footer}>
-                                <TouchableOpacity
-                                    style={[styles.submitBtn, loading && styles.disabledBtn]}
-                                    onPress={handleSubmit}
-                                    disabled={loading}
-                                >
-                                    <Text style={styles.submitBtnText}>{loading ? 'Saving...' : 'Add Transaction'}</Text>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
-                                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                                </TouchableOpacity>
-
-                            </View>
-
-                        </View>
-                    </ScrollView>
+                {/* Note */}
+                <View style={styles.noteContainer}>
+                    <Text style={styles.sectionLabel}>Note (Optional)</Text>
+                    <TextInput
+                        style={styles.noteInput}
+                        placeholder="Add a note for this transaction"
+                        value={note}
+                        onChangeText={setNote}
+                        multiline
+                        numberOfLines={3}
+                        textAlignVertical="top"
+                    />
                 </View>
-            </KeyboardAvoidingView>
+
+                {/* Footer Action */}
+                <View style={styles.footer}>
+                    <TouchableOpacity
+                        style={[styles.submitBtn, loading && styles.disabledBtn]}
+                        onPress={handleSubmit}
+                        disabled={loading}
+                    >
+                        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>Add Transaction</Text>}
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.cancelBtn} onPress={onClose}>
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </Modal>
     );
 };
 
 const styles = StyleSheet.create({
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
-        padding: 16,
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        maxHeight: '90%',
-        overflow: 'hidden',
-    },
-    modalContentKeyboard: {
-        maxHeight: '95%',
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: '#E5E5E5',
-    },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#111827',
-    },
-    modalSubtitle: {
-        fontSize: 14,
-        color: '#6B7280',
-        marginTop: 4,
-    },
-    modalClose: {
-        padding: 4,
-    },
-    scrollContent: {
-        paddingHorizontal: 20,
-    },
-    scrollContentContainer: {
-        paddingVertical: 16,
-        paddingBottom: 30,
-    },
     formContent: {
         marginBottom: 10,
     },
@@ -710,7 +636,6 @@ const styles = StyleSheet.create({
     inputContainer: {
         marginBottom: spacing.md,
     },
-    // Customer Select Styling
     selectedCustomerCard: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -737,25 +662,6 @@ const styles = StyleSheet.create({
         color: '#2563EB', // blue-600
         fontSize: fontSize.sm,
         fontWeight: '500',
-    },
-    selectButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderWidth: 1,
-        borderColor: colors.gray[300],
-        borderRadius: borderRadius.lg,
-        paddingHorizontal: spacing.md,
-        paddingVertical: 12,
-        backgroundColor: colors.white,
-    },
-    selectText: {
-        fontSize: fontSize.md,
-        color: colors.gray[800],
-    },
-    placeholderText: {
-        fontSize: fontSize.md,
-        color: colors.gray[400],
     },
     searchContainer: {
         flexDirection: 'row',
@@ -789,7 +695,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        maxHeight: 200, // Limit dropdown height if many customers
+        maxHeight: 200,
     },
     dropdownItem: {
         padding: spacing.md,
@@ -809,10 +715,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: colors.gray[500],
     },
-    // Selected Items "Cart" Styling
     selectedItemsCard: {
         marginTop: spacing.sm,
-        backgroundColor: '#F3F4F6', // Lighter grey/blue background as per image
+        backgroundColor: '#F3F4F6',
         borderColor: '#E5E7EB',
         borderWidth: 1,
         borderRadius: borderRadius.lg,
@@ -822,13 +727,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: spacing.md,
-        // borderBottomWidth: 1, // Removed border as per image might not have it or it's subtle, sticking to cleaner look
-        // borderBottomColor: '#E5E7EB',
     },
     selectedItemsTitle: {
         fontSize: fontSize.md,
         fontWeight: '600',
-        color: '#1F2937', // gray-800
+        color: '#1F2937',
     },
     selectedItemsContent: {
         paddingHorizontal: spacing.md,
@@ -864,10 +767,10 @@ const styles = StyleSheet.create({
     },
     selectedItemPrice: {
         fontSize: fontSize.sm,
-        color: '#6B7280', // gray-500
+        color: '#6B7280',
     },
     removeButtonRef: {
-        backgroundColor: '#EF4444', // Red-500
+        backgroundColor: '#EF4444',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 4,
@@ -910,10 +813,9 @@ const styles = StyleSheet.create({
     itemSubtotalRef: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#2563EB', // Blue-600
+        color: '#2563EB',
     },
     totalBanner: {
-        // As per image, it's a blue button-like banner at bottom
         backgroundColor: '#2563EB',
         padding: 16,
         borderRadius: borderRadius.lg,
@@ -959,7 +861,44 @@ const styles = StyleSheet.create({
         color: colors.gray[700],
         fontSize: fontSize.md,
         fontWeight: '600',
-    }
+    },
+    // Toast Styles
+    toastContainer: {
+        position: 'absolute',
+        bottom: 40,
+        right: 10,
+        zIndex: 9999,
+        alignItems: 'flex-end',
+    },
+    toastContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 12,
+        gap: 10,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    toastIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#111827',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toastText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1F2937',
+    },
 });
 
 export default AddTransactionModal;

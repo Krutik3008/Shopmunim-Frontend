@@ -1420,7 +1420,7 @@ const ShopOwnerDashboardScreen = () => {
                     if (shopId) {
                         loadDashboardStats(shopId);
                         if (activeTab === 'customers') loadCustomers(shopId);
-                        // You might also want to refresh recent activity if/when implemented
+                        showToast('Transaction added successfully');
                     }
                 }}
             />
