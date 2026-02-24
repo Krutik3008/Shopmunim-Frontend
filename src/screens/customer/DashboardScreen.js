@@ -11,6 +11,7 @@ import {
     Platform,
     Animated,
     Image,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -530,6 +531,32 @@ const CustomerDashboardScreen = () => {
         </ScrollView>
     );
 
+    // UPI Payment Handler
+    const handlePayNow = async (item) => {
+        const upiId = item.shop?.upi_id;
+        const shopName = item.shop?.name || 'Shop';
+        const amount = Math.abs(item.customer?.balance || 0).toFixed(2);
+
+        if (!upiId) {
+            showToast('UPI not available for this shop');
+            return;
+        }
+
+        const upiUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(`Payment to ${shopName}`)}`;
+
+        try {
+            const supported = await Linking.canOpenURL(upiUrl);
+            if (supported) {
+                await Linking.openURL(upiUrl);
+            } else {
+                showToast('No UPI app found on this device');
+            }
+        } catch (error) {
+            console.error('UPI payment error:', error);
+            showToast('Failed to open UPI app');
+        }
+    };
+
     // Payments Tab Content - Matching reference design
     const PaymentsContent = () => {
         if (loading) {
@@ -568,7 +595,7 @@ const CustomerDashboardScreen = () => {
                                         <Text style={styles.paymentShopLocation}>{item.shop?.location}</Text>
                                         <Text style={styles.paymentOweText}>Dues: ₹{Math.abs(item.customer?.balance || 0).toFixed(2)}</Text>
                                     </View>
-                                    <TouchableOpacity style={styles.paymentPayBtn}>
+                                    <TouchableOpacity style={styles.paymentPayBtn} onPress={() => handlePayNow(item)}>
                                         <Text style={styles.paymentPayBtnText}>Pay Now</Text>
                                     </TouchableOpacity>
                                 </View>
