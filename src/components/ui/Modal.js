@@ -23,6 +23,7 @@ const Modal = ({
     description,
     children,
     showCloseButton = true,
+    toast = null,
 }) => {
     const [keyboardVisible, setKeyboardVisible] = useState(false);
     const { height: windowHeight } = useWindowDimensions();
@@ -94,6 +95,7 @@ const Modal = ({
                             </View>
                         </TouchableWithoutFeedback>
                     </KeyboardAvoidingView>
+                    {toast}
                 </View>
             </TouchableWithoutFeedback>
         </RNModal>

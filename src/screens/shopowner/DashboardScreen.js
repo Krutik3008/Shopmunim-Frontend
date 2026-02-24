@@ -287,6 +287,7 @@ const ShopOwnerDashboardScreen = () => {
                     name: newProductName.trim(),
                     price: parseFloat(newProductPrice)
                 });
+                setShowAddProductModal(false);
                 showToast('Product updated successfully');
             } else {
                 // CREATE new product
@@ -294,6 +295,7 @@ const ShopOwnerDashboardScreen = () => {
                     name: newProductName.trim(),
                     price: parseFloat(newProductPrice)
                 });
+                setShowAddProductModal(false);
                 showToast('Product added successfully');
             }
 
@@ -400,7 +402,7 @@ const ShopOwnerDashboardScreen = () => {
             return;
         }
         if (!newCustomerPhone.trim() || newCustomerPhone.length !== 10) {
-            showToast('Please enter a valid 10-digit phone number');
+            showToast('Please enter a valid phone number');
             return;
         }
 
@@ -418,8 +420,8 @@ const ShopOwnerDashboardScreen = () => {
                 nickname: newCustomerNickname.trim() || null
             });
 
-            showToast('Customer added successfully');
             setShowAddCustomerModal(false);
+            showToast('Customer added successfully');
             setNewCustomerName('');
             setNewCustomerPhone('');
             setNewCustomerNickname('');
@@ -1256,6 +1258,34 @@ const ShopOwnerDashboardScreen = () => {
     // Bottom Navigation Tab - Matching Admin Panel Style
     // (TabButton removed - using ShopBottomNav component)
 
+    // Reusable Toast Component Helper
+    const renderToast = () => {
+        if (!toastVisible) return null;
+        return (
+            <Animated.View
+                style={[
+                    styles.toastContainer,
+                    {
+                        opacity: toastAnim,
+                        transform: [{
+                            translateY: toastAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [20, 0]
+                            })
+                        }]
+                    }
+                ]}
+            >
+                <View style={styles.toastContent}>
+                    <View style={styles.toastIcon}>
+                        <Ionicons name="information-circle" size={18} color="#fff" />
+                    </View>
+                    <Text style={styles.toastText}>{toastMessage}</Text>
+                </View>
+            </Animated.View>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <ShopHeader />
@@ -1279,6 +1309,7 @@ const ShopOwnerDashboardScreen = () => {
                 visible={showAddCustomerModal}
                 onClose={() => setShowAddCustomerModal(false)}
                 title="Add New Customer"
+                toast={toastVisible && showAddCustomerModal ? renderToast() : null}
             >
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Customer Name <Text style={styles.required}>*</Text></Text>
@@ -1335,6 +1366,7 @@ const ShopOwnerDashboardScreen = () => {
                 onClose={() => setShowAddProductModal(false)}
                 title={editingProduct ? 'Edit Product' : 'Add New Product'}
                 description={editingProduct ? 'Update product details' : 'Add a new product to your shop inventory'}
+                toast={toastVisible && showAddProductModal ? renderToast() : null}
             >
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Product Name <Text style={styles.required}>*</Text></Text>
@@ -1393,33 +1425,12 @@ const ShopOwnerDashboardScreen = () => {
                 }}
             />
 
-            {/* Custom Toast Notification */}
-            {toastVisible && (
-                <Animated.View
-                    style={[
-                        styles.toastContainer,
-                        {
-                            opacity: toastAnim,
-                            transform: [{
-                                translateY: toastAnim.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [20, 0]
-                                })
-                            }]
-                        }
-                    ]}
-                >
-                    <View style={styles.toastContent}>
-                        <View style={styles.toastIcon}>
-                            <Ionicons name="information-circle" size={18} color="#fff" />
-                        </View>
-                        <Text style={styles.toastText}>{toastMessage}</Text>
-                    </View>
-                </Animated.View>
-            )}
+            {/* Custom Toast Notification - Global */}
+            {toastVisible && !showAddCustomerModal && !showAddProductModal && renderToast()}
         </SafeAreaView >
     );
 };
+
 
 
 
