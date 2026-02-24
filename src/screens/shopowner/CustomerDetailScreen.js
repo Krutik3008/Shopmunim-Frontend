@@ -112,6 +112,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     const toastTimer = useRef(null);
 
     const showToast = (message) => {
+        Keyboard.dismiss();
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setToastMessage(message);
         setToastVisible(true);
@@ -128,6 +129,33 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 useNativeDriver: true,
             }).start(() => setToastVisible(false));
         }, 3000);
+    };
+
+    const renderToast = () => {
+        if (!toastVisible) return null;
+        return (
+            <Animated.View
+                style={[
+                    styles.toastContainer,
+                    {
+                        opacity: toastAnim,
+                        transform: [{
+                            translateY: toastAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [80, 0],
+                            }),
+                        }],
+                    },
+                ]}
+            >
+                <View style={styles.toastContent}>
+                    <View style={styles.toastIcon}>
+                        <Ionicons name="information-circle" size={20} color="#FFFFFF" />
+                    </View>
+                    <Text style={styles.toastText}>{toastMessage}</Text>
+                </View>
+            </Animated.View>
+        );
     };
 
     // Edit Customer State
@@ -408,7 +436,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const handleSendUPILink = async () => {
         if (!customer || (customer?.balance || 0) >= 0) {
-            Alert.alert('Info', 'No pending dues for this customer');
+            showToast('No pending dues for this customer');
             return;
         }
         const amount = Math.abs(customer?.balance || 0);
@@ -418,7 +446,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 title: 'Payment Request'
             });
         } catch (error) {
-            Alert.alert('Error', 'Failed to share UPI link');
+            showToast('Failed to share UPI link');
         }
     };
 
@@ -460,13 +488,15 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
     const handleUpdateCustomer = async () => {
         if (!editName.trim()) {
-            Alert.alert('Error', 'Please enter customer name');
+            showToast('Please enter customer name');
             return;
         }
         if (!editPhone.trim() || editPhone.length !== 10) {
-            Alert.alert('Error', 'Please enter a valid 10-digit phone number');
+            showToast('Please enter a valid phone number');
             return;
         }
+
+        Keyboard.dismiss();
 
         setUpdatingCustomer(true);
         try {
@@ -478,7 +508,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
             await customerAPI.update(shopId, customer.id, updateData);
 
-            Alert.alert('Success', 'Customer updated successfully');
+            showToast('Customer updated successfully');
             setShowEditCustomerModal(false);
 
             // Update local state
@@ -486,7 +516,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             // loadData(); // Optional, but local update is faster
         } catch (error) {
             console.log('Failed to update customer:', error);
-            Alert.alert('Error', 'Failed to update customer');
+            showToast('Failed to update customer');
         } finally {
             setUpdatingCustomer(false);
         }
@@ -514,19 +544,26 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
                             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
                                 <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Edit Customer</Text>
-                                <TouchableOpacity onPress={() => setShowEditCustomerModal(false)}>
+                                <TouchableOpacity onPress={() => {
+                                    Keyboard.dismiss();
+                                    setShowEditCustomerModal(false);
+                                }}>
                                     <Ionicons name="close" size={24} color="#666" />
                                 </TouchableOpacity>
                             </View>
 
-                            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Name</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>
+                                Name <Text style={{ color: '#EF4444' }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
                                 value={editName}
                                 onChangeText={setEditName}
                             />
 
-                            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>Phone</Text>
+                            <Text style={{ fontSize: 14, fontWeight: '500', marginBottom: 8 }}>
+                                Phone <Text style={{ color: '#EF4444' }}>*</Text>
+                            </Text>
                             <TextInput
                                 style={{ borderWidth: 1, borderColor: '#DDD', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 16 }}
                                 value={editPhone}
@@ -554,6 +591,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                 )}
                             </TouchableOpacity>
                         </View>
+                        {renderToast()}
                     </KeyboardAvoidingView>
                 </Modal>
 
@@ -926,30 +964,8 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     </ScrollView>
                 </View>
 
-                {/* Toast Notification */}
-                {toastVisible && (
-                    <Animated.View
-                        style={[
-                            styles.toastContainer,
-                            {
-                                opacity: toastAnim,
-                                transform: [{
-                                    translateY: toastAnim.interpolate({
-                                        inputRange: [0, 1],
-                                        outputRange: [80, 0],
-                                    }),
-                                }],
-                            },
-                        ]}
-                    >
-                        <View style={styles.toastContent}>
-                            <View style={styles.toastIcon}>
-                                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                            </View>
-                            <Text style={styles.toastText}>{toastMessage}</Text>
-                        </View>
-                    </Animated.View>
-                )}
+                {/* Toast Notification - Global */}
+                {renderToast()}
 
                 {/* Bottom Navigation */}
                 <ShopBottomNav activeTab="customers" />
@@ -970,6 +986,8 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     onClose={() => setShowPaymentRequestModal(false)}
                     customer={customer}
                     transactions={transactions}
+                    showToast={showToast}
+                    renderToast={renderToast}
                 />
                 {/* DateTime Pickers */}
                 {showFromDatePicker && (
@@ -1018,7 +1036,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     );
 };
 
-const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
+const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToast, renderToast }) => {
     const [paymentRequestTab, setPaymentRequestTab] = useState('sendNow');
     const [requestType, setRequestType] = useState('Payment Due Reminder');
     const [sendVia, setSendVia] = useState('Push Notification');
@@ -1584,7 +1602,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                                     <TouchableOpacity
                                         onPress={() => {
                                             // TODO: Save logic
-                                            Alert.alert('Success', 'Auto reminder settings saved!');
+                                            showToast('Auto reminder settings saved!');
                                             onClose();
                                         }}
                                     >
@@ -1602,6 +1620,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions }) => {
                         </View>
                     </ScrollView>
                 </View>
+                {renderToast()}
             </KeyboardAvoidingView>
         </Modal>
     );

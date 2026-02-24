@@ -273,6 +273,8 @@ const ShopOwnerDashboardScreen = () => {
             return;
         }
 
+        Keyboard.dismiss();
+
         setAddingProduct(true);
         try {
             const shopId = user?.shop_id || (shops.length > 0 ? shops[0].id : null);
@@ -406,6 +408,8 @@ const ShopOwnerDashboardScreen = () => {
             showToast('Please enter a valid phone number');
             return;
         }
+
+        Keyboard.dismiss();
 
         setAddingCustomer(true);
         try {
