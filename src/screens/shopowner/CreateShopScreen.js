@@ -96,9 +96,8 @@ const CreateShopScreen = ({ navigation, route }) => {
         };
     }, []);
 
-    const fetchLocationDetails = async (pin) => {
+    const fetchLocationDetails = async (pin, preserveArea = false) => {
         if (pin.length !== 6) return;
-
         setIsLoadingPincode(true);
         try {
             const response = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
@@ -114,23 +113,29 @@ const CreateShopScreen = ({ navigation, route }) => {
 
                 const areas = postOffice.map(po => po.Name);
                 setAvailableAreas(areas);
-                if (areas.length > 0) {
+                if (areas.length > 0 && !preserveArea) {
                     setArea(areas[0]);
                 }
             } else {
-                showToast('Invalid Pincode');
+                if (!preserveArea) showToast('Invalid Pincode');
                 setCity('');
                 setState('');
                 setAvailableAreas([]);
-                setArea('');
+                if (!preserveArea) setArea('');
             }
         } catch (error) {
             console.error('Error fetching pincode details:', error);
-            showToast('Failed to fetch location details');
+            if (!preserveArea) showToast('Failed to fetch location details');
         } finally {
             setIsLoadingPincode(false);
         }
     };
+
+    React.useEffect(() => {
+        if (editingShop?.pincode && String(editingShop.pincode).length === 6) {
+            fetchLocationDetails(String(editingShop.pincode), true);
+        }
+    }, []);
 
     const handlePincodeChange = (text) => {
         // Only allow numbers
@@ -181,12 +186,16 @@ const CreateShopScreen = ({ navigation, route }) => {
 
             if (editingShop) {
                 await shopAPI.update(editingShop.id, shopData);
-                showToast('Shop updated successfully!');
-                setTimeout(() => navigation.goBack(), 1500);
+                navigation.navigate('ShopOwnerDashboard', {
+                    successMessage: 'Shop updated successfully!',
+                    refresh: true
+                });
             } else {
                 await shopAPI.create(shopData);
-                showToast('Shop created successfully!');
-                setTimeout(() => navigation.goBack(), 1500);
+                navigation.navigate('ShopOwnerDashboard', {
+                    successMessage: 'Shop created successfully!',
+                    refresh: true
+                });
             }
         } catch (error) {
             console.error('Shop save error:', error);
@@ -298,13 +307,20 @@ const CreateShopScreen = ({ navigation, route }) => {
                                     <View style={[styles.inputGroup, { zIndex: 1000 }]}>
                                         <Text style={styles.label}>Area <Text style={styles.required}>*</Text></Text>
 
-                                        {availableAreas.length > 0 ? (
+                                        {isLoadingPincode ? (
+                                            <View style={[styles.dropdown, styles.readOnlyInput]}>
+                                                <Text style={styles.placeholder}>Fetching areas...</Text>
+                                                <ActivityIndicator size="small" color="#3B82F6" />
+                                            </View>
+                                        ) : availableAreas.length > 0 ? (
                                             <>
                                                 <TouchableOpacity
                                                     style={styles.dropdown}
                                                     onPress={() => {
-                                                        setShowAreaDropdown(!showAreaDropdown);
-                                                        setShowCategoryDropdown(false);
+                                                        if (pincode.length === 6) {
+                                                            setShowAreaDropdown(!showAreaDropdown);
+                                                            setShowCategoryDropdown(false);
+                                                        }
                                                     }}
                                                 >
                                                     <Text style={area ? styles.dropdownText : styles.placeholder}>
@@ -338,13 +354,14 @@ const CreateShopScreen = ({ navigation, route }) => {
                                             </>
                                         ) : (
                                             <TextInput
-                                                style={styles.textInput}
-                                                placeholder="Enter Area"
-                                                placeholderTextColor="#9CA3AF"
+                                                style={[styles.textInput, styles.readOnlyInput]}
+                                                placeholder={pincode.length === 6 ? "Invalid Pincode" : "Enter pincode first"}
+                                                placeholderTextColor={pincode.length === 6 ? "#EF4444" : "#9CA3AF"}
                                                 value={area}
                                                 onChangeText={setArea}
                                                 onFocus={() => { setShowCategoryDropdown(false); setShowAreaDropdown(false); }}
                                                 autoCapitalize="words"
+                                                editable={false}
                                             />
                                         )}
                                     </View>
@@ -355,7 +372,9 @@ const CreateShopScreen = ({ navigation, route }) => {
                                             <Text style={styles.label}>City</Text>
                                             <TextInput
                                                 style={[styles.textInput, styles.readOnlyInput]}
-                                                value={city}
+                                                value={isLoadingPincode ? '' : city}
+                                                placeholder={isLoadingPincode ? "Fetching..." : "City"}
+                                                placeholderTextColor="#9CA3AF"
                                                 editable={false}
                                             />
                                         </View>
@@ -363,7 +382,9 @@ const CreateShopScreen = ({ navigation, route }) => {
                                             <Text style={styles.label}>State</Text>
                                             <TextInput
                                                 style={[styles.textInput, styles.readOnlyInput]}
-                                                value={state}
+                                                value={isLoadingPincode ? '' : state}
+                                                placeholder={isLoadingPincode ? "Fetching..." : "State"}
+                                                placeholderTextColor="#9CA3AF"
                                                 editable={false}
                                             />
                                         </View>
@@ -373,7 +394,9 @@ const CreateShopScreen = ({ navigation, route }) => {
                                         <Text style={styles.label}>Country</Text>
                                         <TextInput
                                             style={[styles.textInput, styles.readOnlyInput]}
-                                            value={country}
+                                            value={isLoadingPincode ? '' : country}
+                                            placeholder={isLoadingPincode ? "Fetching..." : "Country"}
+                                            placeholderTextColor="#9CA3AF"
                                             editable={false}
                                         />
                                     </View>

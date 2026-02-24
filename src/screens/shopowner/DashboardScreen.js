@@ -110,9 +110,13 @@ const ShopOwnerDashboardScreen = () => {
             if (route.params?.tab) {
                 setActiveTab(route.params.tab);
             }
+            if (route.params?.successMessage) {
+                showToast(route.params.successMessage);
+                navigation.setParams({ successMessage: undefined });
+            }
             // Reload shops when screen gains focus (e.g. after returning from CreateShopScreen)
             loadShops();
-        }, [route.params?.tab])
+        }, [route.params?.tab, route.params?.successMessage])
     );
     const [shops, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
