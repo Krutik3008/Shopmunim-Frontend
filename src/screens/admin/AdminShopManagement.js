@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { adminAPI, getAPIErrorMessage } from '../../api';
 import AdminShopDetailsScreen from './AdminShopDetailsScreen';
 
-const AdminShopManagement = () => {
+const AdminShopManagement = ({ showToast }) => {
     const [selectedShop, setSelectedShop] = useState(null);
     const [shops, setShops] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -43,7 +43,11 @@ const AdminShopManagement = () => {
             setTotalShops(response.data.total || 0);
         } catch (err) {
             console.error('Shops fetch error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -219,6 +223,7 @@ const AdminShopManagement = () => {
                 shopCategory={selectedShop.category}
                 shopCode={selectedShop.shop_code}
                 onBack={() => setSelectedShop(null)}
+                showToast={showToast}
             />
         );
     }

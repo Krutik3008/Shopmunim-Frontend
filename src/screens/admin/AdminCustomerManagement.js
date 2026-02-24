@@ -24,7 +24,7 @@ import AdminCustomerDetailScreen from './AdminCustomerDetailScreen';
 
 const { width } = Dimensions.get('window');
 
-const AdminCustomerManagement = () => {
+const AdminCustomerManagement = ({ showToast }) => {
     const navigation = useNavigation();
     const [customers, setCustomers] = useState([]);
     const [shops, setShops] = useState([]);
@@ -109,10 +109,18 @@ const AdminCustomerManagement = () => {
 
         } catch (err) {
             console.error('Data fetch error:', err);
-            if (err.response && err.response.status === 404) {
-                Alert.alert('Server Update Required', 'The /admin/customers endpoint was not found. Please RESTART your backend server terminal to apply the latest changes.');
+            if (showToast) {
+                if (err.response && err.response.status === 404) {
+                    showToast('Server Update Required: The /admin/customers endpoint was not found.', 'error');
+                } else {
+                    showToast(getAPIErrorMessage(err), 'error');
+                }
             } else {
-                Alert.alert('Error', getAPIErrorMessage(err));
+                if (err.response && err.response.status === 404) {
+                    Alert.alert('Server Update Required', 'The /admin/customers endpoint was not found. Please RESTART your backend server terminal to apply the latest changes.');
+                } else {
+                    Alert.alert('Error', getAPIErrorMessage(err));
+                }
             }
         } finally {
             setLoading(false);
@@ -155,6 +163,7 @@ const AdminCustomerManagement = () => {
                 customer={selectedCustomer}
                 shopId={selectedCustomer.shop?.id}
                 onBack={() => setSelectedCustomer(null)}
+                showToast={showToast}
             />
         );
     }
@@ -243,7 +252,11 @@ const AdminCustomerManagement = () => {
                     style={styles.viewDetailsBtn}
                     onPress={() => {
                         if (!item.shop?.id) {
-                            Alert.alert('Error', 'Shop information missing for this customer.');
+                            if (showToast) {
+                                showToast('Shop information missing for this customer.', 'error');
+                            } else {
+                                Alert.alert('Error', 'Shop information missing for this customer.');
+                            }
                             return;
                         }
                         setSelectedCustomer(item);

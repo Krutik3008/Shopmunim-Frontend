@@ -17,7 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI, getAPIErrorMessage } from '../../api';
 
-const AdminRoleManagement = () => {
+const AdminRoleManagement = ({ showToast }) => {
     const [users, setUsers] = useState([]);
     const [currentUserRoles, setCurrentUserRoles] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -42,7 +42,11 @@ const AdminRoleManagement = () => {
             setCurrentUserRoles(response.data.current_user_roles);
         } catch (err) {
             console.error('Role users fetch error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -53,12 +57,20 @@ const AdminRoleManagement = () => {
         try {
             setUpdatingRole(true);
             await adminAPI.assignRole(userId, adminRoles, action);
-            Alert.alert('Success', `Role ${action}ed successfully`);
+            if (showToast) {
+                showToast(`Role ${action}ed successfully`);
+            } else {
+                Alert.alert('Success', `Role ${action}ed successfully`);
+            }
             await loadUsers(); // Reload to reflect changes
             setShowRoleModal(false);
         } catch (err) {
             console.error('Role update error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setUpdatingRole(false);
         }
@@ -77,11 +89,19 @@ const AdminRoleManagement = () => {
                         try {
                             setUpdatingRole(true);
                             await adminAPI.promoteToSuperAdmin(userId);
-                            Alert.alert('Success', 'User promoted to Super Admin');
+                            if (showToast) {
+                                showToast('User promoted to Super Admin');
+                            } else {
+                                Alert.alert('Success', 'User promoted to Super Admin');
+                            }
                             await loadUsers();
                             setShowRoleModal(false);
                         } catch (err) {
-                            Alert.alert('Error', getAPIErrorMessage(err));
+                            if (showToast) {
+                                showToast(getAPIErrorMessage(err), 'error');
+                            } else {
+                                Alert.alert('Error', getAPIErrorMessage(err));
+                            }
                         } finally {
                             setUpdatingRole(false);
                         }
@@ -265,9 +285,9 @@ const AdminRoleManagement = () => {
                             <Text style={styles.guidelineBold}>Super Admin:</Text> Can access admin panel, manage users, shops, and transactions
                         </Text>
                     </View>
-                     <View style={styles.guidelineItem}>
+                    <View style={styles.guidelineItem}>
                         <View style={[styles.guidelineDot, { backgroundColor: '#111827' }]} />
-                       <Text style={styles.guidelineText}>
+                        <Text style={styles.guidelineText}>
                             <Text style={styles.guidelineBold}>Admin:</Text> Can access admin panel, show users, shops, and transactions
                         </Text>
                     </View>

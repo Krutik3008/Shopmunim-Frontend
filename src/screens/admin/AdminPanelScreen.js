@@ -295,7 +295,7 @@ const AdminPanelScreen = () => {
                 colors={['#581c87', '#1e3a8a', '#312e81']} // Purple-900 to Indigo-900 approximation
                 style={[styles.content, isKeyboardVisible && { marginBottom: 0 }, { marginBottom: isKeyboardVisible ? 0 : 65 + Math.max(insets.bottom, 10) }]}
             >
-                <ActiveComponent onRefreshStats={fetchStats} />
+                <ActiveComponent onRefreshStats={fetchStats} showToast={showToast} />
             </LinearGradient>
 
             {/* Bottom Navigation - Fixed - Matches Web Mobile */}

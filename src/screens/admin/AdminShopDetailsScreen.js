@@ -19,7 +19,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { customerAPI, getAPIErrorMessage } from '../../api';
 import AdminCustomerDetailScreen from './AdminCustomerDetailScreen';
 
-const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBack }) => {
+const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBack, showToast }) => {
 
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -53,7 +53,11 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
         if (shopId) {
             fetchData();
         } else {
-            Alert.alert('Error', 'No shop ID provided');
+            if (showToast) {
+                showToast('No shop ID provided', 'error');
+            } else {
+                Alert.alert('Error', 'No shop ID provided');
+            }
             onBack();
         }
     }, [shopId]);
@@ -163,7 +167,11 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
 
         } catch (err) {
             console.error('Data fetch error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -204,6 +212,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                 customer={selectedCustomer}
                 shopId={shopId}
                 onBack={() => setSelectedCustomer(null)}
+                showToast={showToast}
             />
         );
     }
@@ -562,18 +571,18 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                         />
                     )
                 }
-                    {
-                        showToPicker && (
-                <DateTimePicker
-                    value={toDate || new Date()}
-                    mode="date"
-                    display="default"
-                    onChange={onToDateChange}
-                    positiveButton={{ label: 'Set', textColor: '#2563EB' }}
-                    negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
-                />
-                        )
-                    }
+                {
+                    showToPicker && (
+                        <DateTimePicker
+                            value={toDate || new Date()}
+                            mode="date"
+                            display="default"
+                            onChange={onToDateChange}
+                            positiveButton={{ label: 'Set', textColor: '#2563EB' }}
+                            negativeButton={{ label: 'Clear', textColor: '#EF4444' }}
+                        />
+                    )
+                }
             </LinearGradient >
         </View >
     );

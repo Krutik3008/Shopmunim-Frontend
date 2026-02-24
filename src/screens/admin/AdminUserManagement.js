@@ -25,7 +25,7 @@ const COL_WIDTHS = {
 };
 const TABLE_WIDTH = Object.values(COL_WIDTHS).reduce((a, b) => a + b, 0);
 
-const AdminUserManagement = ({ onRefreshStats }) => {
+const AdminUserManagement = ({ onRefreshStats, showToast }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -48,7 +48,11 @@ const AdminUserManagement = ({ onRefreshStats }) => {
             setTotalUsers(response.data.total || 0);
         } catch (err) {
             console.error('Users fetch error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -107,10 +111,23 @@ const AdminUserManagement = ({ onRefreshStats }) => {
                     user.id === userId ? { ...user, ...updates } : user
                 )
             );
-            Alert.alert('Success', 'User status updated');
+
+            if (showToast) {
+                if (updates.verified !== undefined) {
+                    showToast(updates.verified ? 'User verified' : 'User unverified');
+                } else if (updates.flagged !== undefined) {
+                    showToast(updates.flagged ? 'User flagged' : 'User unflagged');
+                } else {
+                    showToast('User status updated');
+                }
+            }
         } catch (err) {
             console.error('User update error:', err);
-            Alert.alert('Error', getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            } else {
+                Alert.alert('Error', getAPIErrorMessage(err));
+            }
         } finally {
             setUpdatingUser(null);
         }

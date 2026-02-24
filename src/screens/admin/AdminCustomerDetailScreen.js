@@ -70,7 +70,7 @@ const saveFileToDevice = async (fileName, base64Content, mimeType) => {
     return { success: true };
 };
 
-const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: propShopId, onBack }) => {
+const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: propShopId, onBack, showToast: propShowToast }) => {
 
     const navigation = useNavigation();
 
@@ -142,29 +142,14 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
     const [perPage, setPerPage] = useState(10);
     const [showPerPageDropdown, setShowPerPageDropdown] = useState(false);
 
-    // Toast notification state
-    const [toastMessage, setToastMessage] = useState('');
-    const [toastVisible, setToastVisible] = useState(false);
-    const toastAnim = useRef(new Animated.Value(0)).current;
-    const toastTimer = useRef(null);
-
-    const showToast = (message) => {
-        if (toastTimer.current) clearTimeout(toastTimer.current);
-        setToastMessage(message);
-        setToastVisible(true);
-        Animated.spring(toastAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-            tension: 80,
-            friction: 10,
-        }).start();
-        toastTimer.current = setTimeout(() => {
-            Animated.timing(toastAnim, {
-                toValue: 0,
-                duration: 300,
-                useNativeDriver: true,
-            }).start(() => setToastVisible(false));
-        }, 3000);
+    // Toast notification bridge
+    const showToast = (message, type = 'success') => {
+        if (propShowToast) {
+            propShowToast(message, type);
+        } else {
+            // Fallback to alert if no toast prop available (safety)
+            Alert.alert(type === 'error' ? 'Error' : 'Notification', message);
+        }
     };
 
     // ... (rest of render) ...
@@ -423,7 +408,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             }
         } catch (error) {
             console.log('PDF export error:', error);
-            Alert.alert('Error', 'Failed to generate PDF. Please try again.');
+            showToast('Failed to generate PDF. Please try again.', 'error');
         }
     };
 
@@ -488,8 +473,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             }
         } catch (error) {
             console.log('Excel export error:', error);
-
-            Alert.alert('Error', 'Failed to generate Excel file. Please try again.');
+            showToast('Failed to generate Excel file. Please try again.', 'error');
         }
     };
 
@@ -883,30 +867,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                 )}
             </SafeAreaView>
 
-            {/* Toast Notification */}
-            {toastVisible && (
-                <Animated.View
-                    style={[
-                        styles.toastContainer,
-                        {
-                            opacity: toastAnim,
-                            transform: [{
-                                translateY: toastAnim.interpolate({
-                                    inputRange: [0, 1],
-                                    outputRange: [80, 0],
-                                }),
-                            }],
-                        },
-                    ]}
-                >
-                    <View style={styles.toastContent}>
-                        <View style={styles.toastIcon}>
-                            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                        </View>
-                        <Text style={styles.toastText}>{toastMessage}</Text>
-                    </View>
-                </Animated.View>
-            )}
+            {/* Removed internal toast UI as it's now handled by AdminPanelScreen */}
 
         </LinearGradient>
     );
