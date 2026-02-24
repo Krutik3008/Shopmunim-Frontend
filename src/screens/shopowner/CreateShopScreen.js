@@ -120,6 +120,7 @@ const CreateShopScreen = ({ navigation, route }) => {
                 if (!preserveArea) showToast('Invalid Pincode');
                 setCity('');
                 setState('');
+                setCountry('');
                 setAvailableAreas([]);
                 if (!preserveArea) setArea('');
             }
@@ -147,6 +148,7 @@ const CreateShopScreen = ({ navigation, route }) => {
         } else {
             setCity('');
             setState('');
+            setCountry('');
             setAvailableAreas([]);
             setArea('');
         }
