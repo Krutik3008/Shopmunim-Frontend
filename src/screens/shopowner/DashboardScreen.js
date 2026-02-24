@@ -277,7 +277,7 @@ const ShopOwnerDashboardScreen = () => {
         try {
             const shopId = user?.shop_id || (shops.length > 0 ? shops[0].id : null);
             if (!shopId) {
-                Alert.alert('Error', 'No shop found. Please create a shop first.');
+                showToast('No shop found. Please create a shop first.');
                 return;
             }
 
@@ -329,9 +329,10 @@ const ShopOwnerDashboardScreen = () => {
                                 await productAPI.delete(shopId, product.id);
                                 loadProducts(shopId);
                                 loadDashboardStats(shopId); // Refresh home stats
+                                showToast('Item deleted successfully');
                             }
                         } catch (error) {
-                            Alert.alert('Error', 'Failed to delete product');
+                            showToast('Failed to delete product');
                         }
                     }
                 }
@@ -1387,7 +1388,15 @@ const ShopOwnerDashboardScreen = () => {
                         placeholder="Enter price"
                         placeholderTextColor="#9CA3AF"
                         value={newProductPrice}
-                        onChangeText={setNewProductPrice}
+                        onChangeText={(text) => {
+                            // Only allow numbers and at most one decimal point
+                            const filtered = text.replace(/[^0-9.]/g, '');
+                            const parts = filtered.split('.');
+                            const finalValue = parts.length > 2
+                                ? `${parts[0]}.${parts.slice(1).join('')}`
+                                : filtered;
+                            setNewProductPrice(finalValue);
+                        }}
                         keyboardType="numeric"
                     />
                 </View>

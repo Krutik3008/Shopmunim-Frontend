@@ -273,9 +273,10 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
             toast={toastVisible ? renderToast() : null}
         >
             <View style={styles.formContent}>
-                {/* Custom Customer Select with Search */}
                 <View style={styles.inputContainer}>
-                    <Text style={styles.sectionLabel}>Select Customer *</Text>
+                    <Text style={styles.sectionLabel}>
+                        Select Customer <Text style={styles.required}>*</Text>
+                    </Text>
 
                     {customerId ? (
                         <View style={styles.selectedCustomerCard}>
@@ -326,7 +327,11 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                                             {customerSearchQuery ? 'No matching customers found' : 'Start typing to search...'}
                                         </Text>
                                     ) : (
-                                        <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled={true}>
+                                        <ScrollView
+                                            style={{ maxHeight: 200 }}
+                                            nestedScrollEnabled={true}
+                                            keyboardShouldPersistTaps="handled"
+                                        >
                                             {filterCustomers().map((customer) => (
                                                 <TouchableOpacity
                                                     key={customer.id}
@@ -352,9 +357,9 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                     )}
                 </View>
 
-                {/* Transaction Type */}
                 <Select
-                    label="Transaction Type *"
+                    label="Transaction Type"
+                    required={true}
                     options={[
                         { label: 'Credit (Give Udhaar)', value: 'credit' },
                         { label: 'Debit (Take Payment)', value: 'debit' }
@@ -397,17 +402,28 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
                 {method === 'manual' ? (
                     <View style={styles.manualInputContainer}>
                         <Input
-                            label="Amount *"
+                            label="Amount"
+                            required={true}
                             placeholder="Enter amount (₹)"
                             value={manualAmount}
-                            onChangeText={setManualAmount}
+                            onChangeText={(text) => {
+                                // Only allow numbers and at most one decimal point
+                                const filtered = text.replace(/[^0-9.]/g, '');
+                                const parts = filtered.split('.');
+                                const finalValue = parts.length > 2
+                                    ? `${parts[0]}.${parts.slice(1).join('')}`
+                                    : filtered;
+                                setManualAmount(finalValue);
+                            }}
                             keyboardType="numeric"
                             prefix="₹"
                         />
                     </View>
                 ) : (
                     <View style={styles.productsContainer}>
-                        <Text style={styles.sectionLabel}>Select Products</Text>
+                        <Text style={styles.sectionLabel}>
+                            Select Products <Text style={styles.required}>*</Text>
+                        </Text>
                         <View style={styles.productsGrid}>
                             {products.length === 0 ? (
                                 <Text style={styles.emptyText}>No products added yet.</Text>
@@ -536,6 +552,9 @@ const styles = StyleSheet.create({
         color: colors.gray[800],
         marginBottom: spacing.xs,
         marginTop: spacing.sm,
+    },
+    required: {
+        color: colors.error,
     },
     methodToggle: {
         flexDirection: 'row',
