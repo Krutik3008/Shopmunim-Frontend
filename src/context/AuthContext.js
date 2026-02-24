@@ -7,6 +7,7 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [logoutToast, setLogoutToast] = useState(false);
     const [loading, setLoading] = useState(true); // START WITH TRUE (Blocking Load)
     const [isAuthenticated, setIsAuthenticated] = useState(false); // Default to false until proven otherwise
 
@@ -100,11 +101,14 @@ export const AuthProvider = ({ children }) => {
             await AsyncStorage.removeItem('user');
             setUser(null);
             setIsAuthenticated(false);
+            setLogoutToast(true);
             console.log('Logged out');
         } catch (error) {
             console.error('Logout error:', error);
         }
     };
+
+    const clearLogoutToast = () => setLogoutToast(false);
 
     const updateUser = async (userData) => {
         setUser(userData);
@@ -152,12 +156,14 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         isAuthenticated,
+        logoutToast,
         login,
         logout,
         updateUser,
         updateProfile,
         switchRole,
         checkAuth,
+        clearLogoutToast,
     };
 
     return (

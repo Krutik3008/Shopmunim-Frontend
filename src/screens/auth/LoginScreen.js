@@ -1,5 +1,5 @@
 // Login Screen with Phone + OTP authentication
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Button, Card, Input } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { authAPI } from '../../api';
@@ -21,7 +22,7 @@ import { useRef } from 'react';
 import { Animated } from 'react-native';
 
 const LoginScreen = ({ navigation }) => {
-    const { login } = useAuth();
+    const { login, logoutToast, clearLogoutToast } = useAuth();
     const [step, setStep] = useState('phone');
     const [phone, setPhone] = useState('');
     const [name, setName] = useState('');
@@ -55,6 +56,15 @@ const LoginScreen = ({ navigation }) => {
             }).start(() => setToastVisible(false));
         }, 3000);
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            if (logoutToast) {
+                showToast('Logged out successfully');
+                clearLogoutToast();
+            }
+        }, [logoutToast])
+    );
 
     const handleSendOTP = async () => {
         Keyboard.dismiss();
