@@ -217,21 +217,24 @@ const EditProfileScreen = () => {
 
             // 2. Update name
             const result = await updateProfile({ name });
-            setLoading(false);
 
             if (result.success) {
+                setLoading(false);
                 const targetDashboard = user?.active_role === 'shop_owner' ? 'ShopOwnerDashboard' : 'CustomerDashboard';
                 navigation.navigate(targetDashboard, {
                     successMessage: 'Profile updated successfully',
                     tab: 'account'
                 });
             } else {
+                setLoading(false);
                 showToast(result.message);
             }
         } catch (error) {
             setLoading(false);
-            console.error('Save error:', error.response?.data || error.message);
-            showToast('Failed to save changes');
+            if (__DEV__) {
+                console.log('Save error:', error.response?.data || error.message);
+            }
+            showToast(error.response?.data?.detail || error.response?.data?.message || 'Failed to save changes');
         }
     };
 

@@ -180,11 +180,13 @@ const ShopOwnerDashboardScreen = () => {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
+    const [toastType, setToastType] = useState('success');
 
-    const showToast = (message) => {
+    const showToast = (message, type = 'success') => {
         Keyboard.dismiss();
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setToastMessage(message);
+        setToastType(type);
         setToastVisible(true);
         Animated.spring(toastAnim, {
             toValue: 1,
@@ -1282,8 +1284,8 @@ const ShopOwnerDashboardScreen = () => {
                 ]}
             >
                 <View style={styles.toastContent}>
-                    <View style={styles.toastIcon}>
-                        <Ionicons name="information-circle" size={18} color="#fff" />
+                    <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
+                        <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#fff" />
                     </View>
                     <Text style={styles.toastText}>{toastMessage}</Text>
                 </View>
@@ -1293,7 +1295,7 @@ const ShopOwnerDashboardScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <ShopHeader />
+            <ShopHeader onSwitchError={(msg) => showToast(msg, 'error')} />
             <View style={styles.content}>{renderContent()}</View>
             {!isKeyboardVisible && (
                 <ShopBottomNav

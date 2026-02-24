@@ -1,5 +1,5 @@
 // Customer Dashboard Screen - Matching reference design
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     View,
     Text,
@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { customerDashboardAPI } from '../../api';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import CustomerBottomNav from '../../components/customer/CustomerBottomNav';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -75,6 +75,7 @@ const saveFileToDevice = async (fileName, base64Content, mimeType) => {
 
 const CustomerDashboardScreen = () => {
     const navigation = useNavigation();
+    const route = useRoute();
     const { user, logout, switchRole } = useAuth();
     const [activeTab, setActiveTab] = useState('ledger');
     const [ledgerData, setLedgerData] = useState([]);
@@ -103,12 +104,14 @@ const CustomerDashboardScreen = () => {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
+    const [toastType, setToastType] = useState('success');
     const toastAnim = useRef(new Animated.Value(0)).current;
     const toastTimer = useRef(null);
 
-    const showToast = (message) => {
+    const showToast = (message, type = 'success') => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setToastMessage(message);
+        setToastType(type);
         setToastVisible(true);
         Animated.spring(toastAnim, {
             toValue: 1,
@@ -126,6 +129,15 @@ const CustomerDashboardScreen = () => {
     };
 
 
+
+    useFocusEffect(
+        useCallback(() => {
+            if (route.params?.successMessage) {
+                showToast(route.params.successMessage);
+                navigation.setParams({ successMessage: undefined });
+            }
+        }, [route.params?.successMessage])
+    );
 
     useEffect(() => {
         loadLedger();
@@ -151,14 +163,16 @@ const CustomerDashboardScreen = () => {
     const handleRoleSwitch = async (role) => {
         setShowRoleDropdown(false);
         if (role !== user?.active_role) {
-            const success = await switchRole(role);
-            if (success) {
-                // Navigate to the appropriate screen
+            const result = await switchRole(role);
+            if (result.success) {
+                const message = `Role switched to ${role === 'shop_owner' ? 'Shop Owner' : 'Admin'}`;
                 if (role === 'shop_owner') {
-                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard', params: { successMessage: message } }] });
                 } else if (role === 'admin') {
-                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel', params: { successMessage: message } }] });
                 }
+            } else {
+                showToast(result.message || 'Role switch failed', 'error');
             }
         }
     };
@@ -982,8 +996,8 @@ const CustomerDashboardScreen = () => {
                     ]}
                 >
                     <View style={styles.toastContent}>
-                        <View style={styles.toastIcon}>
-                            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+                        <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
+                            <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#FFFFFF" />
                         </View>
                         <Text style={styles.toastText}>{toastMessage}</Text>
                     </View>
@@ -1321,7 +1335,7 @@ const styles = StyleSheet.create({
     customerDetailDropdownOptionTextActive: { color: '#2563EB', fontWeight: '600' },
 
     // Toast notification styles
-    toastContainer: { position: 'absolute', bottom: 90, right: 16, zIndex: 999, alignItems: 'flex-end' },
+    toastContainer: { position: 'absolute', bottom: 40, right: 10, zIndex: 2000, alignItems: 'flex-end' },
     toastContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12, gap: 10, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, borderWidth: 1, borderColor: '#E5E7EB' },
     toastIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center' },
     toastText: { fontSize: 14, fontWeight: '500', color: '#1F2937' },

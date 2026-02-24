@@ -115,15 +115,15 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authAPI.switchRole(role);
             console.log('Switch role response:', response.data);
-            // The API returns { user: {...}, message: '...' }
             const updatedUser = response.data.user;
             if (updatedUser) {
                 await updateUser(updatedUser);
             }
-            return true;
+            return { success: true };
         } catch (error) {
-            console.error('Switch role error:', error.response?.data || error.message);
-            return false;
+            const message = error.response?.data?.detail || error.response?.data?.message || 'Admin access not provided or switch failed';
+            console.log('Switch role error:', message);
+            return { success: false, message };
         }
     };
 
@@ -138,7 +138,9 @@ export const AuthProvider = ({ children }) => {
             await updateUser(newUser);
             return { success: true, message: 'Profile updated successfully' };
         } catch (error) {
-            console.error('Update profile error:', error.response?.data || error.message);
+            if (__DEV__) {
+                console.log('Profile update failed:', error.response?.data?.detail || error.message);
+            }
             return {
                 success: false,
                 message: error.response?.data?.detail || error.response?.data?.message || 'Failed to update profile'

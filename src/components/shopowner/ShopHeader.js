@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 
-const ShopHeader = ({ title }) => {
+const ShopHeader = ({ title, onSwitchError }) => {
     const navigation = useNavigation();
     const { user, logout, switchRole } = useAuth();
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
@@ -12,13 +12,16 @@ const ShopHeader = ({ title }) => {
     const handleRoleSwitch = async (role) => {
         setShowRoleDropdown(false);
         if (role !== user?.active_role) {
-            const success = await switchRole(role);
-            if (success) {
+            const result = await switchRole(role);
+            if (result.success) {
+                const message = `Role switched to ${role === 'customer' ? 'Customer' : 'Admin'}`;
                 if (role === 'customer') {
-                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard', params: { successMessage: message } }] });
                 } else if (role === 'admin') {
-                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'AdminPanel', params: { successMessage: message } }] });
                 }
+            } else if (onSwitchError) {
+                onSwitchError(result.message || 'Role switch failed');
             }
         }
     };

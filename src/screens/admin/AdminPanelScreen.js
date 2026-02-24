@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard, BackHandler, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, ScrollView, Platform, Alert, Keyboard, BackHandler, ActivityIndicator, Animated } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { adminAPI } from '../../api';
 import AdminDashboard from './AdminDashboard';
@@ -23,6 +23,43 @@ const AdminPanelScreen = () => {
     const [stats, setStats] = useState({ total_users: 0 });
     const [refreshingStats, setRefreshingStats] = useState(false);
     const insets = useSafeAreaInsets();
+    const route = useRoute(); // Need route for params
+
+    // Toast notification state
+    const [toastMessage, setToastMessage] = useState('');
+    const [toastVisible, setToastVisible] = useState(false);
+    const [toastType, setToastType] = useState('success');
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const toastTimer = useRef(null);
+
+    const showToast = (message, type = 'success') => {
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        setToastMessage(message);
+        setToastType(type);
+        setToastVisible(true);
+        Animated.spring(toastAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 80,
+            friction: 10,
+        }).start();
+        toastTimer.current = setTimeout(() => {
+            Animated.timing(toastAnim, {
+                toValue: 0,
+                duration: 300,
+                useNativeDriver: true,
+            }).start(() => setToastVisible(false));
+        }, 3000);
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            if (route.params?.successMessage) {
+                showToast(route.params.successMessage);
+                navigation.setParams({ successMessage: undefined });
+            }
+        }, [route.params?.successMessage])
+    );
 
     const fetchStats = async (dataOrEvent) => {
         // If data is passed directly (from Dashboard), use it to update stats without api call
@@ -135,13 +172,16 @@ const AdminPanelScreen = () => {
     const handleRoleSwitch = async (role) => {
         setShowRoleDropdown(false);
         if (role !== user?.active_role) {
-            const success = await switchRole(role);
-            if (success) {
+            const result = await switchRole(role);
+            if (result.success) {
+                const message = `Role switched to ${role === 'customer' ? 'Customer' : 'Shop Owner'}`;
                 if (role === 'customer') {
-                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'CustomerDashboard', params: { successMessage: message } }] });
                 } else if (role === 'shop_owner') {
-                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard' }] });
+                    navigation.reset({ index: 0, routes: [{ name: 'ShopOwnerDashboard', params: { successMessage: message } }] });
                 }
+            } else {
+                showToast(result.message || 'Role switch failed', 'error');
             }
         }
     };
@@ -320,6 +360,30 @@ const AdminPanelScreen = () => {
 
                     </View>
                 </View>
+            )}
+            {/* Toast Notification */}
+            {toastVisible && (
+                <Animated.View
+                    style={[
+                        styles.toastContainer,
+                        {
+                            opacity: toastAnim,
+                            transform: [{
+                                translateY: toastAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [20, 0]
+                                })
+                            }]
+                        }
+                    ]}
+                >
+                    <View style={styles.toastContent}>
+                        <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
+                            <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#fff" />
+                        </View>
+                        <Text style={styles.toastText}>{toastMessage}</Text>
+                    </View>
+                </Animated.View>
             )}
         </SafeAreaView>
     );
@@ -566,7 +630,43 @@ const styles = StyleSheet.create({
         bottom: -1000,
         zIndex: 90,
         backgroundColor: 'transparent',
-    }
+    },
+    toastContainer: {
+        position: 'absolute',
+        bottom: 40,
+        right: 10,
+        zIndex: 2000,
+        alignItems: 'flex-end',
+    },
+    toastContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 12,
+        gap: 10,
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+    },
+    toastIcon: {
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: '#111827',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    toastText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#1F2937',
+    },
 });
 
 export default AdminPanelScreen;
