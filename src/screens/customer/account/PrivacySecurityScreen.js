@@ -95,26 +95,6 @@ const PrivacySecurityScreen = () => {
         Alert.alert(title, message, [{ text: 'OK' }]);
     };
 
-    const handleChangePassword = async () => {
-        Alert.alert(
-            'Change Password',
-            'To change your password, we will send a temporary PIN to +91 ' + (user?.phone || 'your phone') + '. Proceed?',
-            [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                    text: 'Send PIN',
-                    onPress: async () => {
-                        try {
-                            await authAPI.resetPIN();
-                            handleFeatureAlert('PIN Sent', 'A verification code has been sent to your registered mobile number.');
-                        } catch (error) {
-                            handleFeatureAlert('Error', 'Failed to initiate PIN reset. Please try again.');
-                        }
-                    }
-                }
-            ]
-        );
-    };
 
     const handleActiveSessions = async () => {
         try {
@@ -312,13 +292,6 @@ const PrivacySecurityScreen = () => {
 
                 <Text style={styles.sectionLabel}>Account Access Control</Text>
                 <View style={styles.section}>
-                    <InfoRow
-                        icon="key-outline"
-                        title="Change Password"
-                        subtitle="Rotate your login credentials"
-                        onPress={handleChangePassword}
-                        iconColor={colors.warning}
-                    />
                     <InfoRow
                         icon="phone-portrait-outline"
                         title="Active Sessions"
