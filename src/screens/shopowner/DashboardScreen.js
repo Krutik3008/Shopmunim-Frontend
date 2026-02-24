@@ -112,9 +112,14 @@ const ShopOwnerDashboardScreen = () => {
             }
             if (route.params?.successMessage) {
                 showToast(route.params.successMessage);
-                navigation.setParams({ successMessage: undefined });
             }
-            // Reload shops when screen gains focus (e.g. after returning from CreateShopScreen)
+
+            // Clear params after processing
+            if (route.params?.tab || route.params?.successMessage) {
+                navigation.setParams({ tab: undefined, successMessage: undefined });
+            }
+
+            // Reload shops when screen gains focus
             loadShops();
         }, [route.params?.tab, route.params?.successMessage])
     );

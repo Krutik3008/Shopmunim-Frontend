@@ -132,11 +132,18 @@ const CustomerDashboardScreen = () => {
 
     useFocusEffect(
         useCallback(() => {
+            if (route.params?.tab) {
+                setActiveTab(route.params.tab);
+            }
             if (route.params?.successMessage) {
                 showToast(route.params.successMessage);
-                navigation.setParams({ successMessage: undefined });
             }
-        }, [route.params?.successMessage])
+
+            // Clear all params after processing
+            if (route.params?.tab || route.params?.successMessage) {
+                navigation.setParams({ tab: undefined, successMessage: undefined });
+            }
+        }, [route.params?.tab, route.params?.successMessage])
     );
 
     useEffect(() => {

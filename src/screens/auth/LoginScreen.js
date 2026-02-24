@@ -32,13 +32,14 @@ const LoginScreen = ({ navigation }) => {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
+    const [toastType, setToastType] = useState('success');
     const toastAnim = useRef(new Animated.Value(0)).current;
     const toastTimer = useRef(null);
 
-    const showToast = (message) => {
-        Keyboard.dismiss();
+    const showToast = (message, type = 'success') => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
         setToastMessage(message);
+        setToastType(type);
         setToastVisible(true);
         Animated.spring(toastAnim, {
             toValue: 1,
@@ -77,7 +78,8 @@ const LoginScreen = ({ navigation }) => {
             setStep('otp');
         } catch (error) {
             console.log('OTP Error:', error.response?.data || error.message);
-            showToast('OTP Not Sent');
+            const errorDetail = error.response?.data?.detail || 'OTP Not Sent';
+            showToast(errorDetail, 'error');
         } finally {
             setLoading(false);
         }
@@ -95,7 +97,7 @@ const LoginScreen = ({ navigation }) => {
             const response = await authAPI.verifyOTP(phone, otp, name || undefined);
             await login(response.data.token, response.data.user);
         } catch (error) {
-            showToast(error.response?.data?.detail || 'Invalid OTP');
+            showToast(error.response?.data?.detail || 'Invalid OTP', 'error');
         } finally {
             setLoading(false);
         }
@@ -275,8 +277,8 @@ const LoginScreen = ({ navigation }) => {
                     ]}
                 >
                     <View style={styles.toastContent}>
-                        <View style={styles.toastIcon}>
-                            <Ionicons name="information-circle" size={18} color="#fff" />
+                        <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
+                            <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#fff" />
                         </View>
                         <Text style={styles.toastText}>{toastMessage}</Text>
                     </View>
