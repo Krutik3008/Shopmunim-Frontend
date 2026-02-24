@@ -468,7 +468,7 @@ const ShopLedgerDetailScreen = ({
             }
         } catch (error) {
             console.log('PDF export error:', error);
-            Alert.alert('Error', 'Failed to generate PDF: ' + (error.message || 'Please try again.'));
+            showToast('Failed to generate PDF');
         }
     };
 
@@ -531,7 +531,7 @@ const ShopLedgerDetailScreen = ({
             }
         } catch (error) {
             console.log('Excel export error:', error);
-            Alert.alert('Error', 'Failed to generate Excel: ' + (error.message || 'Please try again.'));
+            showToast('Failed to generate Excel');
         }
     };
 

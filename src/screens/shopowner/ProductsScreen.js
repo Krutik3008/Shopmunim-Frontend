@@ -41,7 +41,7 @@ const ProductsScreen = ({ route, navigation }) => {
             const response = await productAPI.getAll(shopId);
             setProducts(response.data);
         } catch (error) {
-            Alert.alert('Error', 'Failed to load products');
+            showToast('Failed to load products');
         } finally {
             setLoading(false);
         }
@@ -55,7 +55,7 @@ const ProductsScreen = ({ route, navigation }) => {
 
     const handleAddProduct = async () => {
         if (!productForm.name || !productForm.price) {
-            Alert.alert('Error', 'Please fill all fields');
+            showToast('Please fill all fields');
             return;
         }
 
@@ -64,7 +64,7 @@ const ProductsScreen = ({ route, navigation }) => {
                 name: productForm.name,
                 price: parseFloat(productForm.price),
             });
-            Alert.alert('Success', 'Product added successfully!');
+            showToast('Product added successfully!');
             setShowAddProduct(false);
             setProductForm({ name: '', price: '' });
             loadProducts();
@@ -75,7 +75,7 @@ const ProductsScreen = ({ route, navigation }) => {
 
     const handleUpdateProduct = async () => {
         if (!productForm.name || !productForm.price) {
-            Alert.alert('Error', 'Please fill all fields');
+            showToast('Please fill all fields');
             return;
         }
 
@@ -84,7 +84,7 @@ const ProductsScreen = ({ route, navigation }) => {
                 name: productForm.name,
                 price: parseFloat(productForm.price),
             });
-            Alert.alert('Success', 'Product updated successfully!');
+            showToast('Product updated successfully!');
             setEditingProduct(null);
             setProductForm({ name: '', price: '' });
             loadProducts();
@@ -100,7 +100,7 @@ const ProductsScreen = ({ route, navigation }) => {
             });
             loadProducts();
         } catch (error) {
-            Alert.alert('Error', 'Failed to update product');
+            showToast('Failed to update product');
         }
     };
 
@@ -118,7 +118,7 @@ const ProductsScreen = ({ route, navigation }) => {
                             await productAPI.delete(shopId, product.id);
                             loadProducts();
                         } catch (error) {
-                            Alert.alert('Error', 'Failed to delete product');
+                            showToast('Failed to delete product');
                         }
                     },
                 },

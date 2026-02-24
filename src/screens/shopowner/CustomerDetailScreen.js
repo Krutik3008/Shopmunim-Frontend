@@ -336,7 +336,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             }
         } catch (error) {
             console.error('PDF export error:', error);
-            Alert.alert('Error', 'Failed to generate PDF');
+            showToast('Failed to generate PDF');
         }
     };
 
@@ -389,7 +389,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             }
         } catch (error) {
             console.error('Excel export error:', error);
-            Alert.alert('Error', 'Failed to generate Excel');
+            showToast('Failed to generate Excel');
         }
     };
 
@@ -1452,7 +1452,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                         onPress={() => {
                                             // TODO: Implement send logic
                                             onClose();
-                                            Alert.alert('Success', 'Payment reminder sent successfully!');
+                                            showToast('Payment reminder sent successfully!');
                                         }}
                                     >
                                         <LinearGradient
