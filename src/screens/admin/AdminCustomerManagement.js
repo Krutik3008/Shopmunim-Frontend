@@ -477,9 +477,8 @@ const AdminCustomerManagement = ({ showToast }) => {
                 statusBarTranslucent={true}
             >
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={{ flex: 1 }}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : -100}
                 >
                     <View style={styles.modalOverlay}>
                         <TouchableOpacity
@@ -522,8 +521,10 @@ const AdminCustomerManagement = ({ showToast }) => {
 
                             <ScrollView
                                 style={styles.modalList}
+                                contentContainerStyle={{ paddingBottom: 20 }}
                                 keyboardShouldPersistTaps="handled"
-                                showsVerticalScrollIndicator={false}
+                                showsVerticalScrollIndicator={true}
+                                nestedScrollEnabled={true}
                             >
                                 {shopSearch.length === 0 && (
                                     <TouchableOpacity
@@ -998,8 +999,9 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 24,
         paddingTop: 20,
         paddingHorizontal: 20,
-        paddingBottom: 20,
-        maxHeight: '70%',
+        paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+        maxHeight: '90%',
+        minHeight: 400,
         elevation: 20,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
@@ -1052,7 +1054,7 @@ const styles = StyleSheet.create({
         marginLeft: 8,
     },
     modalList: {
-        marginBottom: 10,
+        flex: 1,
     },
     modalItem: {
         flexDirection: 'row',
