@@ -82,7 +82,7 @@ const PoliciesScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={colors.gray[800]} />
@@ -91,7 +91,7 @@ const PoliciesScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.content}>
                     <View style={styles.infoBanner}>
                         <Ionicons name="information-circle" size={20} color={colors.primary.blue} />
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
     headerTitle: { fontSize: 18, fontWeight: '700', color: colors.gray[900] },
     backButton: { padding: 4 },
     scrollView: { flex: 1 },
+    scrollContent: { paddingBottom: 10 },
     content: { padding: 16 },
 
     infoBanner: {

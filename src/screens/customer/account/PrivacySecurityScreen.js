@@ -182,7 +182,7 @@ const PrivacySecurityScreen = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top']}>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={colors.gray[800]} />
@@ -191,7 +191,7 @@ const PrivacySecurityScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Dynamic Security Overview */}
                 <LinearGradient
                     colors={['#fff', '#F0F9FF']}
@@ -334,6 +334,7 @@ const styles = StyleSheet.create({
     headerTitle: { fontSize: 18, fontWeight: '700', color: colors.gray[900] },
     backButton: { padding: 4 },
     content: { flex: 1, padding: 16 },
+    scrollContent: { paddingBottom: 10 },
 
     // Status Card
     statusCard: {
