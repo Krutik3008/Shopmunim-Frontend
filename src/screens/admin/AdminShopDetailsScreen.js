@@ -166,7 +166,6 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
             });
 
         } catch (err) {
-            console.error('Data fetch error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {

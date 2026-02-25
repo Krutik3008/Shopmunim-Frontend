@@ -6,9 +6,9 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
     Alert,
     Keyboard,
+    TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +28,7 @@ const SignUpScreen = ({ navigation }) => {
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
     const [mockOtp, setMockOtp] = useState('');
+    const [termsAccepted, setTermsAccepted] = useState(true);
 
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
@@ -70,7 +71,7 @@ const SignUpScreen = ({ navigation }) => {
         setLoading(true);
         try {
             console.log('Sending OTP to:', phone);
-            const response = await authAPI.sendOTP(phone, name, false);
+            const response = await authAPI.sendOTP(phone, name, false, termsAccepted);
             console.log('OTP Response:', response.data);
             const otpCode = response.data.mock_otp || '123456';
             setMockOtp(otpCode);
@@ -94,7 +95,7 @@ const SignUpScreen = ({ navigation }) => {
 
         setLoading(true);
         try {
-            const response = await authAPI.verifyOTP(phone, otp, name);
+            const response = await authAPI.verifyOTP(phone, otp, name, termsAccepted);
             await login(response.data.token, response.data.user);
         } catch (error) {
             showToast(error.response?.data?.detail || 'Invalid OTP', 'error');
@@ -130,14 +131,10 @@ const SignUpScreen = ({ navigation }) => {
             style={styles.container}
         >
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.keyboardView}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <View style={styles.scrollContent}>
                     {/* Logo & Title */}
                     <View style={styles.header}>
                         <LinearGradient
@@ -183,11 +180,27 @@ const SignUpScreen = ({ navigation }) => {
                                     title="Create Account"
                                     onPress={handleSendOTP}
                                     loading={loading}
-                                    disabled={!phone || !name}
+                                    disabled={!phone || !name || !termsAccepted}
                                     size="md"
                                     icon={<Ionicons name="person-add" size={16} color="#fff" />}
                                     style={styles.button}
                                 />
+                                <TouchableOpacity
+                                    style={styles.termsContainer}
+                                    onPress={() => {
+                                        const newVal = !termsAccepted;
+                                        setTermsAccepted(newVal);
+                                        if (!newVal) {
+                                            showToast('Please accept Terms and Conditions', 'error');
+                                        }
+                                    }}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+                                        {termsAccepted && <Ionicons name="checkmark" size={14} color="#fff" />}
+                                    </View>
+                                    <Text style={styles.termsText}>I agree to the <Text style={styles.termsLink}>Terms of Services</Text> and <Text style={styles.termsLink}>Privacy Policy</Text></Text>
+                                </TouchableOpacity>
                             </View>
                         ) : (
                             <View style={styles.form}>
@@ -257,7 +270,7 @@ const SignUpScreen = ({ navigation }) => {
                             <Text style={styles.featureText}>Accept payments easily</Text>
                         </View>
                     </View>
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
 
             {/* Custom Toast Notification */}
@@ -450,6 +463,35 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#1F2937',
+    },
+    termsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 12,
+    },
+    checkbox: {
+        width: 22,
+        height: 22,
+        borderRadius: 6,
+        borderWidth: 2,
+        borderColor: '#9CA3AF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+    },
+    checkboxChecked: {
+        backgroundColor: '#3B82F6',
+        borderColor: '#3B82F6',
+    },
+    termsText: {
+        fontSize: 12,
+        color: '#6B7280',
+        flexShrink: 1,
+    },
+    termsLink: {
+        color: '#3B82F6',
+        fontWeight: '600',
     },
 });
 

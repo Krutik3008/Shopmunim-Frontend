@@ -42,7 +42,6 @@ const AdminShopManagement = ({ showToast }) => {
             setShops(response.data.shops || []);
             setTotalShops(response.data.total || 0);
         } catch (err) {
-            console.error('Shops fetch error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {

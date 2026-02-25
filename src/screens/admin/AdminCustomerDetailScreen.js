@@ -175,7 +175,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             const shopRes = await shopAPI.getDashboard(shopId);
             setShopDetails(shopRes.data?.shop);
         } catch (error) {
-            console.error("Error loading details:", error);
+            showToast("Failed to load customer details", "error");
         } finally {
             setLoading(false);
         }
@@ -407,7 +407,6 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                 showToast('Download Successful');
             }
         } catch (error) {
-            console.log('PDF export error:', error);
             showToast('Failed to generate PDF. Please try again.', 'error');
         }
     };
@@ -472,7 +471,6 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                 showToast('Download Successful');
             }
         } catch (error) {
-            console.log('Excel export error:', error);
             showToast('Failed to generate Excel file. Please try again.', 'error');
         }
     };

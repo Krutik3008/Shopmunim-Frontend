@@ -10,7 +10,7 @@ const API_BASE = `${BACKEND_URL}/api`;
 // Create axios instance
 const api = axios.create({
     baseURL: API_BASE,
-    timeout: 10000,
+    timeout: 30000,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -60,14 +60,14 @@ api.interceptors.response.use(
 // ============ AUTH APIs ============
 
 export const authAPI = {
-    sendOTP: (phone, name, is_login = false) => {
-        const data = { phone, is_login };
+    sendOTP: (phone, name, is_login = false, terms_accepted = false) => {
+        const data = { phone, is_login, terms_accepted };
         if (name) data.name = name;
         return api.post('/auth/send-otp', data);
     },
 
-    verifyOTP: (phone, otp, name) => {
-        const data = { phone, otp };
+    verifyOTP: (phone, otp, name, terms_accepted = false) => {
+        const data = { phone, otp, terms_accepted };
         if (name) data.name = name;
         return api.post('/auth/verify-otp', data);
     },
@@ -215,19 +215,29 @@ export const adminAPI = {
  * Helper to extract error message from API response
  */
 export const getAPIErrorMessage = (error) => {
+    let message = 'An unexpected error occurred. Please try again.';
+
     if (error.response?.data?.detail) {
         // FastAPI standard error
-        return error.response.data.detail;
-    }
-    if (error.response?.data?.message) {
+        message = error.response.data.detail;
+    } else if (error.response?.data?.message) {
         // Common fallback
-        return error.response.data.message;
+        message = error.response.data.message;
+    } else if (error.code === 'ECONNABORTED') {
+        message = 'Request timed out. Please check your internet connection.';
+    } else if (error.message === 'Network Error') {
+        message = 'Network error. Please check your internet connection.';
+    } else if (error.message) {
+        // Network/Axios error - Strip "AxiosError: " or "Error: " prefixes
+        message = error.message.replace(/^(AxiosError: |Error: )/i, '');
     }
-    if (error.message) {
-        // Network/Axios error
-        return error.message;
+
+    // Capitalize first letter if it's a message
+    if (typeof message === 'string' && message.length > 0) {
+        return message.charAt(0).toUpperCase() + message.slice(1);
     }
-    return 'An unexpected error occurred. Please try again.';
+
+    return message;
 };
 
 export default api;

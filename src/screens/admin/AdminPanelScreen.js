@@ -34,22 +34,40 @@ const AdminPanelScreen = () => {
 
     const showToast = (message, type = 'success') => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
-        setToastMessage(message);
-        setToastType(type);
-        setToastVisible(true);
-        Animated.spring(toastAnim, {
-            toValue: 1,
-            useNativeDriver: true,
-            tension: 80,
-            friction: 10,
-        }).start();
+
+        // If already visible, pulse it and update
+        if (toastVisible) {
+            setToastMessage(message);
+            setToastType(type);
+
+            // Re-trigger the spring animation to show "activity"
+            toastAnim.setValue(0.8); // Start slightly smaller for pulse
+            Animated.spring(toastAnim, {
+                toValue: 1,
+                useNativeDriver: true,
+                tension: 100,
+                friction: 8,
+            }).start();
+        } else {
+            setToastMessage(message);
+            setToastType(type);
+            setToastVisible(true);
+            toastAnim.setValue(0);
+            Animated.spring(toastAnim, {
+                toValue: 1,
+                useNativeDriver: true,
+                tension: 80,
+                friction: 10,
+            }).start();
+        }
+
         toastTimer.current = setTimeout(() => {
             Animated.timing(toastAnim, {
                 toValue: 0,
                 duration: 300,
                 useNativeDriver: true,
             }).start(() => setToastVisible(false));
-        }, 3000);
+        }, 3500); // Slightly longer duration
     };
 
     useFocusEffect(
@@ -75,7 +93,7 @@ const AdminPanelScreen = () => {
                 setStats(response.data);
             }
         } catch (error) {
-            console.log('Failed to fetch admin stats:', error);
+            showToast('Unable to refresh dashboard stats', 'error');
         } finally {
             setRefreshingStats(false);
         }
@@ -382,6 +400,19 @@ const AdminPanelScreen = () => {
                             <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#fff" />
                         </View>
                         <Text style={styles.toastText}>{toastMessage}</Text>
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (toastTimer.current) clearTimeout(toastTimer.current);
+                                Animated.timing(toastAnim, {
+                                    toValue: 0,
+                                    duration: 300,
+                                    useNativeDriver: true,
+                                }).start(() => setToastVisible(false));
+                            }}
+                            style={styles.toastCloseBtn}
+                        >
+                            <Ionicons name="close" size={16} color="#9CA3AF" />
+                        </TouchableOpacity>
                     </View>
                 </Animated.View>
             )}
@@ -633,39 +664,46 @@ const styles = StyleSheet.create({
     },
     toastContainer: {
         position: 'absolute',
-        bottom: 40,
-        right: 10,
-        zIndex: 2000,
-        alignItems: 'flex-end',
+        bottom: 90, // Increased to show above bottom navigation (65 + insets)
+        left: 20,
+        right: 20,
+        zIndex: 9999,
+        alignItems: 'center', // Center on mobile for better visibility
     },
     toastContent: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
-        paddingVertical: 12,
-        paddingHorizontal: 18,
+        backgroundColor: '#1F2937', // Dark background for premium look
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         borderRadius: 12,
-        gap: 10,
-        elevation: 6,
+        gap: 12,
+        elevation: 10,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.15,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#374151',
+        maxWidth: '100%',
     },
     toastIcon: {
-        width: 28,
-        height: 28,
-        borderRadius: 14,
-        backgroundColor: '#111827',
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        backgroundColor: '#10B981',
         alignItems: 'center',
         justifyContent: 'center',
     },
     toastText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#1F2937',
+        color: '#FFFFFF', // White text on dark background
+        flex: 1, // Allow text to wrap if message is long
+    },
+    toastCloseBtn: {
+        padding: 4,
+        marginLeft: 4,
     },
 });
 

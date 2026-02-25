@@ -47,7 +47,6 @@ const AdminUserManagement = ({ onRefreshStats, showToast }) => {
             setUsers(response.data.users || []);
             setTotalUsers(response.data.total || 0);
         } catch (err) {
-            console.error('Users fetch error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {
@@ -122,7 +121,6 @@ const AdminUserManagement = ({ onRefreshStats, showToast }) => {
                 }
             }
         } catch (err) {
-            console.error('User update error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {

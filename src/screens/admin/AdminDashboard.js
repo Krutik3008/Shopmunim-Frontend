@@ -6,7 +6,7 @@ import { adminAPI, getAPIErrorMessage } from '../../api';
 
 const { width } = Dimensions.get('window');
 
-const AdminDashboard = ({ onRefreshStats }) => {
+const AdminDashboard = ({ onRefreshStats, showToast }) => {
     const [dashboardData, setDashboardData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -24,8 +24,9 @@ const AdminDashboard = ({ onRefreshStats }) => {
             if (onRefreshStats) onRefreshStats(response.data); // Update parent header with new data
             setError('');
         } catch (err) {
-            console.error('Dashboard fetch error:', err);
-            setError(getAPIErrorMessage(err));
+            if (showToast) {
+                showToast(getAPIErrorMessage(err), 'error');
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -41,22 +42,10 @@ const AdminDashboard = ({ onRefreshStats }) => {
         return `₹${parseFloat(amount || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
     };
 
-    if (loading && !refreshing) {
+    if (loading && !refreshing && !dashboardData) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#7C3AED" />
-            </View>
-        );
-    }
-
-    if (error && !dashboardData) {
-        return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorTitle}>Error Loading Dashboard</Text>
-                <Text style={styles.errorMessage}>{error}</Text>
-                <TouchableOpacity onPress={fetchDashboardData} style={styles.retryButton}>
-                    <Text style={styles.retryText}>Retry</Text>
-                </TouchableOpacity>
             </View>
         );
     }
@@ -180,33 +169,6 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-    },
-    errorTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#EF4444',
-    },
-    errorMessage: {
-        fontSize: 14,
-        color: '#fff',
-        marginVertical: 10,
-        textAlign: 'center',
-    },
-    retryButton: {
-        backgroundColor: '#2563EB',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-    },
-    retryText: {
-        color: '#fff',
-        fontWeight: '600',
     },
     headerTextContainer: {
         marginBottom: 16,

@@ -6,7 +6,6 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Platform,
-    ScrollView,
     Alert,
     Keyboard,
 } from 'react-native';
@@ -68,10 +67,6 @@ const LoginScreen = ({ navigation }) => {
 
     const handleSendOTP = async () => {
         Keyboard.dismiss();
-        if (!name.trim()) {
-            showToast('Please Enter Your Name');
-            return;
-        }
         if (!isValidPhone(phone)) {
             showToast('Please Enter a Valid Phone Number');
             return;
@@ -140,14 +135,10 @@ const LoginScreen = ({ navigation }) => {
             style={styles.container}
         >
             <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.keyboardView}
             >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                >
+                <View style={styles.scrollContent}>
                     {/* Logo & Title */}
                     <View style={styles.header}>
                         <LinearGradient
@@ -176,7 +167,6 @@ const LoginScreen = ({ navigation }) => {
                                     placeholder="Enter your name"
                                     value={name}
                                     onChangeText={setName}
-                                    required
                                     style={styles.input}
                                 />
                                 <Input
@@ -267,7 +257,7 @@ const LoginScreen = ({ navigation }) => {
                             <Text style={styles.featureText}>Accept payments easily</Text>
                         </View>
                     </View>
-                </ScrollView>
+                </View>
             </KeyboardAvoidingView>
 
             {/* Custom Toast Notification */}

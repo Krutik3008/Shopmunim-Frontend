@@ -41,7 +41,6 @@ const AdminRoleManagement = ({ showToast }) => {
             setUsers(response.data.users);
             setCurrentUserRoles(response.data.current_user_roles);
         } catch (err) {
-            console.error('Role users fetch error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {
@@ -65,7 +64,6 @@ const AdminRoleManagement = ({ showToast }) => {
             await loadUsers(); // Reload to reflect changes
             setShowRoleModal(false);
         } catch (err) {
-            console.error('Role update error:', err);
             if (showToast) {
                 showToast(getAPIErrorMessage(err), 'error');
             } else {

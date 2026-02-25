@@ -110,7 +110,6 @@ const AdminCustomerManagement = ({ showToast }) => {
             });
 
         } catch (err) {
-            console.error('Data fetch error:', err);
             if (showToast) {
                 if (err.response && err.response.status === 404) {
                     showToast('Server Update Required: The /admin/customers endpoint was not found.', 'error');
