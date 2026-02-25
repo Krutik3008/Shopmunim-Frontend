@@ -843,6 +843,15 @@ const ShopLedgerDetailScreen = ({
                                                                     </View>
                                                                 </View>
                                                             )}
+
+                                                            {(transaction.note || transaction.notes) ? (
+                                                                <View style={{ flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#FFF9E6', borderLeftWidth: 3, borderLeftColor: '#F59E0B', borderRadius: 8, padding: 10, marginTop: 8, gap: 6 }}>
+                                                                    <Text style={{ fontSize: 13, color: '#374151', flex: 1 }}>
+                                                                        <Text style={{ fontWeight: '600', color: '#6B7280' }}>Note: </Text>
+                                                                        {transaction.note || transaction.notes}
+                                                                    </Text>
+                                                                </View>
+                                                            ) : null}
                                                         </View>
                                                     );
                                                 })

@@ -20,6 +20,7 @@ import {
     Pressable,
     Image,
     Animated,
+    Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -37,6 +38,9 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 
 import { colors, shadows } from '../../theme';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const STAT_CARD_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2; // 32 = padding (16*2), 12 = gap
 
 
 const TransactionCard = ({ transaction, showNote = true }) => {
@@ -748,7 +752,8 @@ const ShopOwnerDashboardScreen = () => {
         const filteredCustomers = customers.filter(customer =>
             customer && (
                 customer.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                customer.phone?.includes(searchQuery)
+                customer.phone?.includes(searchQuery) ||
+                customer.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
 
@@ -1497,14 +1502,17 @@ const styles = StyleSheet.create({
 
     // Dashboard Styles
     dashboardContainer: { padding: 16, flexGrow: 1 },
-    statsRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+    statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
     statCard: {
-        flex: 1,
+        width: STAT_CARD_WIDTH,
+        minHeight: 120,
+        flexGrow: 0,
+        flexShrink: 0,
         backgroundColor: '#fff',
         borderRadius: 12,
         padding: 16,
         alignItems: 'center',
-        minWidth: 160,
+        justifyContent: 'center',
         borderWidth: 1,
         borderColor: '#E5E7EB',
         shadowColor: '#000',
