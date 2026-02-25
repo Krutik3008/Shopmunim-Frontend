@@ -574,14 +574,8 @@ const CustomerDashboardScreen = () => {
         const pendingPayments = ledgerData.filter(item => (item.customer?.balance || 0) < 0);
 
         return (
-            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: 140 }}>
-                {(showShopFilterDropdown || showTypeFilterDropdown) && (
-                    <TouchableOpacity
-                        style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 45 }}
-                        onPress={() => { setShowShopFilterDropdown(false); setShowTypeFilterDropdown(false); }}
-                        activeOpacity={1}
-                    />
-                )}
+            <ScrollView style={styles.tabContent} contentContainerStyle={{ paddingBottom: (showShopFilterDropdown || showTypeFilterDropdown) ? 100 : 80 }}>
+
                 <Text style={styles.sectionTitle}>Payment Center</Text>
                 <Text style={styles.sectionSubtitle}>Pending Payments</Text>
 
@@ -660,7 +654,7 @@ const CustomerDashboardScreen = () => {
 
 
                     {/* Shop Filter */}
-                    <View style={[styles.typeFilterContainer, { marginTop: 12, zIndex: 60 }]}>
+                    <View style={[styles.typeFilterContainer, { marginTop: 12 }]}>
                         <Text style={styles.filterLabel}>Filter by Shop</Text>
                         <TouchableOpacity
                             style={styles.typeDropdown}
@@ -676,8 +670,9 @@ const CustomerDashboardScreen = () => {
 
                         {showShopFilterDropdown && (
                             <ScrollView
-                                style={[styles.customerDetailDropdownOptions, { maxHeight: 200 }]}
+                                style={{ maxHeight: 176, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 6 }}
                                 nestedScrollEnabled={true}
+                                keyboardShouldPersistTaps="handled"
                             >
                                 <TouchableOpacity
                                     style={[styles.customerDetailDropdownOption, selectedShopId === 'all' && styles.customerDetailDropdownOptionActive]}
@@ -703,7 +698,7 @@ const CustomerDashboardScreen = () => {
                     </View>
 
                     {/* Transaction Type Filter */}
-                    <View style={[styles.typeFilterContainer, { marginTop: 12, zIndex: showTypeFilterDropdown ? 50 : 40 }]}>
+                    <View style={[styles.typeFilterContainer, { marginTop: 12 }]}>
                         <Text style={styles.filterLabel}>Transaction Type</Text>
                         <TouchableOpacity
                             style={styles.typeDropdown}
@@ -717,8 +712,9 @@ const CustomerDashboardScreen = () => {
 
                         {showTypeFilterDropdown && (
                             <ScrollView
-                                style={[styles.customerDetailDropdownOptions, { maxHeight: 200 }]}
+                                style={{ maxHeight: 176, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, marginTop: 6 }}
                                 nestedScrollEnabled={true}
+                                keyboardShouldPersistTaps="handled"
                             >
                                 <TouchableOpacity
                                     style={[styles.customerDetailDropdownOption, transactionType === 'all' && styles.customerDetailDropdownOptionActive]}
