@@ -1067,6 +1067,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     onClose={() => setShowAddTransactionModal(false)}
                     shopId={shopId}
                     onSuccess={handleTransactionSuccess}
+                    preselectedCustomer={customer}
                 />
             </View>
         </SafeAreaView>

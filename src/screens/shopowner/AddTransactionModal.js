@@ -27,7 +27,7 @@ const safeEntries = (obj) => {
     return Object.entries(obj);
 };
 
-const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
+const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedCustomer }) => {
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(false);
 
@@ -142,7 +142,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
         if (visible && shopId) {
             loadData();
             // Reset form
-            setCustomerId('');
+            setCustomerId(preselectedCustomer?.id || '');
             setTransactionType('credit');
             setMethod('products');
             setSelectedProducts({});
@@ -262,7 +262,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess }) => {
         }
     };
 
-    const selectedCustomer = customers.find(c => c.id === customerId);
+    const selectedCustomer = customers.find(c => c.id === customerId) || (customerId && preselectedCustomer?.id === customerId ? preselectedCustomer : null);
     const totalAmount = calculateTotal();
 
     return (
