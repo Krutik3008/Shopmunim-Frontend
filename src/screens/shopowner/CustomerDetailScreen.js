@@ -660,14 +660,19 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                                     {customer?.nickname ? ` (${customer.nickname})` : ''}
                                 </Text>
                                 <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
-                            </View>
-                            <View style={styles.customerRight}>
-                                <Text style={[styles.balanceAmount, { color: getBalanceColor() }]}>
-                                    {customer?.balance !== 0 ? (customer?.balance > 0 ? '+' : '-') : ''}{formatCurrency(Math.abs(customer?.balance || 0))}
-                                </Text>
-                                <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
-                                    <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
-                                        {getBalanceLabel()}
+                                <View style={styles.customerBalanceRow}>
+                                    <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
+                                        <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
+                                            {getBalanceLabel()}
+                                        </Text>
+                                    </View>
+                                    <Text
+                                        style={[styles.balanceAmount, { color: getBalanceColor() }]}
+                                        numberOfLines={1}
+                                        adjustsFontSizeToFit={true}
+                                        minimumFontScale={0.5}
+                                    >
+                                        {customer?.balance !== 0 ? (customer?.balance > 0 ? '+' : '-') : ''}{formatCurrency(Math.abs(customer?.balance || 0))}
                                     </Text>
                                 </View>
                             </View>
@@ -1789,7 +1794,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E5E7EB',
     },
-    customerLeft: {},
+    customerLeft: {
+        flex: 1,
+    },
+    customerBalanceRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
+    },
     customerName: {
         fontSize: 18,
         fontWeight: '600',
@@ -1801,7 +1813,8 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     customerRight: {
-        alignItems: 'flex-end',
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     balanceAmount: {
         fontSize: 20,
@@ -1811,7 +1824,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 4,
         borderRadius: 8,
-        marginTop: 6,
+        marginRight: 8,
     },
     balanceBadgeText: {
         fontSize: 12,

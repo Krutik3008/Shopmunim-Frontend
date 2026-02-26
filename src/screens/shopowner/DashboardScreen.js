@@ -852,13 +852,11 @@ const ShopOwnerDashboardScreen = () => {
                                         {customer.nickname ? ` (${customer.nickname})` : ''}
                                     </Text>
                                     <Text style={styles.customerPhone}>+91 {customer.phone}</Text>
-                                </View>
-                                <View style={styles.customerRightSide}>
                                     <View style={styles.customerBalance}>
                                         <View style={[
                                             styles.statusBadge,
                                             (customer.balance || 0) == 0 ? styles.statusBadgeClear :
-                                                (customer.balance || 0) < 0 ? styles.statusBadgeDue : styles.statusBadgeAdvance
+                                                (customer.balance || 0) < 0 ? styles.statusBadgeDue : styles.statusBadgeAdvance,
                                         ]}>
                                             <Text style={[
                                                 styles.statusBadgeText,
@@ -868,14 +866,21 @@ const ShopOwnerDashboardScreen = () => {
                                                 {(customer.balance || 0) == 0 ? 'Clear' : (customer.balance || 0) < 0 ? 'Dues' : 'Credit'}
                                             </Text>
                                         </View>
-                                        <Text style={[
-                                            styles.balanceAmount,
-                                            (customer.balance || 0) == 0 ? { color: '#6B7280' } :
-                                                (customer.balance || 0) < 0 ? { color: '#EF4444' } : { color: '#10B981' }
-                                        ]}>
-                                            {(customer.balance || 0) == 0 ? '' : (customer.balance || 0) > 0 ? '+' : '-'}₹{Math.abs(customer.balance || 0).toFixed(2)}
+                                        <Text
+                                            style={[
+                                                styles.balanceAmount,
+                                                (customer.balance || 0) == 0 ? { color: '#6B7280' } :
+                                                    (customer.balance || 0) < 0 ? { color: '#EF4444' } : { color: '#10B981' },
+                                            ]}
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit={true}
+                                            minimumFontScale={0.5}
+                                        >
+                                            {(customer.balance || 0) == 0 ? '' : (customer.balance || 0) > 0 ? '+' : '-'}&#8377;{Math.abs(customer.balance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                                         </Text>
                                     </View>
+                                </View>
+                                <View style={styles.customerRightSide}>
                                     <TouchableOpacity
                                         style={styles.arrowButton}
                                         onPress={() => handleCustomerSelect(customer)}
@@ -2589,9 +2594,9 @@ const styles = StyleSheet.create({
         fontWeight: '400',
     },
     customerBalance: {
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        marginRight: 12, // Space between balance and arrow
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 6,
     },
     customerRightSide: {
         flexDirection: 'row',
@@ -2601,8 +2606,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 6,
-        marginBottom: 4,
-        alignSelf: 'flex-end',
+        marginRight: 8,
     },
     statusBadgeClear: {
         backgroundColor: '#111827',

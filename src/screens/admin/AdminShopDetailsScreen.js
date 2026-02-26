@@ -265,14 +265,29 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                 <Text style={styles.infoText}>  {item.shop.name}</Text>
                             </View>
                         )}
-                    </View>
-                    <View style={[
-                        styles.creditBadge,
-                        isCredit ? styles.badgeCredit : isOwes ? styles.badgeDue : styles.badgeClear
-                    ]}>
-                        <Text style={styles.creditBadgeText}>
-                            {isCredit ? 'Credit' : isOwes ? 'Dues' : 'Clear'}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                            <View style={[
+                                styles.creditBadge,
+                                isCredit ? styles.badgeCredit : isOwes ? styles.badgeDue : styles.badgeClear,
+                                { marginRight: 8 }
+                            ]}>
+                                <Text style={styles.creditBadgeText}>
+                                    {isCredit ? 'Credit' : isOwes ? 'Dues' : 'Clear'}
+                                </Text>
+                            </View>
+                            <Text
+                                style={[{
+                                    fontSize: 15,
+                                    fontWeight: '700',
+                                    color: isCredit ? '#10B981' : isOwes ? '#EF4444' : '#6B7280',
+                                }]}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit={true}
+                                minimumFontScale={0.5}
+                            >
+                                {isCredit ? '+' : isOwes ? '-' : ''}₹{Math.abs(balance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
@@ -380,7 +395,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                 <StatsCard
                                     icon="wallet-outline"
                                     title="₹ Amount"
-                                    value={`₹${(stats.totalSales || 0).toFixed(0)}`}
+                                    value={`₹${(stats.totalSales || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`}
                                     subtitle={(fromDate || toDate) ? 'Sales (Filtered)' : 'Total Sales'}
                                     color="#059669"
                                     iconBg="#D1FAE5"
@@ -389,7 +404,7 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                                     icon="trending-down-outline"
                                     title="With Dues"
                                     value={stats.withDues}
-                                    subtitle={`₹${(stats.totalDues || 0).toFixed(0)} Total Dues`}
+                                    subtitle={`₹${(stats.totalDues || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")} Total Dues`}
                                     color="#DC2626"
                                     iconBg="#FEE2E2"
                                 />
