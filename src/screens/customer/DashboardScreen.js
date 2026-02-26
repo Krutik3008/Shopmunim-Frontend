@@ -163,7 +163,7 @@ const CustomerDashboardScreen = () => {
             const response = await customerDashboardAPI.getLedger();
             setLedgerData(response.data || []);
         } catch (error) {
-            console.log('Failed to load ledger:', error);
+            showToast(`Load data error: ${error.message || 'Network Error'}`, 'error');
         } finally {
             setLoading(false);
             setRefreshing(false);
