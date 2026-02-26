@@ -5,72 +5,86 @@ import {
     Text,
     StyleSheet,
     TouchableOpacity,
+    Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const CustomerHeader = ({ user, logout, showRoleDropdown, setShowRoleDropdown, handleRoleSwitch }) => (
-    <View style={styles.header}>
-        <View style={styles.headerTop}>
-            <Text style={styles.logo}>ShopMunim</Text>
-            <View style={styles.headerRight}>
-                <TouchableOpacity
-                    style={styles.roleSelector}
-                    onPress={() => setShowRoleDropdown(!showRoleDropdown)}
-                >
-                    <Ionicons name="person" size={16} color="#3B82F6" />
-                    <Text style={styles.roleSelectorText}>Customer</Text>
-                    <Ionicons name="chevron-down" size={16} color="#666" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={logout}>
-                    <Text style={styles.headerLogout}>Logout</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
-        <View style={styles.headerBottom}>
-            <Text style={styles.welcomeText}>Welcome, <Text style={styles.userName}>{user?.name || 'User'}</Text></Text>
-            <View style={styles.phoneContainer}>
-                <Text style={styles.phoneText}>+91 {user?.phone}</Text>
-            </View>
-        </View>
+const CustomerHeader = ({ user, logout, showRoleDropdown, setShowRoleDropdown, handleRoleSwitch }) => {
+    const handleLogout = () => {
+        Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Logout', style: 'destructive', onPress: logout }
+            ]
+        );
+    };
 
-        {/* Role Dropdown */}
-        {showRoleDropdown && (
-            <>
-                <TouchableOpacity
-                    style={styles.backdrop}
-                    activeOpacity={1}
-                    onPress={() => setShowRoleDropdown(false)}
-                />
-                <View style={styles.roleDropdown}>
+    return (
+        <View style={styles.header}>
+            <View style={styles.headerTop}>
+                <Text style={styles.logo}>ShopMunim</Text>
+                <View style={styles.headerRight}>
                     <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('customer')}
+                        style={styles.roleSelector}
+                        onPress={() => setShowRoleDropdown(!showRoleDropdown)}
                     >
-                        <Ionicons name="person" size={18} color="#3B82F6" />
-                        <Text style={styles.roleOptionText}>Customer</Text>
-                        {user?.active_role === 'customer' && (
-                            <Ionicons name="checkmark" size={18} color="#3B82F6" />
-                        )}
+                        <Ionicons name="person" size={16} color="#3B82F6" />
+                        <Text style={styles.roleSelectorText}>Customer</Text>
+                        <Ionicons name="chevron-down" size={16} color="#666" />
                     </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('shop_owner')}
-                    >
-                        <Ionicons name="storefront" size={18} color="#8B5CF6" />
-                        <Text style={styles.roleOptionText}>Shop Owner</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
-                        onPress={() => handleRoleSwitch('admin')}
-                    >
-                        <Ionicons name="shield" size={18} color="#F59E0B" />
-                        <Text style={styles.roleOptionText}>Admin</Text>
+                    <TouchableOpacity onPress={handleLogout}>
+                        <Text style={styles.headerLogout}>Logout</Text>
                     </TouchableOpacity>
                 </View>
-            </>
-        )}
-    </View>
-);
+            </View>
+            <View style={styles.headerBottom}>
+                <Text style={styles.welcomeText}>Welcome, <Text style={styles.userName}>{user?.name || 'User'}</Text></Text>
+                <View style={styles.phoneContainer}>
+                    <Text style={styles.phoneText}>+91 {user?.phone}</Text>
+                </View>
+            </View>
+
+            {/* Role Dropdown */}
+            {showRoleDropdown && (
+                <>
+                    <TouchableOpacity
+                        style={styles.backdrop}
+                        activeOpacity={1}
+                        onPress={() => setShowRoleDropdown(false)}
+                    />
+                    <View style={styles.roleDropdown}>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'customer' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('customer')}
+                        >
+                            <Ionicons name="person" size={18} color="#3B82F6" />
+                            <Text style={styles.roleOptionText}>Customer</Text>
+                            {user?.active_role === 'customer' && (
+                                <Ionicons name="checkmark" size={18} color="#3B82F6" />
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'shop_owner' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('shop_owner')}
+                        >
+                            <Ionicons name="storefront" size={18} color="#8B5CF6" />
+                            <Text style={styles.roleOptionText}>Shop Owner</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.roleOption, user?.active_role === 'admin' && styles.roleOptionActive]}
+                            onPress={() => handleRoleSwitch('admin')}
+                        >
+                            <Ionicons name="shield" size={18} color="#F59E0B" />
+                            <Text style={styles.roleOptionText}>Admin</Text>
+                        </TouchableOpacity>
+                    </View>
+                </>
+            )}
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     // Header

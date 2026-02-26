@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +8,17 @@ const ShopHeader = ({ title, onSwitchError }) => {
     const navigation = useNavigation();
     const { user, logout, switchRole } = useAuth();
     const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+    const handleLogout = () => {
+        Alert.alert(
+            'Logout',
+            'Are you sure you want to logout?',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Logout', style: 'destructive', onPress: logout }
+            ]
+        );
+    };
 
     const handleRoleSwitch = async (role) => {
         setShowRoleDropdown(false);
@@ -42,7 +53,7 @@ const ShopHeader = ({ title, onSwitchError }) => {
                         <Text style={styles.roleSelectorText}>Shop Owner</Text>
                         <Ionicons name="chevron-down" size={16} color="#666" />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={logout}>
+                    <TouchableOpacity onPress={handleLogout}>
                         <Text style={styles.headerLogout}>Logout</Text>
                     </TouchableOpacity>
                 </View>

@@ -12,6 +12,7 @@ import {
     Animated,
     Image,
     Linking,
+    Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -916,84 +917,97 @@ const CustomerDashboardScreen = () => {
     };
 
     // Account Tab Content - Matching reference exactly
-    const AccountContent = () => (
-        <ScrollView style={styles.tabContent} contentContainerStyle={styles.accountScrollContent}>
-            {/* Profile Card */}
-            <View style={styles.profileCard}>
-                <LinearGradient
-                    colors={['#8B5CF6', '#6366F1']}
-                    style={styles.profileAccent}
-                />
-                <View style={styles.profileHeader}>
-                    <View style={styles.avatarBorder}>
-                        <View style={styles.avatar}>
-                            {user?.profile_photo ? (
-                                <Image
-                                    source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
-                                    style={{ width: 60, height: 60, borderRadius: 30 }}
-                                />
-                            ) : (
-                                <Ionicons name="person" size={30} color="#8B5CF6" />
-                            )}
+    const AccountContent = () => {
+        const handleLogout = () => {
+            Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Logout', style: 'destructive', onPress: logout }
+                ]
+            );
+        };
+
+        return (
+            <ScrollView style={styles.tabContent} contentContainerStyle={styles.accountScrollContent}>
+                {/* Profile Card */}
+                <View style={styles.profileCard}>
+                    <LinearGradient
+                        colors={['#8B5CF6', '#6366F1']}
+                        style={styles.profileAccent}
+                    />
+                    <View style={styles.profileHeader}>
+                        <View style={styles.avatarBorder}>
+                            <View style={styles.avatar}>
+                                {user?.profile_photo ? (
+                                    <Image
+                                        source={{ uri: `data:image/jpeg;base64,${user.profile_photo}` }}
+                                        style={{ width: 60, height: 60, borderRadius: 30 }}
+                                    />
+                                ) : (
+                                    <Ionicons name="person" size={30} color="#8B5CF6" />
+                                )}
+                            </View>
+                        </View>
+
+                        <View style={styles.profileInfo}>
+                            <Text style={styles.profileNamePrimary} numberOfLines={1}>{user?.name || 'User'}</Text>
+                            <Text style={styles.profilePhoneText}>+91 {user?.phone}</Text>
+                        </View>
+
+                        <View style={styles.rightRoleBadge}>
+                            <Text style={styles.rightRoleBadgeText}>Customer</Text>
                         </View>
                     </View>
-
-                    <View style={styles.profileInfo}>
-                        <Text style={styles.profileNamePrimary} numberOfLines={1}>{user?.name || 'User'}</Text>
-                        <Text style={styles.profilePhoneText}>+91 {user?.phone}</Text>
-                    </View>
-
-                    <View style={styles.rightRoleBadge}>
-                        <Text style={styles.rightRoleBadgeText}>Customer</Text>
-                    </View>
                 </View>
-            </View>
 
-            {/* Account Settings */}
-            <View style={styles.settingsCard}>
-                <Text style={styles.settingsTitle}>Account Settings</Text>
+                {/* Account Settings */}
+                <View style={styles.settingsCard}>
+                    <Text style={styles.settingsTitle}>Account Settings</Text>
 
-                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
-                    <Ionicons name="person-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
-                    <Text style={styles.settingText}>Edit Profile</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('EditProfile')}>
+                        <Ionicons name="person-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
+                        <Text style={styles.settingText}>Edit Profile</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
-                    <Ionicons name="notifications-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
-                    <Text style={styles.settingText}>Notifications</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('Notifications')}>
+                        <Ionicons name="notifications-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
+                        <Text style={styles.settingText}>Notifications</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.settingItem, styles.settingItem]} onPress={() => navigation.navigate('PrivacySecurity')}>
-                    <Ionicons name="lock-closed-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
-                    <Text style={styles.settingText}>Privacy & Security</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={[styles.settingItem, styles.settingItem]} onPress={() => navigation.navigate('PrivacySecurity')}>
+                        <Ionicons name="lock-closed-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
+                        <Text style={styles.settingText}>Privacy & Security</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
-                    <Ionicons name="help-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
-                    <Text style={styles.settingText}>Help & Support</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('HelpSupport')}>
+                        <Ionicons name="help-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
+                        <Text style={styles.settingText}>Help & Support</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
-                    <Ionicons name="information-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
-                    <Text style={styles.settingText}>About ShopMunim</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.settingItem} onPress={() => navigation.navigate('About')}>
+                        <Ionicons name="information-circle-outline" size={22} color="#4B5563" style={{ marginRight: 12 }} />
+                        <Text style={styles.settingText}>About ShopMunim</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={logout}>
-                    <Ionicons name="log-out-outline" size={22} color="#EF4444" style={{ marginRight: 12 }} />
-                    <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
-                </TouchableOpacity>
-            </View>
+                    <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={handleLogout}>
+                        <Ionicons name="log-out-outline" size={22} color="#EF4444" style={{ marginRight: 12 }} />
+                        <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
+                    </TouchableOpacity>
+                </View>
 
-            {/* Footer */}
-            <View style={styles.footer}>
-                <Text style={styles.footerBrand}>ShopMunim</Text>
-                <Text style={styles.footerVersion}>Version 1.2.4</Text>
-                <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
-                <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
+                {/* Footer */}
+                <View style={styles.footer}>
+                    <Text style={styles.footerBrand}>ShopMunim</Text>
+                    <Text style={styles.footerVersion}>Version 1.2.4</Text>
+                    <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
+                    <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 
-            </View>
-        </ScrollView>
-    );
+                </View>
+            </ScrollView>
+        );
+    };
 
     // Render active tab content
     const renderContent = () => {

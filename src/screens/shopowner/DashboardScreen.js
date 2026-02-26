@@ -1030,6 +1030,18 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
             );
         }
+
+        const handleLogout = () => {
+            Alert.alert(
+                'Logout',
+                'Are you sure you want to logout?',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Logout', style: 'destructive', onPress: logout }
+                ]
+            );
+        };
+
         const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
 
         return (
@@ -1260,7 +1272,7 @@ const ShopOwnerDashboardScreen = () => {
                         <Text style={styles.settingText}>About ShopMunim</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={logout}>
+                    <TouchableOpacity style={[styles.settingItem, styles.settingItemLast]} onPress={handleLogout}>
                         <Ionicons name="log-out-outline" size={22} color="#EF4444" style={{ marginRight: 12 }} />
                         <Text style={[styles.settingText, styles.logoutTextRed]}>Logout</Text>
                     </TouchableOpacity>
