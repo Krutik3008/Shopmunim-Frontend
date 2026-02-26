@@ -125,7 +125,10 @@ export const AuthProvider = ({ children }) => {
             }
             return { success: true };
         } catch (error) {
-            const message = error.response?.data?.detail || error.response?.data?.message || 'Admin access not provided or switch failed';
+            let message = error.response?.data?.detail || error.response?.data?.message || 'Admin access not provided or switch failed';
+            if (!error.response || error.message === 'Network Error') {
+                message = 'Switch failed due to Network error';
+            }
             console.log('Switch role error:', message);
             return { success: false, message };
         }
