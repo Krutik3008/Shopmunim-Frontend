@@ -3,8 +3,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Backend URL - Update this to your backend server IP
-// const BACKEND_URL = 'https://shopmunim-backend.onrender.com';
-const BACKEND_URL = 'http://192.168.29.145:8000';
+const BACKEND_URL = 'https://shopmunim-backend.onrender.com';
 const API_BASE = `${BACKEND_URL}/api`;
 
 // Create axios instance
@@ -131,6 +130,10 @@ export const customerAPI = {
             ...response,
             data: response.data.filter(t => t.customer_id === customerId)
         })),
+
+    // Send push notification for payment request
+    notifyPayment: (shopId, customerId, data) =>
+        api.post(`/shops/${shopId}/customers/${customerId}/notify-payment`, data),
 };
 
 // ============ PRODUCT APIs ============

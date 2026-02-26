@@ -13,7 +13,9 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.krutik3011.ShopMunimApp",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +24,8 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.krutik3011.ShopMunimApp",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "pan",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -35,7 +38,14 @@
     ],
     "plugins": [
       "@react-native-community/datetimepicker",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon-v3.png",
+          "color": "#ffffff"
+        }
+      ]
     ],
     "extra": {
       "eas": {

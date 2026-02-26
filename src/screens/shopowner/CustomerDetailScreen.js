@@ -1098,16 +1098,28 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
     const [scheduleTime, setScheduleTime] = useState(null);
     const [showScheduleDatePicker, setShowScheduleDatePicker] = useState(false);
     const [showScheduleTimePicker, setShowScheduleTimePicker] = useState(false);
-    const [isAutoReminderEnabled, setIsAutoReminderEnabled] = useState(false);
-    const [autoReminderDelay, setAutoReminderDelay] = useState('3 days overdue');
+    const [isAutoReminderEnabled, setIsAutoReminderEnabled] = useState(customer?.is_auto_reminder_enabled || false);
+    const [autoReminderDelay, setAutoReminderDelay] = useState(customer?.auto_reminder_delay || '3 days overdue');
     const [showAutoReminderDelayDropdown, setShowAutoReminderDelayDropdown] = useState(false);
-    const [autoReminderFrequency, setAutoReminderFrequency] = useState('Daily until paid');
+    const [autoReminderFrequency, setAutoReminderFrequency] = useState(customer?.auto_reminder_frequency || 'Daily until paid');
     const [showAutoReminderFrequencyDropdown, setShowAutoReminderFrequencyDropdown] = useState(false);
-    const [autoReminderMethod, setAutoReminderMethod] = useState('Push Notification');
+    const [autoReminderMethod, setAutoReminderMethod] = useState(customer?.auto_reminder_method || 'Push Notification');
     const [showAutoReminderMethodDropdown, setShowAutoReminderMethodDropdown] = useState(false);
     const [advanceAmount, setAdvanceAmount] = useState('');
     const [advanceReason, setAdvanceReason] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const sortedTransactions = transactions ? [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
+
+    // Sync state if customer changes
+    useEffect(() => {
+        if (customer) {
+            setIsAutoReminderEnabled(customer.is_auto_reminder_enabled || false);
+            setAutoReminderDelay(customer.auto_reminder_delay || '3 days overdue');
+            setAutoReminderFrequency(customer.auto_reminder_frequency || 'Daily until paid');
+            setAutoReminderMethod(customer.auto_reminder_method || 'Push Notification');
+        }
+    }, [customer]);
 
 
     // Helper functions for formatting
@@ -1500,20 +1512,95 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
 
                                     {/* Send Button */}
                                     <TouchableOpacity
-                                        onPress={() => {
-                                            // TODO: Implement send logic
-                                            onClose();
-                                            showToast('Payment reminder sent successfully!');
+                                        disabled={isSending}
+                                        onPress={async () => {
+                                            if (sendVia === 'Push Notification') {
+                                                if (!reminderMessage.trim()) {
+                                                    showToast('Please enter a message to send');
+                                                    return;
+                                                }
+                                                setIsSending(true);
+                                                try {
+                                                    const payload = {
+                                                        title: requestType,
+                                                        body: reminderMessage,
+                                                        data: { customerId: customer.id }
+                                                    };
+                                                    await customerAPI.notifyPayment(customer.shop_id, customer.id, payload);
+                                                    showToast('Payment reminder push notification sent successfully!');
+                                                    onClose();
+                                                } catch (error) {
+                                                    const errorMsg = error.response?.data?.detail || 'Failed to send notification';
+                                                    showToast(errorMsg);
+                                                } finally {
+                                                    setIsSending(false);
+                                                }
+                                            } else if (sendVia === 'SMS Message') {
+                                                if (!reminderMessage.trim()) {
+                                                    showToast('Please enter a message to send');
+                                                    return;
+                                                }
+                                                showToast('Opening SMS app...');
+                                                const url = Platform.OS === 'ios'
+                                                    ? `sms:${customer.phone}&body=${encodeURIComponent(reminderMessage)}`
+                                                    : `sms:${customer.phone}?body=${encodeURIComponent(reminderMessage)}`;
+
+                                                Linking.canOpenURL(url).then(supported => {
+                                                    if (!supported) {
+                                                        showToast('SMS is not available on this device');
+                                                    } else {
+                                                        return Linking.openURL(url);
+                                                    }
+                                                }).catch(() => showToast('Could not open SMS app'));
+                                                onClose();
+                                            } else if (sendVia === 'WhatsApp') {
+                                                if (!reminderMessage.trim()) {
+                                                    showToast('Please enter a message to send');
+                                                    return;
+                                                }
+                                                showToast('Opening WhatsApp...');
+                                                let phoneString = customer.phone.replace(/[^0-9]/g, '');
+                                                if (phoneString.length === 10) {
+                                                    phoneString = '91' + phoneString; // Assume India (+91) if 10 digits
+                                                }
+                                                const url = `whatsapp://send?phone=${phoneString}&text=${encodeURIComponent(reminderMessage)}`;
+                                                Linking.openURL(url).catch(() => {
+                                                    // Fallback to web universal link
+                                                    Linking.openURL(`https://wa.me/${phoneString}?text=${encodeURIComponent(reminderMessage)}`).catch(() => {
+                                                        showToast('Make sure WhatsApp is installed');
+                                                    });
+                                                });
+                                                onClose();
+                                            } else if (sendVia === 'Phone Call') {
+                                                showToast('Opening Phone app...');
+                                                const url = `tel:${customer.phone}`;
+                                                Linking.canOpenURL(url).then(supported => {
+                                                    if (!supported) {
+                                                        showToast('Phone calls are not available on this device');
+                                                    } else {
+                                                        return Linking.openURL(url);
+                                                    }
+                                                }).catch(() => showToast('Could not open Phone app'));
+                                                onClose();
+                                            } else {
+                                                showToast(`${sendVia} is not yet implemented fully.`);
+                                            }
                                         }}
                                     >
                                         <LinearGradient
-                                            colors={['#F97316', '#EF4444']}
+                                            colors={isSending ? ['#9CA3AF', '#6B7280'] : ['#F97316', '#EF4444']}
                                             style={modalStyles.paymentSendBtn}
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={modalStyles.paymentSendBtnText}>Send Reminder</Text>
-                                            <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                            {isSending ? (
+                                                <ActivityIndicator color="#fff" size="small" />
+                                            ) : (
+                                                <>
+                                                    <Text style={modalStyles.paymentSendBtnText}>Send Reminder</Text>
+                                                    <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                                </>
+                                            )}
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
@@ -1651,19 +1738,41 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                     )}
 
                                     <TouchableOpacity
-                                        onPress={() => {
-                                            // TODO: Save logic
-                                            showToast('Auto reminder settings saved!');
-                                            onClose();
+                                        disabled={isSaving}
+                                        onPress={async () => {
+                                            setIsSaving(true);
+                                            try {
+                                                const updateData = {
+                                                    is_auto_reminder_enabled: isAutoReminderEnabled,
+                                                    auto_reminder_delay: autoReminderDelay,
+                                                    auto_reminder_frequency: autoReminderFrequency,
+                                                    auto_reminder_method: autoReminderMethod
+                                                };
+                                                await customerAPI.update(customer.shop_id, customer.id, updateData);
+                                                showToast('Auto reminder settings saved successfully!');
+
+                                                // We should ideally trigger a refresh of the customer data in the parent component
+                                                // but since onClose is called, the user will see the toast and close the modal.
+                                                onClose();
+                                            } catch (error) {
+                                                const errorMsg = error.response?.data?.detail || 'Failed to save settings';
+                                                showToast(errorMsg);
+                                            } finally {
+                                                setIsSaving(false);
+                                            }
                                         }}
                                     >
                                         <LinearGradient
-                                            colors={['#111827', '#374151']}
+                                            colors={isSaving ? ['#9CA3AF', '#6B7280'] : ['#111827', '#374151']}
                                             style={modalStyles.paymentSendBtn}
                                             start={{ x: 0, y: 0 }}
                                             end={{ x: 1, y: 0 }}
                                         >
-                                            <Text style={modalStyles.paymentSendBtnText}>Save Auto Reminder Settings</Text>
+                                            {isSaving ? (
+                                                <ActivityIndicator color="#fff" size="small" />
+                                            ) : (
+                                                <Text style={modalStyles.paymentSendBtnText}>Save Auto Reminder Settings</Text>
+                                            )}
                                         </LinearGradient>
                                     </TouchableOpacity>
                                 </View>
