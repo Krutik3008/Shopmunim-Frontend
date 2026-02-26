@@ -1377,7 +1377,7 @@ const styles = StyleSheet.create({
     customerDetailDropdownOptionTextActive: { color: '#2563EB', fontWeight: '600' },
 
     // Toast notification styles
-    toastContainer: { position: 'absolute', bottom: 40, right: 10, zIndex: 2000, alignItems: 'flex-end' },
+    toastContainer: { position: 'absolute', bottom: 100, left: 20, right: 20, zIndex: 2000, alignItems: 'center' },
     toastContent: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 18, borderRadius: 12, gap: 10, elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, borderWidth: 1, borderColor: '#E5E7EB' },
     toastIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center' },
     toastText: { fontSize: 14, fontWeight: '500', color: '#1F2937' },

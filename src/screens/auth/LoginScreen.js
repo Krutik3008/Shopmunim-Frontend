@@ -421,10 +421,11 @@ const styles = StyleSheet.create({
     },
     toastContainer: {
         position: 'absolute',
-        bottom: 40,
-        right: 10,
+        bottom: 100,
+        left: 20,
+        right: 20,
         zIndex: 999,
-        alignItems: 'flex-end',
+        alignItems: 'center',
     },
     toastContent: {
         flexDirection: 'row',

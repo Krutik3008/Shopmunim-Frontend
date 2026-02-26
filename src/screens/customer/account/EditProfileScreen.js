@@ -680,10 +680,11 @@ const styles = StyleSheet.create({
     // Toast Styles
     toastContainer: {
         position: 'absolute',
-        bottom: 40,
-        right: 10,
+        bottom: 100,
+        left: 20,
+        right: 20,
         zIndex: 9999,
-        alignItems: 'flex-end',
+        alignItems: 'center',
     },
     toastContent: {
         flexDirection: 'row',
