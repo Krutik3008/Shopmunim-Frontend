@@ -318,7 +318,14 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                     <Ionicons name={icon} size={18} color={color} />
                 </View>
             </View>
-            <Text style={styles.statValue}>{value}</Text>
+            <Text
+                style={styles.statValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+            >
+                {value}
+            </Text>
             {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
         </View>
     );

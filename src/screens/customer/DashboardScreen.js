@@ -425,13 +425,25 @@ const CustomerDashboardScreen = () => {
                     <View style={[styles.rupeeCircle, !isOwed && { backgroundColor: '#F3F4F6' }]}>
                         <FontAwesome name="rupee" size={18} color={isOwed ? "#EF4444" : "#333"} />
                     </View>
-                    <Text style={[styles.statValue, isOwed && styles.statValueRed]}>₹{Math.abs(stats.totalOwed || 0).toFixed(2)}</Text>
+                    <Text
+                        style={[styles.statValue, isOwed && styles.statValueRed]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.5}
+                    >
+                        ₹{Math.abs(stats.totalOwed || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    </Text>
                     <Text style={styles.statLabel}>Total Dues</Text>
                 </View>
                 <View style={styles.statCard}>
                     <Text style={styles.statEmoji}>📊</Text>
-                    <Text style={styles.statValue}>
-                        {stats.netBalance < 0 ? '-' : ''}₹{Math.abs(stats.netBalance || 0).toFixed(2)}
+                    <Text
+                        style={styles.statValue}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.5}
+                    >
+                        {stats.netBalance < 0 ? '-' : ''}₹{Math.abs(stats.netBalance || 0).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     </Text>
                     <Text style={styles.statLabel}>Net Balance</Text>
                 </View>

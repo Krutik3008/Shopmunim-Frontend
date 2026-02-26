@@ -587,12 +587,26 @@ const ShopOwnerDashboardScreen = () => {
                 <View style={styles.statsRow}>
                     <View style={styles.statCard}>
                         <Ionicons name="people-outline" size={28} color="#6366F1" />
-                        <Text style={styles.statNumber}>{dashboardStats?.total_customers || customers.length || 0}</Text>
+                        <Text
+                            style={styles.statNumber}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.5}
+                        >
+                            {dashboardStats?.total_customers || customers.length || 0}
+                        </Text>
                         <Text style={styles.statLabel}>Customers</Text>
                     </View>
                     <View style={styles.statCard}>
                         <Ionicons name="cube-outline" size={28} color="#3B82F6" />
-                        <Text style={[styles.statNumber, { color: '#3B82F6' }]}>{dashboardStats?.total_products || products.length || 0}</Text>
+                        <Text
+                            style={[styles.statNumber, { color: '#3B82F6' }]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.5}
+                        >
+                            {dashboardStats?.total_products || products.length || 0}
+                        </Text>
                         <Text style={styles.statLabel}>Products</Text>
                     </View>
                 </View>
@@ -603,8 +617,13 @@ const ShopOwnerDashboardScreen = () => {
                         <View style={[styles.rupeeCircle, { backgroundColor: '#EF4444' }]}>
                             <Text style={[styles.rupeeIcon, { color: '#fff' }]}>₹</Text>
                         </View>
-                        <Text style={[styles.statNumber, { color: '#EF4444' }]}>
-                            ₹{Math.abs(customers.reduce((acc, c) => acc + (c.balance < 0 ? c.balance : 0), 0)).toFixed(2)}
+                        <Text
+                            style={[styles.statNumber, { color: '#EF4444' }]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.5}
+                        >
+                            ₹{Math.abs(customers.reduce((acc, c) => acc + (c.balance < 0 ? c.balance : 0), 0)).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                         </Text>
                         <Text style={styles.statLabel}>Pending Dues</Text>
 
@@ -620,7 +639,12 @@ const ShopOwnerDashboardScreen = () => {
                     <View style={styles.statCard}>
                         {/* With Dues - Orange Warning */}
                         <Ionicons name="warning-outline" size={28} color="#F59E0B" style={{ marginBottom: 4 }} />
-                        <Text style={[styles.statNumber, { color: '#F59E0B' }]}>
+                        <Text
+                            style={[styles.statNumber, { color: '#F59E0B' }]}
+                            numberOfLines={1}
+                            adjustsFontSizeToFit
+                            minimumFontScale={0.5}
+                        >
                             {customers.filter(c => c.balance < 0).length}
                         </Text>
                         <Text style={styles.statLabel2}>Total Customers With Dues</Text>

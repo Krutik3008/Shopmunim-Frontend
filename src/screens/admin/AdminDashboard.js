@@ -59,7 +59,14 @@ const AdminDashboard = ({ onRefreshStats, showToast }) => {
                     <Ionicons name={icon} size={18} color={color || "#6B7280"} />
                 </View>
             </View>
-            <Text style={styles.statValue}>{value}</Text>
+            <Text
+                style={styles.statValue}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
+            >
+                {value}
+            </Text>
             <Text style={styles.statSubtext}>{subtext}</Text>
         </View>
     );
