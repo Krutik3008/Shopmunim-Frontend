@@ -110,13 +110,21 @@ const CustomerDetailScreen = ({ route, navigation }) => {
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
     const [toastVisible, setToastVisible] = useState(false);
+    const [toastType, setToastType] = useState('success');
     const toastAnim = useRef(new Animated.Value(0)).current;
     const toastTimer = useRef(null);
 
-    const showToast = (message) => {
+    const showToast = (message, type = 'success') => {
         Keyboard.dismiss();
         if (toastTimer.current) clearTimeout(toastTimer.current);
+
+        let finalType = type;
+        if (typeof message === 'string' && message.toLowerCase().includes('network error')) {
+            finalType = 'error';
+        }
+
         setToastMessage(message);
+        setToastType(finalType);
         setToastVisible(true);
         Animated.spring(toastAnim, {
             toValue: 1,
@@ -151,10 +159,10 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 ]}
             >
                 <View style={styles.toastContent}>
-                    <View style={styles.toastIcon}>
-                        <Ionicons name="information-circle" size={20} color="#FFFFFF" />
+                    <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
+                        <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#FFFFFF" />
                     </View>
-                    <Text style={styles.toastText}>{toastMessage}</Text>
+                    <Text style={[styles.toastText, typeof toastMessage === 'string' && (toastMessage.toLowerCase().includes('network error') || toastMessage.toLowerCase().includes('switch failed') || toastMessage.toLowerCase().includes('admin access')) && { paddingHorizontal: 10, flex: 1 }]}>{toastMessage}</Text>
                 </View>
             </Animated.View>
         );
@@ -206,7 +214,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 console.log('Could not refresh customer:', e);
             }
         } catch (error) {
-            console.error('Load data error:', error);
+            showToast(`Load data error: ${error.message || 'Network Error'}`, 'error');
         } finally {
             setLoading(false);
         }
