@@ -112,8 +112,14 @@ const CustomerDashboardScreen = () => {
 
     const showToast = (message, type = 'success') => {
         if (toastTimer.current) clearTimeout(toastTimer.current);
+
+        let finalType = type;
+        if (typeof message === 'string' && message.toLowerCase().includes('network error')) {
+            finalType = 'error';
+        }
+
         setToastMessage(message);
-        setToastType(type);
+        setToastType(finalType);
         setToastVisible(true);
         Animated.spring(toastAnim, {
             toValue: 1,

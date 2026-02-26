@@ -426,7 +426,7 @@ const ShopOwnerDashboardScreen = () => {
         try {
             const shopId = user?.shop_id || (shops.length > 0 ? shops[0].id : null);
             if (!shopId) {
-                Alert.alert('Error', 'No shop found. Please create a shop first.');
+                showToast('No shop found. Please create a shop first.', 'error');
                 return;
             }
 
@@ -471,7 +471,7 @@ const ShopOwnerDashboardScreen = () => {
         } catch (error) {
             console.log('Failed to load shops:', error);
             if (!refreshing) { // Don't alert on pull-to-refresh, just log
-                Alert.alert('Error', getAPIErrorMessage(error));
+                showToast(getAPIErrorMessage(error), 'error');
             }
         } finally {
             setLoading(false);
@@ -532,7 +532,7 @@ const ShopOwnerDashboardScreen = () => {
         try {
             await Share.share({ message });
         } catch (error) {
-            Alert.alert('Error', 'Failed to share link');
+            showToast('Failed to share link', 'error');
         }
     };
 
