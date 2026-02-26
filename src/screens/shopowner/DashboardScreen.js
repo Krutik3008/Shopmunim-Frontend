@@ -1338,7 +1338,7 @@ const ShopOwnerDashboardScreen = () => {
                     <View style={[styles.toastIcon, toastType === 'error' && { backgroundColor: '#EF4444' }]}>
                         <Ionicons name={toastType === 'error' ? "alert-circle" : "checkmark-circle"} size={20} color="#fff" />
                     </View>
-                    <Text style={styles.toastText}>{toastMessage}</Text>
+                    <Text style={[styles.toastText, typeof toastMessage === 'string' && toastMessage.toLowerCase().includes('network error') && { paddingHorizontal: 10, flex: 1 }]}>{toastMessage}</Text>
                 </View>
             </Animated.View>
         );
