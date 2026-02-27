@@ -2734,6 +2734,7 @@ const modalStyles = StyleSheet.create({
         borderRadius: 8,
         gap: 8,
         marginTop: 8,
+        marginBottom: 40,
     },
     paymentSendBtnText: {
         fontSize: 16,
