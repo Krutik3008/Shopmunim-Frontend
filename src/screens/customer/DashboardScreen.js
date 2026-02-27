@@ -499,44 +499,50 @@ const CustomerDashboardScreen = () => {
                                     <View style={styles.ledgerInfo}>
                                         <Text style={styles.shopName}>{item.shop?.name}</Text>
                                         <Text style={styles.shopLocation}>{item.shop?.location}</Text>
+
+                                        {(() => {
+                                            const balance = item.customer?.balance || 0;
+                                            let badgeStyle = styles.badgeClear;
+                                            let textStyle = styles.badgeClearText;
+                                            let label = "Clear";
+                                            let amountColor = '#374151';
+
+                                            if (balance < 0) {
+                                                badgeStyle = styles.badgeOwe;
+                                                textStyle = styles.badgeOweText;
+                                                label = "Dues";
+                                                amountColor = '#EF4444';
+                                            } else if (balance > 0) {
+                                                badgeStyle = styles.badgeCredit;
+                                                textStyle = styles.badgeCreditText;
+                                                label = "Credit";
+                                                amountColor = '#111827';
+                                            }
+
+                                            return (
+                                                <View style={styles.ledgerBalanceRow}>
+                                                    <View style={[styles.statusBadge, badgeStyle]}>
+                                                        <Text style={[styles.statusBadgeText, textStyle]}>{label}</Text>
+                                                    </View>
+                                                    <Text style={[styles.ledgerBalanceAmount, { color: amountColor }]}>
+                                                        {balance < 0 ? '-' : ''}₹{Math.abs(balance).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                                                    </Text>
+                                                </View>
+                                            );
+                                        })()}
                                     </View>
 
-                                    {(() => {
-                                        const balance = item.customer?.balance || 0;
-                                        let badgeStyle = styles.badgeClear;
-                                        let textStyle = styles.badgeClearText;
-                                        let iconColor = "#666";
-                                        let label = "Clear";
-
-                                        if (balance < 0) {
-                                            badgeStyle = styles.badgeOwe;
-                                            textStyle = styles.badgeOweText;
-                                            iconColor = "#fff";
-                                            label = "Dues";
-                                        } else if (balance > 0) {
-                                            badgeStyle = styles.badgeCredit;
-                                            textStyle = styles.badgeCreditText;
-                                            iconColor = "#fff";
-                                            label = "Credit";
-                                        }
-
-                                        return (
-                                            <TouchableOpacity
-                                                style={[styles.ledgerBadge, badgeStyle]}
-                                                activeOpacity={0.7}
-                                                onPress={() => setSelectedShopLedger(item)}
-                                            >
-                                                <Text style={[styles.ledgerBadgeText, textStyle]}>
-                                                    {label} ₹{Math.abs(balance).toFixed(2)}
-                                                </Text>
-                                                <Ionicons
-                                                    name="chevron-forward"
-                                                    size={16}
-                                                    color={iconColor}
-                                                />
-                                            </TouchableOpacity>
-                                        );
-                                    })()}
+                                    <TouchableOpacity
+                                        style={styles.ledgerArrow}
+                                        activeOpacity={0.7}
+                                        onPress={() => setSelectedShopLedger(item)}
+                                    >
+                                        <Ionicons
+                                            name="arrow-forward"
+                                            size={18}
+                                            color="#FFF"
+                                        />
+                                    </TouchableOpacity>
                                 </View>
 
 
@@ -1176,8 +1182,18 @@ const styles = StyleSheet.create({
     shopLocation: { fontSize: 13, color: '#666', marginTop: 2 },
 
     // Ledger Badges
-    ledgerBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-    ledgerBadgeText: { fontSize: 13, fontWeight: '600' },
+    ledgerBalanceRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 12 },
+    statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
+    statusBadgeText: { fontSize: 12, fontWeight: '700' },
+    ledgerBalanceAmount: { fontSize: 18, fontWeight: '700' },
+    ledgerArrow: {
+        width: 32,
+        height: 32,
+        backgroundColor: '#4E86F7',
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
 
     badgeClear: { backgroundColor: '#F3F4F6' },
     badgeClearText: { color: '#374151' },
