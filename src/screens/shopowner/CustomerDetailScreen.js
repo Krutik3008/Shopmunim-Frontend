@@ -197,7 +197,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 const shopRes = await shopAPI.getDashboard(shopId);
                 setShopDetails(shopRes.data?.shop);
             } catch (e) {
-                console.log('Could not load shop details:', e);
+                showToast('Failed to load shop details', e);
             }
 
             const productsRes = await productAPI.getAll(shopId);
@@ -212,7 +212,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                     setCustomer(updatedCustomer);
                 }
             } catch (e) {
-                console.log('Could not refresh customer:', e);
+                showToast('Failed to refresh customer', e);
             }
         } catch (error) {
             showToast(`Load data error: ${error.message || 'Network Error'}`, 'error');
@@ -550,8 +550,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             setCustomer(prev => ({ ...prev, ...updateData }));
             // loadData(); // Optional, but local update is faster
         } catch (error) {
-            console.log('Failed to update customer:', error);
-            showToast('Failed to update customer');
+            showToast('Failed to update customer', error);
         } finally {
             setUpdatingCustomer(false);
         }
@@ -1177,13 +1176,16 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
         const freq = newFreq || autoReminderFrequency;
         const method = newMethod || autoReminderMethod;
 
+        const customerName = customer?.name || 'Customer';
+        const customerBalance = Math.abs(customer?.balance || 0).toFixed(2);
+
         let template = "";
         if (method === 'WhatsApp') {
-            template = `Dear {name},\n\nThis is an automated reminder that your payment is {delay}.\n\nPending Balance: ₹{amount}\n\nWe will remind you {frequency}.\n\nPlease pay at your earliest convenience. Thank you!`;
+            template = `Dear ${customerName},\n\nThis is an automated reminder that your payment is ${delay}.\n\nPending Balance: ₹${customerBalance}\n\nWe will remind you ${freq}.\n\nPlease pay at your earliest convenience. Thank you!`;
         } else if (method === 'SMS Message') {
-            template = `ShopMunim: Dear {name}, your payment is {delay}. Balance: ₹{amount}. (Auto-reminder: {frequency})`;
+            template = `ShopMunim: Dear ${customerName}, your payment is ${delay}. Balance: ₹${customerBalance}. (Auto-reminder: ${freq})`;
         } else {
-            template = `Dear {name}, your payment is {delay}. Balance: ₹{amount}. We will remind you {frequency}. Please clear your dues. Thank you!`;
+            template = `Dear ${customerName}, your payment is ${delay}. Balance: ₹${customerBalance}. We will remind you ${freq}. Please clear your dues. Thank you!`;
         }
         setAutoReminderMessage(template);
     };
@@ -1223,7 +1225,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
         >
             <KeyboardAvoidingView
                 style={modalStyles.paymentModalOverlay}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             >
                 <View style={modalStyles.paymentModalContent}>
                     {/* Header */}
@@ -1685,7 +1687,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                 method: 'SMS Message'
                                                             });
                                                         } catch (e) {
-                                                            console.log('Error logging SMS to backend:', e);
+                                                            showToast('Failed to log SMS to backend', e);
                                                         }
 
                                                         Linking.canOpenURL(url).then(supported => {
@@ -1716,7 +1718,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                 method: 'WhatsApp'
                                                             });
                                                         } catch (e) {
-                                                            console.log('Error logging WhatsApp to backend:', e);
+                                                            showToast('Failed to log WhatsApp to backend', e);
                                                         }
 
                                                         Linking.openURL(url).catch(() => {
@@ -1909,7 +1911,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                     </View>
                                                     <TextInput
                                                         style={modalStyles.paymentMessageInput}
-                                                        placeholder="Describe your auto message (use {name} and {amount} as placeholders)"
+                                                        placeholder="Enter your reminder message..."
                                                         placeholderTextColor="#9CA3AF"
                                                         multiline
                                                         numberOfLines={3}
