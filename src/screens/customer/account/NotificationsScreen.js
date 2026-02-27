@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, shadows, spacing } from '../../../theme';
-import { customerDashboardAPI, getAPIErrorMessage } from '../../../api';
+import { customerDashboardAPI, authAPI, getAPIErrorMessage } from '../../../api';
 
 const NotificationsScreen = () => {
     const navigation = useNavigation();
@@ -16,13 +16,33 @@ const NotificationsScreen = () => {
 
     // Settings State
     const [pushEnabled, setPushEnabled] = useState(true);
-    const [emailEnabled, setEmailEnabled] = useState(false);
     const [paymentAlerts, setPaymentAlerts] = useState(true);
-    const [promotions, setPromotions] = useState(false);
+    const [promotions, setPromotions] = useState(true);
+    const [allEnabled, setAllEnabled] = useState(true);
+    const [syncing, setSyncing] = useState(false);
 
     useEffect(() => {
         fetchNotifications();
+        fetchPreferences();
     }, []);
+
+    const fetchPreferences = async () => {
+        try {
+            const response = await authAPI.getMe();
+            const user = response.data;
+            setPushEnabled(user.push_enabled ?? true);
+            setPaymentAlerts(user.payment_alerts_enabled ?? true);
+            setPromotions(user.promotions_enabled ?? true);
+
+            // Set "All" toggle based on individual settings
+            const allOn = (user.push_enabled ?? true) &&
+                (user.payment_alerts_enabled ?? true) &&
+                (user.promotions_enabled ?? true);
+            setAllEnabled(allOn);
+        } catch (error) {
+            console.error('Error fetching preferences:', error);
+        }
+    };
 
     const fetchNotifications = async () => {
         try {
@@ -70,8 +90,60 @@ const NotificationsScreen = () => {
         return date.toLocaleDateString();
     };
 
-    const toggleSwitch = (value, setter) => {
-        setter(value);
+    const toggleSwitch = async (key, value) => {
+        // Update local state first for responsiveness
+        let newPush = pushEnabled;
+        let newAlerts = paymentAlerts;
+        let newPromos = promotions;
+
+        if (key === 'push') {
+            setPushEnabled(value);
+            newPush = value;
+        } else if (key === 'alerts') {
+            setPaymentAlerts(value);
+            newAlerts = value;
+        } else if (key === 'promos') {
+            setPromotions(value);
+            newPromos = value;
+        }
+
+        // Update "All" toggle state
+        setAllEnabled(newPush && newAlerts && newPromos);
+
+        // Sync with backend
+        try {
+            setSyncing(true);
+            await authAPI.updateProfile({
+                push_enabled: newPush,
+                payment_alerts_enabled: newAlerts,
+                promotions_enabled: newPromos
+            });
+        } catch (error) {
+            console.error('Error syncing preferences:', error);
+            // Revert state on failure could be added here
+        } finally {
+            setSyncing(false);
+        }
+    };
+
+    const toggleAll = async (value) => {
+        setAllEnabled(value);
+        setPushEnabled(value);
+        setPaymentAlerts(value);
+        setPromotions(value);
+
+        try {
+            setSyncing(true);
+            await authAPI.updateProfile({
+                push_enabled: value,
+                payment_alerts_enabled: value,
+                promotions_enabled: value
+            });
+        } catch (error) {
+            console.error('Error syncing all preferences:', error);
+        } finally {
+            setSyncing(false);
+        }
     };
 
     const toggleExpand = (id) => {
@@ -120,26 +192,26 @@ const NotificationsScreen = () => {
             <View style={styles.settingsGroup}>
                 <View style={styles.settingRow}>
                     <View style={styles.settingTextContent}>
+                        <Text style={styles.settingTitleText}>All Notifications</Text>
+                        <Text style={styles.settingSubtitleText}>Enable or disable all alert types</Text>
+                    </View>
+                    <Switch
+                        value={allEnabled}
+                        onValueChange={toggleAll}
+                        trackColor={{ false: colors.gray[200], true: colors.primary.blue + '80' }}
+                        thumbColor={allEnabled ? colors.primary.blue : '#fff'}
+                    />
+                </View>
+                <View style={styles.settingRow}>
+                    <View style={styles.settingTextContent}>
                         <Text style={styles.settingTitleText}>Push Notifications</Text>
                         <Text style={styles.settingSubtitleText}>Receive alerts on your device</Text>
                     </View>
                     <Switch
                         value={pushEnabled}
-                        onValueChange={(val) => toggleSwitch(val, setPushEnabled)}
+                        onValueChange={(val) => toggleSwitch('push', val)}
                         trackColor={{ false: colors.gray[200], true: colors.primary.blue + '80' }}
                         thumbColor={pushEnabled ? colors.primary.blue : '#fff'}
-                    />
-                </View>
-                <View style={styles.settingRow}>
-                    <View style={styles.settingTextContent}>
-                        <Text style={styles.settingTitleText}>Email Notifications</Text>
-                        <Text style={styles.settingSubtitleText}>Receive updates via your email</Text>
-                    </View>
-                    <Switch
-                        value={emailEnabled}
-                        onValueChange={(val) => toggleSwitch(val, setEmailEnabled)}
-                        trackColor={{ false: colors.gray[200], true: colors.primary.blue + '80' }}
-                        thumbColor={emailEnabled ? colors.primary.blue : '#fff'}
                     />
                 </View>
                 <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
@@ -149,7 +221,7 @@ const NotificationsScreen = () => {
                     </View>
                     <Switch
                         value={promotions}
-                        onValueChange={(val) => toggleSwitch(val, setPromotions)}
+                        onValueChange={(val) => toggleSwitch('promos', val)}
                         trackColor={{ false: colors.gray[200], true: colors.primary.blue + '80' }}
                         thumbColor={promotions ? colors.primary.blue : '#fff'}
                     />
@@ -165,7 +237,7 @@ const NotificationsScreen = () => {
                     </View>
                     <Switch
                         value={paymentAlerts}
-                        onValueChange={(val) => toggleSwitch(val, setPaymentAlerts)}
+                        onValueChange={(val) => toggleSwitch('alerts', val)}
                         trackColor={{ false: colors.gray[200], true: colors.primary.blue + '80' }}
                         thumbColor={paymentAlerts ? colors.primary.blue : '#fff'}
                     />

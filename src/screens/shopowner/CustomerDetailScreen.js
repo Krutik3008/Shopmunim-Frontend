@@ -1127,6 +1127,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
     const [showAutoReminderFrequencyDropdown, setShowAutoReminderFrequencyDropdown] = useState(false);
     const [autoReminderMethod, setAutoReminderMethod] = useState(customer?.auto_reminder_method || 'Push Notification');
     const [showAutoReminderMethodDropdown, setShowAutoReminderMethodDropdown] = useState(false);
+    const [autoReminderMessage, setAutoReminderMessage] = useState(customer?.auto_reminder_message || '');
     const [advanceAmount, setAdvanceAmount] = useState('');
     const [advanceReason, setAdvanceReason] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -1150,6 +1151,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
             setAutoReminderDelay(customer.auto_reminder_delay || '3 days overdue');
             setAutoReminderFrequency(customer.auto_reminder_frequency || 'Daily until paid');
             setAutoReminderMethod(customer.auto_reminder_method || 'Push Notification');
+            setAutoReminderMessage(customer.auto_reminder_message || '');
 
             if (visible) {
                 fetchHistory();
@@ -1168,6 +1170,22 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
         } finally {
             setLoadingHistory(false);
         }
+    };
+
+    const updateAutoTemplate = (newDelay, newFreq, newMethod) => {
+        const delay = newDelay || autoReminderDelay;
+        const freq = newFreq || autoReminderFrequency;
+        const method = newMethod || autoReminderMethod;
+
+        let template = "";
+        if (method === 'WhatsApp') {
+            template = `Dear {name},\n\nThis is an automated reminder that your payment is {delay}.\n\nPending Balance: ₹{amount}\n\nWe will remind you {frequency}.\n\nPlease pay at your earliest convenience. Thank you!`;
+        } else if (method === 'SMS Message') {
+            template = `ShopMunim: Dear {name}, your payment is {delay}. Balance: ₹{amount}. (Auto-reminder: {frequency})`;
+        } else {
+            template = `Dear {name}, your payment is {delay}. Balance: ₹{amount}. We will remind you {frequency}. Please clear your dues. Thank you!`;
+        }
+        setAutoReminderMessage(template);
     };
 
 
@@ -1279,7 +1297,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                         onPress={() => setPaymentRequestTab('autoSetup')}
                                     >
                                         <Ionicons name="settings-outline" size={16} color={paymentRequestTab === 'autoSetup' ? '#111827' : '#6B7280'} />
-                                        <Text style={[modalStyles.paymentModalTabText, paymentRequestTab === 'autoSetup' && modalStyles.paymentModalTabTextActive]}>Settings</Text>
+                                        <Text style={[modalStyles.paymentModalTabText, paymentRequestTab === 'autoSetup' && modalStyles.paymentModalTabTextActive]}>Auto Setup</Text>
                                     </TouchableOpacity>
                                     <TouchableOpacity
                                         style={[modalStyles.paymentModalTab, paymentRequestTab === 'history' && modalStyles.paymentModalTabActive]}
@@ -1784,6 +1802,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                         onPress={() => {
                                                                             setAutoReminderDelay(option);
                                                                             setShowAutoReminderDelayDropdown(false);
+                                                                            updateAutoTemplate(option, null, null);
                                                                         }}
                                                                     >
                                                                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1821,6 +1840,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                         onPress={() => {
                                                                             setAutoReminderFrequency(option);
                                                                             setShowAutoReminderFrequencyDropdown(false);
+                                                                            updateAutoTemplate(null, option, null);
                                                                         }}
                                                                     >
                                                                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1858,6 +1878,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                         onPress={() => {
                                                                             setAutoReminderMethod(option);
                                                                             setShowAutoReminderMethodDropdown(false);
+                                                                            updateAutoTemplate(null, null, option);
                                                                         }}
                                                                     >
                                                                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1874,6 +1895,33 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                 </View>
                                             )}
 
+                                            {/* Auto Reminder Message */}
+                                            {isAutoReminderEnabled && (
+                                                <View style={{ marginBottom: 20 }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                                                        <Text style={modalStyles.paymentModalLabel}>Default Auto Message</Text>
+                                                        <TouchableOpacity
+                                                            style={modalStyles.paymentTemplateBtn}
+                                                            onPress={() => updateAutoTemplate(null, null, null)}
+                                                        >
+                                                            <Text style={{ fontSize: 11, color: '#4B5563', fontWeight: '500' }}>Use Template</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                    <TextInput
+                                                        style={modalStyles.paymentMessageInput}
+                                                        placeholder="Describe your auto message (use {name} and {amount} as placeholders)"
+                                                        placeholderTextColor="#9CA3AF"
+                                                        multiline
+                                                        numberOfLines={3}
+                                                        value={autoReminderMessage}
+                                                        onChangeText={setAutoReminderMessage}
+                                                        textAlignVertical="top"
+                                                        maxLength={500}
+                                                    />
+                                                    <Text style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Use {"{name}"} for customer name and {"{amount}"} for balance.</Text>
+                                                </View>
+                                            )}
+
                                             <TouchableOpacity
                                                 disabled={isSaving}
                                                 onPress={async () => {
@@ -1883,7 +1931,8 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                             is_auto_reminder_enabled: isAutoReminderEnabled,
                                                             auto_reminder_delay: autoReminderDelay,
                                                             auto_reminder_frequency: autoReminderFrequency,
-                                                            auto_reminder_method: autoReminderMethod
+                                                            auto_reminder_method: autoReminderMethod,
+                                                            auto_reminder_message: autoReminderMessage
                                                         };
                                                         await customerAPI.update(customer.shop_id, customer.id, updateData);
                                                         showToast('Auto reminder settings saved successfully!');

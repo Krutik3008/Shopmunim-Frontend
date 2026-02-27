@@ -139,6 +139,9 @@ export const customerAPI = {
     // Get notifications sent by the shop
     getNotifications: (shopId) => api.get(`/shops/${shopId}/notifications`),
 
+    // Get a specific customer
+    getById: (shopId, customerId) => api.get(`/shops/${shopId}/customers/${customerId}`),
+
     // Get notification history for a specific customer
     getCustomerNotifications: (shopId, customerId) =>
         api.get(`/shops/${shopId}/customers/${customerId}/notifications`),
