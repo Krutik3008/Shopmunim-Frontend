@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI, getAPIErrorMessage } from '../../api';
+import { Skeleton } from '../../components/ui';
 
 const { width } = Dimensions.get('window');
 
@@ -44,9 +45,46 @@ const AdminDashboard = ({ onRefreshStats, showToast }) => {
 
     if (loading && !refreshing && !dashboardData) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#7C3AED" />
-            </View>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.contentContainer}
+            >
+                <View style={styles.headerTextContainer}>
+                    <Skeleton width="40%" height={28} style={{ marginBottom: 8 }} />
+                    <Skeleton width="60%" height={16} />
+                </View>
+
+                <View style={styles.gridContainer}>
+                    {[1, 2, 3, 4].map(i => (
+                        <View key={i} style={styles.statCard}>
+                            <View style={styles.statHeader}>
+                                <Skeleton width="50%" height={12} />
+                                <Skeleton width={32} height={32} borderRadius={8} />
+                            </View>
+                            <Skeleton width="70%" height={24} style={{ marginBottom: 4 }} />
+                            <Skeleton width="40%" height={10} />
+                        </View>
+                    ))}
+                </View>
+
+                {[1, 2].map(i => (
+                    <View key={i} style={styles.fullWidthCard}>
+                        <View style={styles.cardHeader}>
+                            <Skeleton width={20} height={20} borderRadius={10} />
+                            <Skeleton width="40%" height={18} />
+                        </View>
+                        <Skeleton width="60%" height={12} style={{ marginBottom: 16 }} />
+                        <View style={styles.row}>
+                            <Skeleton width="30%" height={14} />
+                            <Skeleton width="20%" height={14} />
+                        </View>
+                        <View style={styles.row}>
+                            <Skeleton width="30%" height={14} />
+                            <Skeleton width="30%" height={14} />
+                        </View>
+                    </View>
+                ))}
+            </ScrollView>
         );
     }
 

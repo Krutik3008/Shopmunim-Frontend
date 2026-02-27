@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { adminAPI, getAPIErrorMessage } from '../../api';
 import AdminShopDetailsScreen from './AdminShopDetailsScreen';
+import { Skeleton } from '../../components/ui';
 
 const AdminShopManagement = ({ showToast }) => {
     const [selectedShop, setSelectedShop] = useState(null);
@@ -285,8 +286,24 @@ const AdminShopManagement = ({ showToast }) => {
                 </View>
 
                 {loading && !refreshing && shops.length === 0 ? (
-                    <View style={styles.centerContainer}>
-                        <ActivityIndicator size="large" color="#fff" />
+                    <View style={styles.listContent}>
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={[styles.shopCard, { padding: 16 }]}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                                    <View style={{ flex: 1 }}>
+                                        <Skeleton width="60%" height={20} style={{ marginBottom: 8 }} />
+                                        <Skeleton width="40%" height={14} />
+                                    </View>
+                                    <Skeleton width={80} height={24} borderRadius={4} />
+                                </View>
+                                <Skeleton width="40%" height={16} style={{ marginBottom: 12 }} />
+                                <View style={{ backgroundColor: '#F9FAFB', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                                    <Skeleton width="50%" height={14} style={{ marginBottom: 8 }} />
+                                    <Skeleton width="70%" height={14} />
+                                </View>
+                                <Skeleton width="100%" height={40} borderRadius={8} />
+                            </View>
+                        ))}
                     </View>
                 ) : shops.length === 0 ? (
                     <View style={styles.emptyContainer}>

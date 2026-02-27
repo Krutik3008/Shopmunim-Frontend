@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import { Modal } from '../../components/ui';
+import { Modal, Skeleton } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { shopAPI, getAPIErrorMessage, customerAPI, productAPI, transactionAPI } from '../../api';
@@ -554,11 +554,62 @@ const ShopOwnerDashboardScreen = () => {
     const renderHomeContent = () => {
         const hasShops = shops.length > 0;
 
-        if (loading) {
+        if (loading && !refreshing) {
             return (
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3B82F6" />
-                </View>
+                <ScrollView
+                    style={styles.tabContent}
+                    contentContainerStyle={styles.dashboardContainer}
+                >
+                    {/* Stats Cards Row 1 Skeleton */}
+                    <View style={styles.statsRow}>
+                        <View style={styles.statCard}>
+                            <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                            <Skeleton width="60%" height={28} style={{ marginBottom: 8 }} />
+                            <Skeleton width="40%" height={14} />
+                        </View>
+                        <View style={styles.statCard}>
+                            <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                            <Skeleton width="60%" height={28} style={{ marginBottom: 8 }} />
+                            <Skeleton width="40%" height={14} />
+                        </View>
+                    </View>
+
+                    {/* Stats Cards Row 2 Skeleton */}
+                    <View style={styles.statsRow}>
+                        <View style={styles.statCard}>
+                            <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                            <Skeleton width="70%" height={28} style={{ marginBottom: 8 }} />
+                            <Skeleton width="50%" height={14} style={{ marginBottom: 12 }} />
+                            <Skeleton width="80%" height={40} borderRadius={8} />
+                        </View>
+                        <View style={styles.statCard}>
+                            <Skeleton width={32} height={32} borderRadius={16} style={{ marginBottom: 12 }} />
+                            <Skeleton width="40%" height={28} style={{ marginBottom: 8 }} />
+                            <Skeleton width="80%" height={14} />
+                        </View>
+                    </View>
+
+                    {/* Quick Actions Skeleton */}
+                    <Skeleton width="40%" height={20} style={{ marginVertical: 16 }} />
+                    <View style={styles.quickActionsRow}>
+                        <Skeleton width="48%" height={48} borderRadius={12} />
+                        <Skeleton width="48%" height={48} borderRadius={12} />
+                    </View>
+
+                    {/* Recent Activity Skeleton */}
+                    <View style={[styles.recentActivityCard, { marginTop: 24, padding: 16 }]}>
+                        <Skeleton width="50%" height={20} style={{ marginBottom: 16 }} />
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={{ marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#F3F4F6', paddingBottom: 16 }}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                                    <Skeleton width="40%" height={16} />
+                                    <Skeleton width="30%" height={16} />
+                                </View>
+                                <Skeleton width="20%" height={20} borderRadius={4} alignSelf="flex-end" />
+                            </View>
+                        ))}
+                    </View>
+                </ScrollView>
             );
         }
 

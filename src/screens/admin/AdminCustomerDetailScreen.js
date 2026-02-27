@@ -19,6 +19,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { customerAPI, shopAPI } from '../../api';
+import { Skeleton } from '../../components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -500,7 +501,30 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                             </View>
                         </View>
                         {loading ? (
-                            <ActivityIndicator size="large" color="#ffffff" style={{ marginTop: 40 }} />
+                            <View style={{ padding: 16 }}>
+                                {/* Shop Info Skeleton */}
+                                <View style={[styles.card, { padding: 16 }]}>
+                                    <Skeleton width="40%" height={20} style={{ marginBottom: 16 }} />
+                                    {[1, 2, 3, 4, 5].map(i => (
+                                        <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                            <Skeleton width="30%" height={14} />
+                                            <Skeleton width="50%" height={14} />
+                                        </View>
+                                    ))}
+                                </View>
+                                {/* Stats Skeleton */}
+                                <View style={styles.sectionCard}>
+                                    <Skeleton width="40%" height={20} style={{ marginBottom: 16 }} />
+                                    <View style={styles.statsGrid}>
+                                        {[1, 2, 3, 4].map(i => (
+                                            <View key={i} style={[styles.statBox, { backgroundColor: '#F3F4F6' }]}>
+                                                <Skeleton width="60%" height={24} style={{ marginBottom: 8 }} />
+                                                <Skeleton width="80%" height={12} />
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                            </View>
                         ) : (
                             <>
                                 {/* Shop Information Card */}

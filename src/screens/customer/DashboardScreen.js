@@ -22,6 +22,7 @@ import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/nativ
 import CustomerHeader from '../../components/customer/CustomerHeader';
 import CustomerBottomNav from '../../components/customer/CustomerBottomNav';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Skeleton } from '../../components/ui';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Print from 'expo-print';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -486,7 +487,34 @@ const CustomerDashboardScreen = () => {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         >
             {loading ? (
-                <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />
+                <>
+                    <View style={styles.statsContainer}>
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={styles.statCard}>
+                                <Skeleton width={24} height={24} borderRadius={12} style={{ marginBottom: 8 }} />
+                                <Skeleton width="60%" height={24} style={{ marginBottom: 4 }} />
+                                <Skeleton width="40%" height={12} />
+                            </View>
+                        ))}
+                    </View>
+                    <View style={styles.ledgerList}>
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={[styles.ledgerItemContainer, { padding: 16 }]}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                    <View style={{ flex: 1 }}>
+                                        <Skeleton width="60%" height={18} style={{ marginBottom: 8 }} />
+                                        <Skeleton width="40%" height={12} style={{ marginBottom: 12 }} />
+                                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                            <Skeleton width={40} height={18} borderRadius={4} style={{ marginRight: 8 }} />
+                                            <Skeleton width={60} height={18} />
+                                        </View>
+                                    </View>
+                                    <Skeleton width={36} height={36} borderRadius={18} />
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </>
             ) : ledgerData.length === 0 ? (
                 <LedgerEmptyState />
             ) : (
@@ -585,7 +613,24 @@ const CustomerDashboardScreen = () => {
     // Payments Tab Content - Matching reference design
     const PaymentsContent = () => {
         if (loading) {
-            return <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 50 }} />;
+            return (
+                <View style={styles.tabContent}>
+                    <Skeleton width="40%" height={24} style={{ marginHorizontal: 20, marginTop: 20, marginBottom: 8 }} />
+                    <Skeleton width="30%" height={18} style={{ marginHorizontal: 20, marginBottom: 20 }} />
+                    {[1, 2].map(i => (
+                        <View key={i} style={[styles.paymentCard, { padding: 16 }]}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                                <View style={{ flex: 1 }}>
+                                    <Skeleton width="50%" height={18} style={{ marginBottom: 8 }} />
+                                    <Skeleton width="40%" height={12} style={{ marginBottom: 12 }} />
+                                    <Skeleton width="30%" height={16} />
+                                </View>
+                                <Skeleton width={80} height={36} borderRadius={18} />
+                            </View>
+                        </View>
+                    ))}
+                </View>
+            );
         }
 
         if (ledgerData.length === 0) {

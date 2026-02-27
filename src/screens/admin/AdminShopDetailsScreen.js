@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { customerAPI, getAPIErrorMessage } from '../../api';
 import AdminCustomerDetailScreen from './AdminCustomerDetailScreen';
+import { Skeleton } from '../../components/ui';
 
 const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBack, showToast }) => {
 
@@ -505,7 +506,22 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
 
                             {/* List */}
                             {loading && !refreshing ? (
-                                <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+                                <View style={styles.listContainer}>
+                                    {[1, 2, 3].map(i => (
+                                        <View key={i} style={[styles.customerCard, { padding: 16 }]}>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                                <Skeleton width="50%" height={20} />
+                                                <Skeleton width="25%" height={24} borderRadius={12} />
+                                            </View>
+                                            <Skeleton width="40%" height={14} style={{ marginBottom: 8 }} />
+                                            <Skeleton width="30%" height={16} style={{ marginBottom: 12 }} />
+                                            <View style={{ gap: 8 }}>
+                                                <Skeleton width="40%" height={14} />
+                                                <Skeleton width="30%" height={14} />
+                                            </View>
+                                        </View>
+                                    ))}
+                                </View>
                             ) : (
                                 <View style={styles.listContainer}>
                                     {paginatedCustomers.map((item, index) => (

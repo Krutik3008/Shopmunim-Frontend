@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { adminAPI, customerAPI, getAPIErrorMessage } from '../../api';
 import AdminCustomerDetailScreen from './AdminCustomerDetailScreen';
+import { Skeleton } from '../../components/ui';
 
 const { width } = Dimensions.get('window');
 
@@ -271,7 +272,7 @@ const AdminCustomerManagement = ({ showToast }) => {
         );
     };
 
-    const StatsCard = ({ icon, title, value, subtext, color, iconBg }) => (
+    const StatsCard = ({ icon, title, value, subtext, color, iconBg, isLoading }) => (
         <View style={styles.statCard}>
             <View style={styles.statHeader}>
                 <Text style={styles.statLabel}>{title}</Text>
@@ -279,8 +280,16 @@ const AdminCustomerManagement = ({ showToast }) => {
                     <Ionicons name={icon} size={18} color={color || "#6B7280"} />
                 </View>
             </View>
-            <Text style={styles.statValue}>{value}</Text>
-            <Text style={styles.statSubtext}>{subtext}</Text>
+            {isLoading ? (
+                <Skeleton width="60%" height={28} style={{ marginBottom: 4, marginTop: 2 }} />
+            ) : (
+                <Text style={styles.statValue}>{value}</Text>
+            )}
+            {isLoading ? (
+                <Skeleton width="40%" height={12} />
+            ) : (
+                <Text style={styles.statSubtext}>{subtext}</Text>
+            )}
         </View>
     );
 
@@ -309,6 +318,7 @@ const AdminCustomerManagement = ({ showToast }) => {
                         subtext="Total Registered"
                         color="#2563EB"
                         iconBg="#EFF6FF"
+                        isLoading={loading}
                     />
                     <StatsCard
                         icon="storefront-outline"
@@ -317,6 +327,7 @@ const AdminCustomerManagement = ({ showToast }) => {
                         subtext="On Platform"
                         color="#059669"
                         iconBg="#D1FAE5"
+                        isLoading={loading}
                     />
                     <StatsCard
                         icon="trending-down-outline"
@@ -325,6 +336,7 @@ const AdminCustomerManagement = ({ showToast }) => {
                         subtext="Pending Payments"
                         color="#DC2626"
                         iconBg="#FEE2E2"
+                        isLoading={loading}
                     />
                     <StatsCard
                         icon="swap-horizontal-outline"
@@ -333,6 +345,7 @@ const AdminCustomerManagement = ({ showToast }) => {
                         subtext="All time"
                         color="#7C3AED"
                         iconBg="#F3E8FF"
+                        isLoading={loading}
                     />
                 </View>
 
@@ -388,7 +401,24 @@ const AdminCustomerManagement = ({ showToast }) => {
 
                 {/* List */}
                 {loading && !refreshing ? (
-                    <ActivityIndicator size="large" color="#4F46E5" style={{ marginTop: 20 }} />
+                    <View style={styles.listContainer}>
+                        {[1, 2, 3, 4, 5].map((i) => (
+                            <View key={i} style={[styles.customerCard, { padding: 16 }]}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <Skeleton width="50%" height={20} />
+                                    <Skeleton width="20%" height={24} borderRadius={4} />
+                                </View>
+                                <View style={{ marginBottom: 12 }}>
+                                    <Skeleton width="40%" height={14} style={{ marginBottom: 8 }} />
+                                    <Skeleton width="60%" height={14} />
+                                </View>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                                    <Skeleton width="30%" height={36} borderRadius={8} />
+                                    <Skeleton width="30%" height={36} borderRadius={8} />
+                                </View>
+                            </View>
+                        ))}
+                    </View>
                 ) : (
                     <View style={styles.listContainer}>
                         {paginatedCustomers.map((item, index) => (

@@ -24,6 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { customerAPI, transactionAPI, productAPI, shopAPI } from '../../api';
 import { useAuth } from '../../context/AuthContext';
+import { Skeleton } from '../../components/ui';
 import ShopHeader from '../../components/shopowner/ShopHeader';
 import ShopBottomNav from '../../components/shopowner/ShopBottomNav';
 import AddTransactionModal from './AddTransactionModal';
@@ -724,14 +725,35 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         </TouchableOpacity>
 
                         {/* Loading State */}
-                        {loading && (
-                            <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#2563EB" />
-                                <Text style={styles.loadingText}>Loading transactions...</Text>
+                        {loading ? (
+                            <View style={{ paddingBottom: 20 }}>
+                                {/* Analytics Skeleton */}
+                                <View style={styles.sectionCard}>
+                                    <View style={styles.sectionHeader}>
+                                        <Skeleton width="40%" height={18} />
+                                    </View>
+                                    <View style={styles.statsGrid}>
+                                        {[1, 2, 3, 4].map(i => (
+                                            <View key={i} style={[styles.statBox, { backgroundColor: '#F3F4F6' }]}>
+                                                <Skeleton width="50%" height={24} style={{ marginBottom: 8 }} />
+                                                <Skeleton width="70%" height={12} />
+                                            </View>
+                                        ))}
+                                    </View>
+                                </View>
+                                {/* Transactions Skeleton */}
+                                {[1, 2, 3].map(i => (
+                                    <View key={i} style={[styles.sectionCard, { padding: 16 }]}>
+                                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                            <Skeleton width="30%" height={14} />
+                                            <Skeleton width="20%" height={14} />
+                                        </View>
+                                        <Skeleton width="60%" height={16} style={{ marginBottom: 8 }} />
+                                        <Skeleton width="40%" height={14} />
+                                    </View>
+                                ))}
                             </View>
-                        )}
-
-                        {!loading && (
+                        ) : (
                             <>
                                 {/* Purchase Analytics Section */}
                                 <View style={styles.sectionCard}>
