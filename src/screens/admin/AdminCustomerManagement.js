@@ -59,6 +59,24 @@ const AdminCustomerManagement = ({ showToast }) => {
     const [showShopDropdown, setShowShopDropdown] = useState(false);
     const [shopSearch, setShopSearch] = useState('');
 
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+    useEffect(() => {
+        const keyboardDidShowListener = Keyboard.addListener(
+            'keyboardDidShow',
+            (e) => setKeyboardHeight(e.endCoordinates.height)
+        );
+        const keyboardDidHideListener = Keyboard.addListener(
+            'keyboardDidHide',
+            () => setKeyboardHeight(0)
+        );
+
+        return () => {
+            keyboardDidHideListener.remove();
+            keyboardDidShowListener.remove();
+        };
+    }, []);
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -504,18 +522,20 @@ const AdminCustomerManagement = ({ showToast }) => {
                 transparent={true}
                 animationType="slide"
                 onRequestClose={() => { Keyboard.dismiss(); setShowShopDropdown(false); }}
-                statusBarTranslucent={true}
             >
-                <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    style={{ flex: 1 }}
-                >
-                    <View style={styles.modalOverlay}>
-                        <TouchableOpacity
-                            style={styles.modalBackdrop}
-                            activeOpacity={1}
-                            onPress={() => { Keyboard.dismiss(); setShowShopDropdown(false); }}
-                        />
+                <View style={[
+                    styles.modalOverlay,
+                    Platform.OS === 'android' ? { paddingBottom: keyboardHeight } : {}
+                ]}>
+                    <TouchableOpacity
+                        style={styles.modalBackdrop}
+                        activeOpacity={1}
+                        onPress={() => { Keyboard.dismiss(); setShowShopDropdown(false); }}
+                    />
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                        style={{ width: '100%' }}
+                    >
                         <View style={styles.modalContent}>
                             <View style={styles.modalHeader}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -553,6 +573,8 @@ const AdminCustomerManagement = ({ showToast }) => {
                                 style={styles.modalList}
                                 contentContainerStyle={{ paddingBottom: 20 }}
                                 keyboardShouldPersistTaps="handled"
+                                keyboardDismissMode="on-drag"
+                                onScrollBeginDrag={Keyboard.dismiss}
                                 showsVerticalScrollIndicator={true}
                                 nestedScrollEnabled={true}
                             >
@@ -613,8 +635,8 @@ const AdminCustomerManagement = ({ showToast }) => {
                                     )}
                             </ScrollView>
                         </View>
-                    </View>
-                </KeyboardAvoidingView>
+                    </KeyboardAvoidingView>
+                </View>
             </Modal>
         </View>
     );
