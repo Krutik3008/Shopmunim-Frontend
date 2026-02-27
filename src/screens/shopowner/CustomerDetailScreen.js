@@ -1225,7 +1225,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
         >
             <KeyboardAvoidingView
                 style={modalStyles.paymentModalOverlay}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             >
                 <View style={modalStyles.paymentModalContent}>
                     {/* Header */}
@@ -1239,8 +1239,8 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                         </TouchableOpacity>
                     </View>
 
-                    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                        <TouchableWithoutFeedback onPress={closeAllDropdowns}>
+                    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" onScrollBeginDrag={Keyboard.dismiss}>
+                        <TouchableWithoutFeedback onPress={() => { closeAllDropdowns(); Keyboard.dismiss(); }}>
                             <View>
                                 {/* Customer Details Card */}
                                 {customer && (
@@ -1779,6 +1779,32 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                 />
                                             </View>
 
+                                            {/* Auto Reminder Message */}
+                                            {isAutoReminderEnabled && (
+                                                <View style={{ marginBottom: 20 }}>
+                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                                                        <Text style={modalStyles.paymentModalLabel}>Default Auto Message</Text>
+                                                        <TouchableOpacity
+                                                            style={modalStyles.paymentTemplateBtn}
+                                                            onPress={() => updateAutoTemplate(null, null, null)}
+                                                        >
+                                                            <Text style={{ fontSize: 11, color: '#4B5563', fontWeight: '500' }}>Use Template</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                    <TextInput
+                                                        style={modalStyles.paymentMessageInput}
+                                                        placeholder="Enter your reminder message..."
+                                                        placeholderTextColor="#9CA3AF"
+                                                        multiline
+                                                        numberOfLines={3}
+                                                        value={autoReminderMessage}
+                                                        onChangeText={setAutoReminderMessage}
+                                                        textAlignVertical="top"
+                                                        maxLength={500}
+                                                    />
+                                                </View>
+                                            )}
+
                                             {isAutoReminderEnabled && (
                                                 <View style={{ marginBottom: 20 }}>
                                                     {/* Send reminder after */}
@@ -1897,31 +1923,6 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                 </View>
                                             )}
 
-                                            {/* Auto Reminder Message */}
-                                            {isAutoReminderEnabled && (
-                                                <View style={{ marginBottom: 20 }}>
-                                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                                                        <Text style={modalStyles.paymentModalLabel}>Default Auto Message</Text>
-                                                        <TouchableOpacity
-                                                            style={modalStyles.paymentTemplateBtn}
-                                                            onPress={() => updateAutoTemplate(null, null, null)}
-                                                        >
-                                                            <Text style={{ fontSize: 11, color: '#4B5563', fontWeight: '500' }}>Use Template</Text>
-                                                        </TouchableOpacity>
-                                                    </View>
-                                                    <TextInput
-                                                        style={modalStyles.paymentMessageInput}
-                                                        placeholder="Enter your reminder message..."
-                                                        placeholderTextColor="#9CA3AF"
-                                                        multiline
-                                                        numberOfLines={3}
-                                                        value={autoReminderMessage}
-                                                        onChangeText={setAutoReminderMessage}
-                                                        textAlignVertical="top"
-                                                        maxLength={500}
-                                                    />
-                                                </View>
-                                            )}
 
                                             <TouchableOpacity
                                                 disabled={isSaving}
@@ -1983,7 +1984,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                     <Text style={{ marginTop: 10, color: '#6B7280', fontSize: 13, textAlign: 'center' }}>No reminders sent yet.</Text>
                                                 </View>
                                             ) : (
-                                                notiHistory.map((item, index) => (
+                                                notiHistory.slice(0, 10).map((item, index) => (
                                                     <View key={item.id || index} style={{
                                                         backgroundColor: '#fff',
                                                         borderWidth: 1,

@@ -132,6 +132,11 @@ const ShopOwnerDashboardScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
+    // Tab Specific Loading States
+    const [loadingCustomers, setLoadingCustomers] = useState(false);
+    const [loadingProducts, setLoadingProducts] = useState(false);
+    const [loadingTransactions, setLoadingTransactions] = useState(false);
+
     useEffect(() => {
         const keyboardDidShowListener = Keyboard.addListener(
             'keyboardDidShow',
@@ -253,10 +258,13 @@ const ShopOwnerDashboardScreen = () => {
     const loadProducts = async (shopId) => {
         try {
             if (!shopId) return;
+            setLoadingProducts(true);
             const response = await productAPI.getAll(shopId);
             setProducts(response.data || []);
         } catch (error) {
             console.log('Failed to load products:', error);
+        } finally {
+            setLoadingProducts(false);
         }
     };
 
@@ -355,34 +363,25 @@ const ShopOwnerDashboardScreen = () => {
 
     const loadCustomers = async (shopId) => {
         try {
-            // Check if shopId is valid before making request
             if (!shopId) return;
-
+            setLoadingCustomers(true);
             const response = await customerAPI.getAll(shopId);
             const resData = response.data || {};
             setCustomers(resData.customers || resData || []);
         } catch (error) {
             console.log('Failed to load customers:', error);
-            // Don't show alert for background loads, maybe just log
+        } finally {
+            setLoadingCustomers(false);
         }
     };
 
     const loadTransactions = async (shopId) => {
         try {
             if (!shopId) return;
+            setLoadingTransactions(true);
             const response = await transactionAPI.getAll(shopId);
-            // Sort by date descending
             const sorted = (response.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            console.log('Transactions loaded count:', sorted.length);
-            if (sorted.length > 0) {
-                console.log('Sample Transaction Keys:', Object.keys(sorted[0]));
-                console.log('Sample Transaction Items (products):', JSON.stringify(sorted[0].products));
-                console.log('Sample Transaction Items (items):', JSON.stringify(sorted[0].items));
-            }
-
-            // Enrich with customer names if possible, but Dashboard usually gets full data or we map it
-            // Assuming API returns customer_name or we map it from customers list
             const enriched = sorted.map(t => {
                 const customer = customers.find(c => c.id === t.customer_id);
                 return { ...t, customer_name: customer?.name || t.customer_name || 'Unknown' };
@@ -390,6 +389,8 @@ const ShopOwnerDashboardScreen = () => {
             setTransactions(enriched);
         } catch (error) {
             console.log('Failed to load transactions:', error);
+        } finally {
+            setLoadingTransactions(false);
         }
     };
 
@@ -749,8 +750,37 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
-                    {/* Spacer for bottom nav */}
                     <View style={{ height: 100 }} />
+                </ScrollView>
+            );
+        }
+
+        if ((loading || loadingProducts) && !refreshing) {
+            return (
+                <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabPadding}>
+                    <View style={styles.productsCard}>
+                        <View style={styles.productsCardHeader}>
+                            <View style={styles.tabHeaderLeft}>
+                                <Skeleton width="40%" height={24} style={{ marginBottom: 4 }} />
+                                <Skeleton width="70%" height={16} />
+                            </View>
+                            <Skeleton width={100} height={36} borderRadius={6} />
+                        </View>
+                        <View style={styles.productsList}>
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <View key={i} style={[styles.productItem, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                                    <View style={{ flex: 1 }}>
+                                        <Skeleton width="60%" height={20} style={{ marginBottom: 8 }} />
+                                        <Skeleton width="30%" height={24} borderRadius={12} />
+                                    </View>
+                                    <View style={{ flexDirection: 'row', gap: 8 }}>
+                                        <Skeleton width={60} height={32} borderRadius={6} />
+                                        <Skeleton width={60} height={32} borderRadius={6} />
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
                 </ScrollView>
             );
         }
@@ -836,8 +866,38 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
-                    {/* Spacer for bottom nav */}
                     <View style={{ height: 100 }} />
+                </ScrollView>
+            );
+        }
+
+        if ((loading || loadingCustomers) && !refreshing) {
+            return (
+                <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabPadding}>
+                    <View style={styles.customersHeader}>
+                        <Skeleton width="40%" height={28} />
+                        <View style={styles.customersHeaderRight}>
+                            <Skeleton width={32} height={32} borderRadius={16} />
+                            <Skeleton width={80} height={36} borderRadius={6} />
+                        </View>
+                    </View>
+                    <Skeleton width="100%" height={44} borderRadius={8} style={{ marginBottom: 16 }} />
+                    <View style={styles.customersList}>
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <View key={i} style={[styles.customerItem, { flexDirection: 'row', alignItems: 'center' }]}>
+                                <Skeleton width={40} height={40} borderRadius={20} style={{ marginRight: 12 }} />
+                                <View style={{ flex: 1 }}>
+                                    <Skeleton width="50%" height={16} style={{ marginBottom: 6 }} />
+                                    <Skeleton width="40%" height={14} style={{ marginBottom: 6 }} />
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Skeleton width={60} height={20} borderRadius={10} />
+                                        <Skeleton width={60} height={16} />
+                                    </View>
+                                </View>
+                                <Skeleton width={24} height={24} borderRadius={12} />
+                            </View>
+                        ))}
+                    </View>
                 </ScrollView>
             );
         }
@@ -957,8 +1017,35 @@ const ShopOwnerDashboardScreen = () => {
             return (
                 <ScrollView style={styles.tabContent} contentContainerStyle={styles.tabContentContainer}>
                     <EmptyStateCard />
-                    {/* Spacer for bottom nav */}
                     <View style={{ height: 100 }} />
+                </ScrollView>
+            );
+        }
+
+        if ((loading || loadingTransactions) && !refreshing) {
+            return (
+                <ScrollView style={styles.tabContent} contentContainerStyle={styles.dashboardContainer}>
+                    <View style={styles.transactionsHeader}>
+                        <Skeleton width="50%" height={24} />
+                        <Skeleton width={40} height={24} borderRadius={12} />
+                    </View>
+                    <View style={styles.transactionsList}>
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <View key={i} style={[styles.transactionCard, { padding: 16 }]}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                                    <View style={{ flex: 1 }}>
+                                        <Skeleton width="60%" height={16} style={{ marginBottom: 6 }} />
+                                        <Skeleton width="40%" height={14} />
+                                    </View>
+                                    <View style={{ alignItems: 'flex-end' }}>
+                                        <Skeleton width={80} height={20} style={{ marginBottom: 6 }} />
+                                        <Skeleton width={60} height={20} borderRadius={4} />
+                                    </View>
+                                </View>
+                                <Skeleton width="100%" height={14} style={{ marginTop: 8 }} />
+                            </View>
+                        ))}
+                    </View>
                 </ScrollView>
             );
         }
