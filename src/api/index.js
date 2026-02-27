@@ -135,6 +135,13 @@ export const customerAPI = {
     // Send push notification for payment request
     notifyPayment: (shopId, customerId, data) =>
         api.post(`/shops/${shopId}/customers/${customerId}/notify-payment`, data),
+
+    // Get notifications sent by the shop
+    getNotifications: (shopId) => api.get(`/shops/${shopId}/notifications`),
+
+    // Get notification history for a specific customer
+    getCustomerNotifications: (shopId, customerId) =>
+        api.get(`/shops/${shopId}/customers/${customerId}/notifications`),
 };
 
 // ============ PRODUCT APIs ============
@@ -170,6 +177,8 @@ export const transactionAPI = {
 export const customerDashboardAPI = {
     // Get customer's ledger across all shops they're connected to
     getLedger: () => api.get('/customer/ledger'),
+    // Get customer's notification history
+    getNotifications: () => api.get('/customer/notifications'),
 };
 
 // ============ ADMIN APIs ============

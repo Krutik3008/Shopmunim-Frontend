@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, shadows, spacing } from '../../../theme';
+import { customerDashboardAPI, getAPIErrorMessage } from '../../../api';
 
 const NotificationsScreen = () => {
     const navigation = useNavigation();
     const [viewMode, setViewMode] = useState('inbox'); // 'inbox' or 'settings'
+    const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+    const [expandedId, setExpandedId] = useState(null);
 
     // Settings State
     const [pushEnabled, setPushEnabled] = useState(true);
@@ -15,73 +20,99 @@ const NotificationsScreen = () => {
     const [paymentAlerts, setPaymentAlerts] = useState(true);
     const [promotions, setPromotions] = useState(false);
 
-    // Mock Notifications Data
-    const mockNotifications = [
-        {
-            id: '1',
-            type: 'payment',
-            title: 'Payment Received',
-            message: 'You received ₹1,200 from Ramesh Kumar for INV-882.',
-            time: '2 mins ago',
-            unread: true,
-            icon: 'cash-outline',
-            iconBg: '#ECFDF5',
-            iconColor: '#10B981'
-        },
-        {
-            id: '2',
-            type: 'security',
-            title: 'New Login Detected',
-            message: 'A new login was detected from a Windows device in Mumbai.',
-            time: '1 hour ago',
-            unread: true,
-            icon: 'shield-outline',
-            iconBg: '#FEF2F2',
-            iconColor: '#EF4444'
-        },
-        {
-            id: '3',
-            type: 'promo',
-            title: 'Weekend Offer! 🚀',
-            message: 'Get 20% off on all credit reports this weekend only.',
-            time: '5 hours ago',
-            unread: false,
-            icon: 'megaphone-outline',
-            iconBg: '#F0F9FF',
-            iconColor: '#3B82F6'
-        },
-        {
-            id: '4',
-            type: 'update',
-            title: 'Shop Policy Updated',
-            message: 'Mittal General Store has updated their credit terms.',
-            time: 'Yesterday',
-            unread: false,
-            icon: 'document-text-outline',
-            iconBg: '#F5F3FF',
-            iconColor: '#8B5CF6'
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const fetchNotifications = async () => {
+        try {
+            setLoading(true);
+            const response = await customerDashboardAPI.getNotifications();
+
+            // Map backend data to UI format
+            const mappedNotis = response.data.map(noti => ({
+                id: noti.id,
+                type: 'payment',
+                title: noti.title || 'Payment Request',
+                message: noti.message,
+                time: formatTime(noti.created_at),
+                unread: false, // For now since we don't track read status
+                icon: 'cash-outline',
+                iconBg: '#ECFDF5',
+                iconColor: '#10B981',
+                shopName: noti.shop_name
+            }));
+
+            setNotifications(mappedNotis);
+        } catch (error) {
+            console.error('Error fetching notifications:', getAPIErrorMessage(error));
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-    ];
+    };
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchNotifications();
+    };
+
+    const formatTime = (dateStr) => {
+        const date = new Date(dateStr);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+    };
 
     const toggleSwitch = (value, setter) => {
         setter(value);
     };
 
-    const renderNotificationItem = ({ item }) => (
-        <TouchableOpacity style={[styles.notiCard, item.unread && styles.notiCardUnread]}>
-            <View style={[styles.iconContainer, { backgroundColor: item.iconBg, opacity: item.unread ? 1 : 0.6 }]}>
-                <Ionicons name={item.icon} size={22} color={item.iconColor} />
-            </View>
-            <View style={styles.notiContent}>
-                <View style={styles.notiHeader}>
-                    <Text style={[styles.notiTitle, item.unread && styles.notiTitleUnread]}>{item.title}</Text>
-                    {item.unread && <View style={styles.unreadDot} />}
+    const toggleExpand = (id) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
+
+    const renderNotificationItem = ({ item }) => {
+        const isExpanded = expandedId === item.id;
+
+        return (
+            <TouchableOpacity
+                style={[styles.notiCard, item.unread && styles.notiCardUnread]}
+                onPress={() => toggleExpand(item.id)}
+                activeOpacity={0.7}
+            >
+                <View style={[styles.iconContainer, { backgroundColor: item.iconBg, opacity: item.unread ? 1 : 0.6 }]}>
+                    <Ionicons name={item.icon} size={22} color={item.iconColor} />
                 </View>
-                <Text style={[styles.notiMsg, !item.unread && styles.notiMsgRead]} numberOfLines={2}>{item.message}</Text>
-                <Text style={[styles.notiTime, !item.unread && { opacity: 0.6 }]}>{item.time}</Text>
-            </View>
-        </TouchableOpacity>
-    );
+                <View style={styles.notiContent}>
+                    <View style={styles.notiHeader}>
+                        <Text style={[styles.notiTitle, item.unread && styles.notiTitleUnread]}>{item.title}</Text>
+                        {item.unread && <View style={styles.unreadDot} />}
+                    </View>
+                    <Text
+                        style={[styles.notiMsg, !item.unread && styles.notiMsgRead]}
+                        numberOfLines={isExpanded ? undefined : 2}
+                    >
+                        {item.message}
+                    </Text>
+                    <View style={styles.notiFooter}>
+                        <Text style={[styles.notiTime, !item.unread && { opacity: 0.6 }]}>{item.time}</Text>
+                        <Ionicons
+                            name={isExpanded ? "chevron-up" : "chevron-down"}
+                            size={16}
+                            color={colors.gray[400]}
+                        />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     const renderSettings = () => (
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -171,22 +202,31 @@ const NotificationsScreen = () => {
             </View>
 
             {viewMode === 'inbox' ? (
-                <FlatList
-                    data={mockNotifications}
-                    renderItem={renderNotificationItem}
-                    keyExtractor={item => item.id}
-                    contentContainerStyle={styles.listContent}
-                    ListHeaderComponent={() => (
-                        <Text style={styles.sectionLabel}>RECENT UPDATES</Text>
-                    )}
-                    ListEmptyComponent={() => (
-                        <View style={styles.emptyContainer}>
-                            <Ionicons name="notifications-off-outline" size={64} color={colors.gray[200]} />
-                            <Text style={styles.emptyText}>All caught up!</Text>
-                            <Text style={styles.emptySubtext}>Your notifications will appear here.</Text>
-                        </View>
-                    )}
-                />
+                loading && !refreshing ? (
+                    <View style={styles.loadingCenter}>
+                        <ActivityIndicator color={colors.primary.blue} size="large" />
+                    </View>
+                ) : (
+                    <FlatList
+                        data={notifications}
+                        renderItem={renderNotificationItem}
+                        keyExtractor={item => item.id}
+                        contentContainerStyle={styles.listContent}
+                        refreshControl={
+                            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary.blue]} />
+                        }
+                        ListHeaderComponent={() => (
+                            notifications.length > 0 ? <Text style={styles.sectionLabel}>RECENT UPDATES</Text> : null
+                        )}
+                        ListEmptyComponent={() => (
+                            <View style={styles.emptyContainer}>
+                                <Ionicons name="notifications-off-outline" size={64} color={colors.gray[200]} />
+                                <Text style={styles.emptyText}>All caught up!</Text>
+                                <Text style={styles.emptySubtext}>Your payment reminders will appear here.</Text>
+                            </View>
+                        )}
+                    />
+                )
             ) : renderSettings()}
         </SafeAreaView>
     );
@@ -247,6 +287,7 @@ const styles = StyleSheet.create({
     notiMsg: { fontSize: 13, color: colors.gray[600], lineHeight: 18, marginBottom: 8 },
     notiMsgRead: { color: colors.gray[500] },
     notiTime: { fontSize: 11, color: colors.gray[400], fontWeight: '600' },
+    notiFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
     // Settings Styles
     scrollView: { flex: 1 },
@@ -286,6 +327,7 @@ const styles = StyleSheet.create({
     emptyContainer: { alignItems: 'center', marginTop: 100 },
     emptyText: { fontSize: 18, fontWeight: '700', color: colors.gray[400], marginTop: 16 },
     emptySubtext: { fontSize: 14, color: colors.gray[400], marginTop: 8 },
+    loadingCenter: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
 
 export default NotificationsScreen;

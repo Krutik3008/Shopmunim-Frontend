@@ -22,6 +22,10 @@
         "foregroundImage": "./assets/adaptive-icon-v3.png",
         "backgroundColor": "#ffffff"
       },
+      "notification": {
+        "icon": "./assets/noti-brand-v1.png",
+        "color": "#304FFE"
+      },
       "edgeToEdgeEnabled": true,
       "package": "com.krutik3011.ShopMunimApp",
       "softwareKeyboardLayoutMode": "pan",
@@ -42,8 +46,8 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/icon-v3.png",
-          "color": "#ffffff"
+          "icon": "./assets/noti-brand-v1.png",
+          "color": "#304FFE"
         }
       ]
     ],

@@ -11,7 +11,8 @@ const AuthContext = createContext(null);
 // Configure notifications handle behavior
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
-        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
     }),
@@ -46,7 +47,7 @@ export const AuthProvider = ({ children }) => {
             });
         }
 
-        if (Device.isDevice) {
+        if (Device.isDevice || Platform.OS === 'android') {
             const { status: existingStatus } = await Notifications.getPermissionsAsync();
             let finalStatus = existingStatus;
 

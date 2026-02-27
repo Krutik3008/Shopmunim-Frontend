@@ -1131,17 +1131,44 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
     const [advanceReason, setAdvanceReason] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [notiHistory, setNotiHistory] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const sortedTransactions = transactions ? [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date)) : [];
 
     // Sync state if customer changes
     useEffect(() => {
+        if (visible) {
+            setScheduleDate(null);
+            setScheduleTime(null);
+            setReminderMessage('');
+            setAdvanceAmount('');
+            setAdvanceReason('');
+            setRequestType('Payment Due Reminder');
+        }
         if (customer) {
             setIsAutoReminderEnabled(customer.is_auto_reminder_enabled || false);
             setAutoReminderDelay(customer.auto_reminder_delay || '3 days overdue');
             setAutoReminderFrequency(customer.auto_reminder_frequency || 'Daily until paid');
             setAutoReminderMethod(customer.auto_reminder_method || 'Push Notification');
+
+            if (visible) {
+                fetchHistory();
+            }
         }
-    }, [customer]);
+    }, [customer, visible]);
+
+    const fetchHistory = async () => {
+        if (!customer) return;
+        setLoadingHistory(true);
+        try {
+            const response = await customerAPI.getCustomerNotifications(customer.shop_id, customer.id);
+            setNotiHistory(response.data || []);
+        } catch (error) {
+            console.error('Error fetching history:', error);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
 
 
     const closeAllDropdowns = () => {
@@ -1252,7 +1279,14 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                         onPress={() => setPaymentRequestTab('autoSetup')}
                                     >
                                         <Ionicons name="settings-outline" size={16} color={paymentRequestTab === 'autoSetup' ? '#111827' : '#6B7280'} />
-                                        <Text style={[modalStyles.paymentModalTabText, paymentRequestTab === 'autoSetup' && modalStyles.paymentModalTabTextActive]}>Auto Setup</Text>
+                                        <Text style={[modalStyles.paymentModalTabText, paymentRequestTab === 'autoSetup' && modalStyles.paymentModalTabTextActive]}>Settings</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity
+                                        style={[modalStyles.paymentModalTab, paymentRequestTab === 'history' && modalStyles.paymentModalTabActive]}
+                                        onPress={() => setPaymentRequestTab('history')}
+                                    >
+                                        <Ionicons name="list-outline" size={16} color={paymentRequestTab === 'history' ? '#111827' : '#6B7280'} />
+                                        <Text style={[modalStyles.paymentModalTabText, paymentRequestTab === 'history' && modalStyles.paymentModalTabTextActive]}>History</Text>
                                     </TouchableOpacity>
                                 </View>
 
@@ -1285,7 +1319,13 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                 modalStyles.paymentModalDropdownOption,
                                                                 requestType === 'Payment Due Reminder' && { backgroundColor: '#F3F4F6' }
                                                             ]}
-                                                            onPress={() => { setRequestType('Payment Due Reminder'); setShowRequestTypeDropdown(false); }}
+                                                            onPress={() => {
+                                                                setRequestType('Payment Due Reminder');
+                                                                setShowRequestTypeDropdown(false);
+                                                                setAdvanceAmount('');
+                                                                setAdvanceReason('');
+                                                                setReminderMessage('');
+                                                            }}
                                                         >
                                                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                                                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1303,7 +1343,13 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                                 modalStyles.paymentModalDropdownOption,
                                                                 requestType === 'Advance Payment Request' && { backgroundColor: '#F3F4F6' }
                                                             ]}
-                                                            onPress={() => { setRequestType('Advance Payment Request'); setShowRequestTypeDropdown(false); }}
+                                                            onPress={() => {
+                                                                setRequestType('Advance Payment Request');
+                                                                setShowRequestTypeDropdown(false);
+                                                                setAdvanceAmount('');
+                                                                setAdvanceReason('');
+                                                                setReminderMessage('');
+                                                            }}
                                                         >
                                                             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                                                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1424,7 +1470,32 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
 
                                                         <TouchableOpacity
                                                             style={[modalStyles.paymentModalDropdownOption, sendVia === 'Phone Call' && { backgroundColor: '#F3F4F6' }]}
-                                                            onPress={() => { setSendVia('Phone Call'); setShowSendViaDropdown(false); }}
+                                                            onPress={async () => {
+                                                                setShowSendViaDropdown(false);
+                                                                const sanitizedPhone = customer.phone.replace(/[^0-9+]/g, '');
+                                                                const url = `tel:${sanitizedPhone}`;
+                                                                Linking.openURL(url).catch(() => {
+                                                                    showToast('Phone calls are not available on this device');
+                                                                });
+                                                                onClose();
+                                                                return;
+                                                                if (false) {
+                                                                    // Log to backend first
+                                                                    try {
+                                                                        await customerAPI.notifyPayment(customer.shop_id, customer.id, {
+                                                                            title: 'Phone Call',
+                                                                            body: 'Contacted via phone call',
+                                                                            method: 'Phone Call'
+                                                                        });
+                                                                    } catch (e) {
+                                                                        console.log('Error logging Phone Call to backend:', e);
+                                                                    }
+                                                                    Linking.openURL(url);
+                                                                    onClose();
+                                                                } else {
+                                                                    showToast('Phone calls are not available on this device');
+                                                                }
+                                                            }}
                                                         >
                                                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                                                 <Ionicons name="call-outline" size={16} color="#374151" />
@@ -1442,10 +1513,17 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                     <TouchableOpacity
                                                         style={modalStyles.paymentTemplateBtn}
                                                         onPress={() => {
-                                                            const amount = Math.abs(customer?.balance || 0).toFixed(2);
                                                             const name = customer?.name || 'Customer';
-                                                            const template = `Dear ${name},\n\nYou have a pending payment of ₹${amount} at our shop.\n\nPlease make the payment at your earliest convenience. You can pay via UPI or visit our shop.\n\nThank you!\n- Shop Owner`;
-                                                            setReminderMessage(template);
+                                                            if (requestType === 'Payment Due Reminder') {
+                                                                const amount = Math.abs(customer?.balance || 0).toFixed(2);
+                                                                const template = `Dear ${name},\n\nYou have a pending payment of ₹${amount} at our shop.\n\nPlease make the payment at your earliest convenience. You can pay via UPI or visit our shop.\n\nThank you!\n- Shop Owner`;
+                                                                setReminderMessage(template);
+                                                            } else if (requestType === 'Advance Payment Request') {
+                                                                const amount = advanceAmount || '0.00';
+                                                                const reason = (advanceReason && advanceReason.trim()) ? advanceReason : 'your order';
+                                                                const template = `Dear ${name},\n\nThis is a request for an advance payment of ₹${amount} for ${reason}.\n\nPlease complete the payment to proceed with your request.\n\nThank you!\n- Shop Owner`;
+                                                                setReminderMessage(template);
+                                                            }
                                                         }}
                                                     >
                                                         <Text style={{ fontSize: 11, color: '#4B5563', fontWeight: '500' }}>Use Template</Text>
@@ -1465,6 +1543,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                 <View style={{ marginTop: 4, height: 1, backgroundColor: '#E5E7EB' }} />
                                                 <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>Characters: {reminderMessage.length}/500</Text>
                                             </View>
+
 
                                             {/* Schedule Options */}
                                             <View style={{ marginBottom: 20 }}>
@@ -1545,16 +1624,27 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                         }
                                                         setIsSending(true);
                                                         try {
+                                                            let scheduledAt = null;
+                                                            if (scheduleDate && scheduleTime) {
+                                                                const sDate = new Date(scheduleDate);
+                                                                const sTime = new Date(scheduleTime);
+                                                                sDate.setHours(sTime.getHours());
+                                                                sDate.setMinutes(sTime.getMinutes());
+                                                                scheduledAt = sDate.toISOString();
+                                                            }
+
                                                             const payload = {
                                                                 title: requestType,
                                                                 body: reminderMessage,
-                                                                data: { customerId: customer.id }
+                                                                data: { customerId: customer.id },
+                                                                method: sendVia,
+                                                                scheduled_at: scheduledAt
                                                             };
                                                             await customerAPI.notifyPayment(customer.shop_id, customer.id, payload);
-                                                            showToast('Payment reminder push notification sent successfully!');
+                                                            showToast(scheduledAt ? 'Reminder scheduled successfully!' : 'Payment reminder sent successfully!');
                                                             onClose();
                                                         } catch (error) {
-                                                            const errorMsg = error.response?.data?.detail || 'Failed to send notification';
+                                                            const errorMsg = error.response?.data?.detail || 'Failed to process request';
                                                             showToast(errorMsg);
                                                         } finally {
                                                             setIsSending(false);
@@ -1568,6 +1658,17 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                         const url = Platform.OS === 'ios'
                                                             ? `sms:${customer.phone}&body=${encodeURIComponent(reminderMessage)}`
                                                             : `sms:${customer.phone}?body=${encodeURIComponent(reminderMessage)}`;
+
+                                                        // Log to backend
+                                                        try {
+                                                            await customerAPI.notifyPayment(customer.shop_id, customer.id, {
+                                                                title: requestType,
+                                                                body: reminderMessage,
+                                                                method: 'SMS Message'
+                                                            });
+                                                        } catch (e) {
+                                                            console.log('Error logging SMS to backend:', e);
+                                                        }
 
                                                         Linking.canOpenURL(url).then(supported => {
                                                             if (!supported) {
@@ -1588,6 +1689,18 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                             phoneString = '91' + phoneString; // Assume India (+91) if 10 digits
                                                         }
                                                         const url = `whatsapp://send?phone=${phoneString}&text=${encodeURIComponent(reminderMessage)}`;
+
+                                                        // Log to backend
+                                                        try {
+                                                            await customerAPI.notifyPayment(customer.shop_id, customer.id, {
+                                                                title: requestType,
+                                                                body: reminderMessage,
+                                                                method: 'WhatsApp'
+                                                            });
+                                                        } catch (e) {
+                                                            console.log('Error logging WhatsApp to backend:', e);
+                                                        }
+
                                                         Linking.openURL(url).catch(() => {
                                                             // Fallback to web universal link
                                                             Linking.openURL(`https://wa.me/${phoneString}?text=${encodeURIComponent(reminderMessage)}`).catch(() => {
@@ -1628,7 +1741,7 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                 </LinearGradient>
                                             </TouchableOpacity>
                                         </View>
-                                    ) : (
+                                    ) : paymentRequestTab === 'autoSetup' ? (
                                         <View style={modalStyles.paymentTabContent}>
                                             <Text style={modalStyles.paymentModalSectionTitle}>Automatic Reminders</Text>
 
@@ -1799,6 +1912,68 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                     )}
                                                 </LinearGradient>
                                             </TouchableOpacity>
+                                        </View>
+                                    ) : (
+                                        <View style={modalStyles.paymentTabContent}>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                                                <Text style={modalStyles.paymentModalSectionTitle}>Reminders History</Text>
+                                                <TouchableOpacity onPress={fetchHistory}>
+                                                    <Ionicons name="refresh-outline" size={18} color="#4B5563" />
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            {loadingHistory ? (
+                                                <View style={{ padding: 40, alignItems: 'center' }}>
+                                                    <ActivityIndicator size="small" color="#2563EB" />
+                                                    <Text style={{ marginTop: 10, color: '#6B7280', fontSize: 12 }}>Loading history...</Text>
+                                                </View>
+                                            ) : notiHistory.length === 0 ? (
+                                                <View style={{ padding: 40, alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12 }}>
+                                                    <Ionicons name="mail-unread-outline" size={40} color="#D1D5DB" />
+                                                    <Text style={{ marginTop: 10, color: '#6B7280', fontSize: 13, textAlign: 'center' }}>No reminders sent yet.</Text>
+                                                </View>
+                                            ) : (
+                                                notiHistory.map((item, index) => (
+                                                    <View key={item.id || index} style={{
+                                                        backgroundColor: '#fff',
+                                                        borderWidth: 1,
+                                                        borderColor: '#F3F4F6',
+                                                        borderRadius: 12,
+                                                        padding: 12,
+                                                        marginBottom: 10,
+                                                        flexDirection: 'row',
+                                                        alignItems: 'center'
+                                                    }}>
+                                                        <View style={{
+                                                            width: 32,
+                                                            height: 32,
+                                                            borderRadius: 16,
+                                                            backgroundColor: item.method === 'Push Notification' ? '#DBEAFE' : '#D1FAE5',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            marginRight: 12
+                                                        }}>
+                                                            <Ionicons
+                                                                name={item.method === 'Push Notification' ? 'notifications-outline' : 'chatbubble-outline'}
+                                                                size={16}
+                                                                color={item.method === 'Push Notification' ? '#2563EB' : '#059669'}
+                                                            />
+                                                        </View>
+                                                        <View style={{ flex: 1 }}>
+                                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
+                                                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>{item.title}</Text>
+                                                                <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                                                            </View>
+                                                            <Text style={{ fontSize: 12, color: '#6B7280' }} numberOfLines={1}>{item.message}</Text>
+                                                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                                                <Text style={{ fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' }}>{item.method}</Text>
+                                                                <View style={{ width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#D1D5DB', marginHorizontal: 6 }} />
+                                                                <Text style={{ fontSize: 10, color: item.status === 'sent' ? '#059669' : '#EF4444', fontWeight: '600' }}>{item.status}</Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
+                                                ))
+                                            )}
                                         </View>
                                     )}
                                 </View>
