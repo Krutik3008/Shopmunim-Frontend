@@ -1918,7 +1918,6 @@ const PaymentRequestModal = ({ visible, onClose, customer, transactions, showToa
                                                         textAlignVertical="top"
                                                         maxLength={500}
                                                     />
-                                                    <Text style={{ fontSize: 10, color: '#9CA3AF', marginTop: 4 }}>Use {"{name}"} for customer name and {"{amount}"} for balance.</Text>
                                                 </View>
                                             )}
 
@@ -2754,7 +2753,7 @@ const modalStyles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#E5E7EB',
-        marginBottom: 20,
+        marginBottom: 60,
     },
     paymentTabContent: {
         padding: 16,
