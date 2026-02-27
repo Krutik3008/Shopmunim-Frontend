@@ -90,3 +90,7 @@ coverage/
 .sass-cache/
 *.bak
 *.swp
+
+# Firebase
+google-services.json
+GoogleService-Info.plist
