@@ -8,6 +8,7 @@ import {
     Platform,
     Alert,
     Keyboard,
+    ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -138,7 +139,11 @@ const LoginScreen = ({ navigation }) => {
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
                 style={styles.keyboardView}
             >
-                <View style={styles.scrollContent}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
                     {/* Logo & Title */}
                     <View style={styles.header}>
                         <LinearGradient
@@ -257,7 +262,7 @@ const LoginScreen = ({ navigation }) => {
                             <Text style={styles.featureText}>Accept payments easily</Text>
                         </View>
                     </View>
-                </View>
+                </ScrollView>
             </KeyboardAvoidingView>
 
             {/* Custom Toast Notification */}
@@ -298,7 +303,8 @@ const styles = StyleSheet.create({
     scrollContent: {
         flexGrow: 1,
         paddingHorizontal: 20,
-        paddingVertical: 40,
+        paddingTop: 40,
+        paddingBottom: 60, // Consistent with SignUp
         justifyContent: 'center',
     },
     header: {
