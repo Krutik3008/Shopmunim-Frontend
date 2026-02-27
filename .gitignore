@@ -91,6 +91,4 @@ coverage/
 *.bak
 *.swp
 
-# Firebase
-google-services.json
-GoogleService-Info.plist
+
