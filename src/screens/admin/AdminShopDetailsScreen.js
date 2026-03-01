@@ -334,15 +334,24 @@ const AdminShopDetailsScreen = ({ shopId, shopName, shopCategory, shopCode, onBa
                     <Ionicons name={icon} size={18} color={color} />
                 </View>
             </View>
-            <Text
-                style={styles.statValue}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.5}
-            >
-                {value}
-            </Text>
-            {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
+            {loading && !refreshing ? (
+                <>
+                    <Skeleton width="60%" height={26} style={{ marginBottom: 4 }} />
+                    <Skeleton width="40%" height={12} />
+                </>
+            ) : (
+                <>
+                    <Text
+                        style={styles.statValue}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.5}
+                    >
+                        {value}
+                    </Text>
+                    {subtitle && <Text style={styles.statSubtitle}>{subtitle}</Text>}
+                </>
+            )}
         </View>
     );
 

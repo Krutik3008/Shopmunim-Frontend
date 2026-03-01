@@ -234,7 +234,7 @@ const AdminRoleManagement = ({ showToast }) => {
                         <Ionicons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search users..."
+                            placeholder="Search by name or number..."
                             value={search}
                             onChangeText={setSearch}
                         />
