@@ -860,7 +860,12 @@ const CustomerDashboardScreen = () => {
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 onScrollBeginDrag={() => setShowPerPageDropdown(false)}
             >
-                <Text style={styles.sectionTitle}>Transaction History</Text>
+                <View style={[styles.titleWithBadge, { justifyContent: 'space-between' }]}>
+                    <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Transaction History</Text>
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countBadgeText}>{allTransactions.length}</Text>
+                    </View>
+                </View>
                 <View style={styles.historyList}>
                     {(() => {
                         const totalItems = allTransactions.length;
@@ -1484,6 +1489,23 @@ const styles = StyleSheet.create({
     paginationCenter: { alignItems: 'center' },
     paginationPageLabel: { fontSize: 11, color: '#9CA3AF' },
     paginationPageNum: { fontSize: 14, fontWeight: '600', color: '#111827' },
+    titleWithBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+    },
+    countBadge: {
+        backgroundColor: '#F3F4F6',
+        paddingHorizontal: 10,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+    },
+    countBadgeText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: '#374151',
+    },
 });
 
 export default CustomerDashboardScreen;
