@@ -246,25 +246,25 @@ const ShopOwnerDashboardScreen = () => {
 
         if (currentShopId) {
             if (activeTab === 'customers') {
-                loadCustomers(currentShopId);
+                loadCustomers(currentShopId, customers.length === 0);
             } else if (activeTab === 'products') {
-                loadProducts(currentShopId);
+                loadProducts(currentShopId, products.length === 0);
             } else if (activeTab === 'transactions') {
-                loadTransactions(currentShopId);
+                loadTransactions(currentShopId, transactions.length === 0);
             }
         }
     }, [activeTab, user?.shop_id, shops]);
 
-    const loadProducts = async (shopId) => {
+    const loadProducts = async (shopId, showLoading = true) => {
         try {
             if (!shopId) return;
-            setLoadingProducts(true);
+            if (showLoading) setLoadingProducts(true);
             const response = await productAPI.getAll(shopId);
             setProducts(response.data || []);
         } catch (error) {
             console.log('Failed to load products:', error);
         } finally {
-            setLoadingProducts(false);
+            if (showLoading) setLoadingProducts(false);
         }
     };
 
@@ -361,24 +361,24 @@ const ShopOwnerDashboardScreen = () => {
         );
     };
 
-    const loadCustomers = async (shopId) => {
+    const loadCustomers = async (shopId, showLoading = true) => {
         try {
             if (!shopId) return;
-            setLoadingCustomers(true);
+            if (showLoading) setLoadingCustomers(true);
             const response = await customerAPI.getAll(shopId);
             const resData = response.data || {};
             setCustomers(resData.customers || resData || []);
         } catch (error) {
             console.log('Failed to load customers:', error);
         } finally {
-            setLoadingCustomers(false);
+            if (showLoading) setLoadingCustomers(false);
         }
     };
 
-    const loadTransactions = async (shopId) => {
+    const loadTransactions = async (shopId, showLoading = true) => {
         try {
             if (!shopId) return;
-            setLoadingTransactions(true);
+            if (showLoading) setLoadingTransactions(true);
             const response = await transactionAPI.getAll(shopId);
             const sorted = (response.data || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -390,7 +390,7 @@ const ShopOwnerDashboardScreen = () => {
         } catch (error) {
             console.log('Failed to load transactions:', error);
         } finally {
-            setLoadingTransactions(false);
+            if (showLoading) setLoadingTransactions(false);
         }
     };
 
