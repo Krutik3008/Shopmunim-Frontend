@@ -917,7 +917,7 @@ const ShopLedgerDetailScreen = ({
                                 );
                             })()}
 
-                            <View style={{ height: 50 }} />
+                            <View style={{ height: 70 }} />
                         </>
                     )}
                 </ScrollView>

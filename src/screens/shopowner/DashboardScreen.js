@@ -737,7 +737,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 100 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
         );
     };
@@ -844,7 +844,7 @@ const ShopOwnerDashboardScreen = () => {
                 </View>
 
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 100 }} />
+                <View style={{ height: 120 }} />
             </ScrollView>
         );
     };
@@ -1004,7 +1004,7 @@ const ShopOwnerDashboardScreen = () => {
                     </View>
                 )}
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 90 }} />
+                <View style={{ height: 110 }} />
             </ScrollView>
         );
     };
@@ -1151,7 +1151,7 @@ const ShopOwnerDashboardScreen = () => {
                     )}
 
                     {/* Spacer for bottom nav */}
-                    <View style={{ height: 100 }} />
+                    <View style={{ height: 120 }} />
                 </Pressable>
             </ScrollView>
         );
@@ -1425,7 +1425,7 @@ const ShopOwnerDashboardScreen = () => {
 
                 </View>
                 {/* Spacer for bottom nav */}
-                <View style={{ height: 80 }} />
+                <View style={{ height: 100 }} />
             </ScrollView >
         );
     };

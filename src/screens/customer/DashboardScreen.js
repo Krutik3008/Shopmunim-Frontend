@@ -580,7 +580,7 @@ const CustomerDashboardScreen = () => {
                 </>
             )}
             {/* Spacer for bottom nav */}
-            <View style={{ height: 30 }} />
+            <View style={{ height: 50 }} />
         </ScrollView>
     );
 
@@ -812,7 +812,7 @@ const CustomerDashboardScreen = () => {
                     </View>
                 </View>
 
-                <View style={{ height: 20 }} />
+                <View style={{ height: 50 }} />
             </ScrollView >
         );
     };
@@ -968,7 +968,7 @@ const CustomerDashboardScreen = () => {
                         );
                     })()}
                 </View>
-                <View style={{ height: 5 }} />
+                <View style={{ height: 25 }} />
             </ScrollView >
         );
     };
