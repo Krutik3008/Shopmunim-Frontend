@@ -21,6 +21,7 @@ import {
     Image,
     Animated,
     Dimensions,
+    Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
@@ -431,24 +432,71 @@ const ShopOwnerDashboardScreen = () => {
                 return;
             }
 
+            const savedName = newCustomerName.trim();
+            const savedPhone = newCustomerPhone.trim();
+
             await customerAPI.create(shopId, {
-                name: newCustomerName.trim(),
-                phone: newCustomerPhone.trim(),
+                name: savedName,
+                phone: savedPhone,
                 nickname: newCustomerNickname.trim() || null
             });
 
             setShowAddCustomerModal(false);
             showToast('Customer added successfully');
+
+            // Clear state
             setNewCustomerName('');
             setNewCustomerPhone('');
             setNewCustomerNickname('');
+
             loadCustomers(shopId); // Refresh list
             loadDashboardStats(shopId); // Refresh home stats
+
+            // After successful add, ask to send WhatsApp
+            setTimeout(() => {
+                Alert.alert(
+                    'Send Invitation',
+                    `Would you like to send a welcome message to ${savedName} on WhatsApp?`,
+                    [
+                        { text: 'Skip', style: 'cancel' },
+                        {
+                            text: 'Send',
+                            onPress: () => handleVerifyWhatsApp(savedPhone, savedName)
+                        }
+                    ]
+                );
+            }, 500);
         } catch (error) {
             console.log('Failed to add customer:', error);
             showToast(getAPIErrorMessage(error));
         } finally {
             setAddingCustomer(false);
+        }
+    };
+
+    const handleVerifyWhatsApp = async (phone, name) => {
+        const targetPhone = phone || newCustomerPhone;
+        const targetName = name || newCustomerName;
+
+        if (!targetPhone || targetPhone.length !== 10) {
+            showToast('Please enter a valid 10-digit number');
+            return;
+        }
+        const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
+        const message = `Hello ${targetName || 'Customer'}, this is ${currentShop?.name || 'our shop'}. We are adding you to our digital ledger on ShopMunim. Please confirm if this is your correct number.`;
+        const url = `whatsapp://send?phone=91${targetPhone}&text=${encodeURIComponent(message)}`;
+
+        try {
+            const canOpen = await Linking.canOpenURL(url);
+            if (canOpen) {
+                await Linking.openURL(url);
+            } else {
+                // Fallback to web link
+                await Linking.openURL(`https://wa.me/91${targetPhone}?text=${encodeURIComponent(message)}`);
+            }
+        } catch (error) {
+            console.log('WhatsApp Error:', error);
+            showToast('Could not open WhatsApp');
         }
     };
 
@@ -3392,6 +3440,28 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '500',
         color: '#1F2937',
+    },
+    // WhatsApp Verification Styles
+    phoneInputWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    whatsappVerifyBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#DCF8C6',
+        paddingHorizontal: 12,
+        height: 48,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#86EFAC',
+    },
+    whatsappVerifyText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#075E54',
+        marginLeft: 4,
     },
 });
 
