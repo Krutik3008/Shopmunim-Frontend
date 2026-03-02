@@ -50,8 +50,8 @@ api.interceptors.response.use(
         }
 
         if (error.response?.status === 401) {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('user');
+            // Handled globally via AuthContext listener for reactive logout
+            if (__DEV__) console.log('Unauthorized (401) detected. Redirecting to login via AuthContext.');
         }
         return Promise.reject(error);
     }
@@ -86,6 +86,7 @@ export const authAPI = {
     getSessions: () => api.get('/auth/sessions'),
     requestDataExport: () => api.post('/auth/request-data-export'),
     resetPIN: () => api.post('/auth/reset-pin'),
+    logout: () => api.post('/auth/logout'),
     logoutAllSessions: () => api.post('/auth/logout-all'),
     deleteAccount: () => api.delete('/auth/me'),
 };

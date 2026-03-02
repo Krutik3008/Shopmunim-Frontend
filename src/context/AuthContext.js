@@ -1,7 +1,7 @@
 // Auth Context - Global authentication state management
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../api';
+import api, { authAPI } from '../api';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -24,6 +24,9 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true); // START WITH TRUE (Blocking Load)
     const [isAuthenticated, setIsAuthenticated] = useState(false); // Default to false until proven otherwise
 
+    // Use a ref for logout to keep the interceptor stable
+    const logoutRef = useRef(null);
+
     // Check authentication on app start
     useEffect(() => {
         // Safety timeout - if auth check takes too long, proceed anyway
@@ -34,6 +37,42 @@ export const AuthProvider = ({ children }) => {
 
         checkAuth().finally(() => clearTimeout(timeout));
     }, []);
+
+    // Global Interceptor for 401 handling
+    useEffect(() => {
+        const interceptor = api.interceptors.response.use(
+            (response) => response,
+            async (error) => {
+                // If the error is 401 and it's NOT a logout attempt itself (to avoid infinite loops)
+                if (error.response?.status === 401 && !error.config?.url?.includes('/auth/logout')) {
+                    console.log('Session expired or invalidated from another device. Triggering global logout...');
+                    if (logoutRef.current) {
+                        await logoutRef.current();
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+        return () => api.interceptors.response.eject(interceptor);
+    }, []); // Register ONCE and stay stable
+
+    // Background polling to detect remote logout (Logout All)
+    useEffect(() => {
+        if (!isAuthenticated) return;
+
+        // Check session every 15 seconds for HIGHER RESPONSIVENESS to "Logout All"
+        const pollSession = async () => {
+            try {
+                await authAPI.getMe();
+            } catch (error) {
+                // The interceptor will catch 401 and trigger logout()
+                if (__DEV__) console.log('Poll check: session invalidated');
+            }
+        };
+
+        const intervalId = setInterval(pollSession, 15000);
+        return () => clearInterval(intervalId);
+    }, [isAuthenticated]);
 
     const registerForPushNotificationsAsync = async () => {
         let token;
@@ -162,18 +201,36 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
-            await AsyncStorage.removeItem('token');
-            await AsyncStorage.removeItem('user');
-            setUser(null);
+            // Avoid redundant logout calls if already logged out
+            if (!isAuthenticated && !user) return;
+
+            console.log('Executing reactive logout...');
+
+            // 1. Immediately update state to trigger UI redirect to AuthStack
             setIsAuthenticated(false);
+            setUser(null);
             setLogoutToast(true);
-            console.log('Logged out');
+
+            // 2. Perform cleanup
+            await AsyncStorage.multiRemove(['token', 'user']);
+
+            // 3. Best-effort server logout (don't let it block local state change)
+            authAPI.logout().catch(() => {
+                if (__DEV__) console.log('Server session already removed or inaccessible');
+            });
+
+            console.log('Logged out successfully (State Reset & Storage Cleared)');
         } catch (error) {
             console.error('Logout error:', error);
         }
-    };
+    }, [isAuthenticated, user]);
+
+    // Keep the ref updated with the latest logout function
+    useEffect(() => {
+        logoutRef.current = logout;
+    }, [logout]);
 
     const clearLogoutToast = () => setLogoutToast(false);
 
