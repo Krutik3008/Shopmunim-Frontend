@@ -300,11 +300,6 @@ const CustomerDashboardScreen = () => {
             const now = new Date();
             const generatedDate = `${now.toLocaleDateString('en-GB')} at ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}`;
 
-            if (transactions.length === 0) {
-                alert('No transactions to export for selected period');
-                return;
-            }
-
             // Calculate stats specifically for the filtered transactions
             const totalCredits = transactions.filter(t => t.type === 'credit').length;
             const totalCreditsAmount = transactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
@@ -367,7 +362,7 @@ const CustomerDashboardScreen = () => {
 
                 <div class="header">
                     <h1><span>📋</span> Transaction Report</h1>
-                    <div class="generated">${dateFrom || dateTo ? `Period: ${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}` : 'Full History'}</div>
+                    <div class="generated">${dateFrom || dateTo ? `Period: ${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}` : 'Period: Full History'}</div>
                     <div class="generated">Generated on: ${generatedDate}</div>
                 </div>
 
@@ -468,9 +463,9 @@ const CustomerDashboardScreen = () => {
             rows.push([`Customer: ${user?.name || 'Customer'} (${user?.phone || 'N/A'})`]);
             rows.push([`Report Generated: ${reportDate}`]);
             if (dateFrom || dateTo) {
-                rows.push(['Period:', `${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}`]);
+                rows.push([`Period: ${dateFrom ? formatDateDisplay(dateFrom) : 'Beginning'} to ${dateTo ? formatDateDisplay(dateTo) : 'Today'}`]);
             } else {
-                rows.push(['Period:', 'Full History']);
+                rows.push(['Period: Full History']);
             }
             rows.push([]);
 

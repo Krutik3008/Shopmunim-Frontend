@@ -314,6 +314,16 @@ const ShopLedgerDetailScreen = ({
         }
     };
 
+    const formatTime = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "";
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+        } catch (e) {
+            return "";
+        }
+    };
+
     const onFromDateChange = (event, selectedDate) => {
         setShowFromPicker(false);
         if (event.type === 'set' && selectedDate) {
@@ -356,7 +366,7 @@ const ShopLedgerDetailScreen = ({
                 const typeLabel = isPay ? 'Payment Made' : 'Credit Taken';
                 const amountColor = isPay ? '#10B981' : '#DC2626';
                 return `<tr>
-                    <td>${formatShortDate(t.date)}</td>
+                    <td>${formatShortDate(t.date)}<br/><span style="font-size:9px;color:#6B7280">${formatTime(t.date)}</span></td>
                     <td style="color:${typeColor};font-weight:600">${typeLabel}</td>
                     <td>${itemNames}</td>
                     <td>${items.length > 0 ? totalQty : '-'}</td>
@@ -395,6 +405,7 @@ const ShopLedgerDetailScreen = ({
 
                 <div class="header">
                     <h1><span>📋</span> Transaction Report</h1>
+                    <div class="generated">${fromDate || toDate ? `Period: ${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}` : 'Period: Full History'}</div>
                     <div class="generated">Generated on: ${generatedDate}</div>
                 </div>
 
@@ -482,6 +493,11 @@ const ShopLedgerDetailScreen = ({
             rows.push([`Shop: ${shopDetails?.name || 'N/A'}`]);
             rows.push([`Customer: ${customer.name} (${customer.phone})`]);
             rows.push([`Report Generated: ${reportDate}`]);
+            if (fromDate || toDate) {
+                rows.push(['Period:', `${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}`]);
+            } else {
+                rows.push(['Period: Full History']);
+            }
             rows.push([]);
             rows.push(['Date', 'Type', 'Items', 'Quantity', 'Amount', 'Note']);
 
@@ -491,7 +507,7 @@ const ShopLedgerDetailScreen = ({
                 const itemNames = items.map(i => i.name || 'Item').join(', ') || '';
                 const totalQty = items.length > 0 ? items.reduce((s, i) => s + (i.quantity || 1), 0) : '';
                 rows.push([
-                    formatShortDate(t.date),
+                    `${formatShortDate(t.date)} ${formatTime(t.date)}`,
                     isPay ? 'Payment Made' : 'Credit Taken',
                     itemNames,
                     totalQty,

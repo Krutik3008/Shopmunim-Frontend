@@ -250,6 +250,16 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
         }
     };
 
+    const formatTime = (dateString) => {
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return "";
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+        } catch (e) {
+            return "";
+        }
+    };
+
     const onFromDateChange = (event, selectedDate) => {
         setShowFromPicker(false);
         if (event.type === 'set' && selectedDate) {
@@ -293,7 +303,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                 const typeLabel = isPay ? 'Payment Received' : 'Credit Given';
                 const amountColor = isPay ? '#10B981' : '#DC2626';
                 return `<tr>
-                    <td>${formatShortDate(t.date)}</td>
+                    <td>${formatShortDate(t.date)}<br/><span style="font-size:9px;color:#6B7280">${formatTime(t.date)}</span></td>
                     <td style="color:${typeColor};font-weight:600">${typeLabel}</td>
                     <td>${itemNames}</td>
                     <td>${items.length > 0 ? totalQty : '-'}</td>
@@ -333,6 +343,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
 
                 <div class="header">
                     <h1><span>🔒</span> Admin Customer Transaction Report</h1>
+                    <div class="generated">${fromDate || toDate ? `Period: ${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}` : 'Period: Full History'}</div>
                     <div class="badge">ADMIN REPORT</div>
                     <div class="generated">Generated on: ${generatedDate}</div>
                 </div>
@@ -422,6 +433,11 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
             rows.push([`Shop: ${shopDetails?.name || 'N/A'}`]);
             rows.push([`Customer: ${customer.name} (${customer.phone})`]);
             rows.push([`Report Generated: ${reportDate}`]);
+            if (fromDate || toDate) {
+                rows.push([`Period: ${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}`]);
+            } else {
+                rows.push(['Period: Full History']);
+            }
             rows.push([]); // Empty row
             rows.push(['Date', 'Type', 'Items', 'Quantity', 'Amount', 'Note']); // Headers
 
@@ -431,7 +447,7 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
                 const itemNames = items.map(i => i.name || 'Item').join(', ') || '';
                 const totalQty = items.length > 0 ? items.reduce((s, i) => s + (i.quantity || 1), 0) : '';
                 rows.push([
-                    formatShortDate(t.date),
+                    `${formatShortDate(t.date)} ${formatTime(t.date)}`,
                     isPay ? 'Payment Received' : 'Credit Given',
                     itemNames,
                     totalQty,
