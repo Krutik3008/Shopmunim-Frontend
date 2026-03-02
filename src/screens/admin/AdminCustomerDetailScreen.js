@@ -430,14 +430,15 @@ const AdminCustomerDetailScreen = ({ route, customer: propCustomer, shopId: prop
 
             // Build rows as array-of-arrays for precise layout
             const rows = [];
+            rows.push(['Customer Transaction Report']);
             rows.push([`Shop: ${shopDetails?.name || 'N/A'}`]);
-            rows.push([`Customer: ${customer.name} (${customer.phone})`]);
+            rows.push([`Category: ${shopDetails?.category || 'N/A'}`]);
+            rows.push([`Location: ${shopDetails?.location || 'N/A'}`]);
+            rows.push([`Shop Code: ${shopDetails?.shop_code || 'N/A'}`]);
+            rows.push([]);
+            rows.push([`Customer: ${customer.name} (${customer.phone || 'N/A'})`]);
             rows.push([`Report Generated: ${reportDate}`]);
-            if (fromDate || toDate) {
-                rows.push([`Period: ${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}`]);
-            } else {
-                rows.push(['Period: Full History']);
-            }
+            rows.push([`Period: ${fromDate || toDate ? `${fromDate ? formatDateDisplay(fromDate) : 'Beginning'} to ${toDate ? formatDateDisplay(toDate) : 'Today'}` : 'Full History'}`]);
             rows.push([]); // Empty row
             rows.push(['Date', 'Type', 'Items', 'Quantity', 'Amount', 'Note']); // Headers
 
