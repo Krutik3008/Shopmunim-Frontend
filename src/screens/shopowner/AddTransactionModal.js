@@ -408,7 +408,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedC
                                 ) : (
                                     <View style={styles.sendBtnContent}>
                                         <Ionicons name="logo-whatsapp" size={18} color="#2563EB" />
-                                        <Text style={styles.sendVerificationLinkText}>Send Verification Link</Text>
+                                        <Text style={styles.sendVerificationLinkText}>Send via WhatsApp</Text>
                                     </View>
                                 )}
                             </TouchableOpacity>

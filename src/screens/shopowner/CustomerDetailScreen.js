@@ -564,6 +564,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                 } else {
                     await Linking.openURL(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`);
                 }
+                showToast('Verification link sent successfully');
             } else {
                 showToast('Failed to generate verification link');
             }

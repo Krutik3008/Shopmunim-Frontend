@@ -509,7 +509,8 @@ const ShopOwnerDashboardScreen = () => {
             const link = response.data?.verification_link;
 
             if (link) {
-                const shopName = currentShop?.name || 'our store';
+                const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
+                const shopName = currentShop?.name || '';
                 const message = `Hello ${name || 'Customer'},\n\nWelcome to Shop ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
 
                 const url = `whatsapp://send?phone=91${phone}&text=${encodeURIComponent(message)}`;
@@ -519,6 +520,7 @@ const ShopOwnerDashboardScreen = () => {
                 } else {
                     await Linking.openURL(`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`);
                 }
+                showToast('Verification link sent successfully');
             } else {
                 showToast('Failed to generate verification link');
             }
