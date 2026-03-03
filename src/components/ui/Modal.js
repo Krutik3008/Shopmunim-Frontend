@@ -72,7 +72,7 @@ const Modal = ({
                     <View style={[
                         styles.container,
                         {
-                            maxHeight: keyboardVisible ? windowHeight * 0.5 : windowHeight * 0.85,
+                            maxHeight: keyboardVisible ? windowHeight * 0.9 : windowHeight * 0.85,
                             marginTop: keyboardVisible ? 60 : 0
                         }
                     ]}>
@@ -100,7 +100,7 @@ const Modal = ({
                             style={styles.content}
                             showsVerticalScrollIndicator={false}
                             keyboardShouldPersistTaps={keyboardShouldPersistTaps}
-                            contentContainerStyle={{ paddingBottom: keyboardVisible ? 50 : 20 }}
+                            contentContainerStyle={{ paddingBottom: keyboardVisible ? 280 : 20 }}
                         >
                             {children}
                         </ScrollView>
