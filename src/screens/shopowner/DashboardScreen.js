@@ -227,9 +227,6 @@ const ShopOwnerDashboardScreen = () => {
         return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })} ${date.getFullYear()}, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}`;
     };
 
-    useEffect(() => {
-        loadShops();
-    }, []);
 
     const loadDashboardStats = async (shopId) => {
         try {

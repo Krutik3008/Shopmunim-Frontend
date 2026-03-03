@@ -60,18 +60,26 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         if (!isAuthenticated) return;
 
-        // Check session every 15 seconds for HIGHER RESPONSIVENESS to "Logout All"
+        let timeoutId;
         const pollSession = async () => {
             try {
                 await authAPI.getMe();
+                // Schedule next poll even on success
+                timeoutId = setTimeout(pollSession, 60000);
             } catch (error) {
-                // The interceptor will catch 401 and trigger logout()
-                if (__DEV__) console.log('Poll check: session invalidated');
+                // If it's a 401, the interceptor will trigger logout()
+                // If it's a network error, we retry later
+                if (error.response?.status !== 401) {
+                    timeoutId = setTimeout(pollSession, 60000);
+                }
             }
         };
 
-        const intervalId = setInterval(pollSession, 15000);
-        return () => clearInterval(intervalId);
+        // Start first poll after 60s
+        timeoutId = setTimeout(pollSession, 60000);
+        return () => {
+            if (timeoutId) clearTimeout(timeoutId);
+        };
     }, [isAuthenticated]);
 
     const registerForPushNotificationsAsync = async () => {
@@ -169,7 +177,6 @@ export const AuthProvider = ({ children }) => {
                 timeoutPromise
             ]);
             console.log('Background verification success');
-            // Update user with latest data from server
             setUser(response.data);
             await AsyncStorage.setItem('user', JSON.stringify(response.data));
         } catch (error) {
