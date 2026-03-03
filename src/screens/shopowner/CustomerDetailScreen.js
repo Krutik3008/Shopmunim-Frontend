@@ -555,7 +555,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
 
             if (link) {
                 const shopName = shopDetails?.name || 'our store';
-                const message = `Hello ${name || 'Customer'},\n\nWelcome to ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
+                const message = `Hello ${name || 'Customer'},\n\nWelcome to Shop ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
 
                 const url = `whatsapp://send?phone=91${phone}&text=${encodeURIComponent(message)}`;
                 const canOpen = await Linking.canOpenURL(url);
@@ -680,13 +680,24 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         {/* Customer Info Card */}
                         <View style={styles.customerCard}>
                             <View style={styles.customerLeft}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                    <Text style={styles.customerName}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                    <Text style={[styles.customerName, { flexShrink: 1, marginRight: 10 }]}>
                                         {customer?.name || 'Unknown'}
                                         {customer?.nickname ? ` (${customer.nickname})` : ''}
                                     </Text>
-                                    {customer?.is_verified && (
-                                        <Ionicons name="checkmark-circle" size={20} color="#10B981" style={{ marginLeft: 8 }} />
+                                    {customer?.is_verified ? (
+                                        <View style={styles.verifiedBadgeName}>
+                                            <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                                            <Text style={[styles.badgeTextName, { color: '#10B981' }]}>Verified</Text>
+                                        </View>
+                                    ) : (
+                                        <TouchableOpacity
+                                            style={styles.unverifiedBadgeName}
+                                            onPress={() => handleSendVerification(customer.shop_id, customer.id, customer.phone, customer.name)}
+                                        >
+                                            <Ionicons name="alert-circle" size={12} color="#EF4444" />
+                                            <Text style={[styles.badgeTextName, { color: '#EF4444' }]}>Unverified</Text>
+                                        </TouchableOpacity>
                                     )}
                                 </View>
                                 <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
@@ -2197,6 +2208,35 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#111827',
+    },
+    verifiedBadgeName: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#D1FAE5',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+        gap: 4,
+        borderWidth: 1,
+        borderColor: '#10B981',
+    },
+    unverifiedBadgeName: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEE2E2',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 12,
+        marginLeft: 8,
+        gap: 4,
+        borderWidth: 1,
+        borderColor: '#EF4444',
+    },
+    badgeTextName: {
+        fontSize: 10,
+        fontWeight: '700',
+        textTransform: 'uppercase',
     },
     customerPhone: {
         fontSize: 14,

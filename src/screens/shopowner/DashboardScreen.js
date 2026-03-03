@@ -510,7 +510,7 @@ const ShopOwnerDashboardScreen = () => {
 
             if (link) {
                 const shopName = currentShop?.name || 'our store';
-                const message = `Hello ${name || 'Customer'},\n\nWelcome to ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
+                const message = `Hello ${name || 'Customer'},\n\nWelcome to Shop ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
 
                 const url = `whatsapp://send?phone=91${phone}&text=${encodeURIComponent(message)}`;
                 const canOpen = await Linking.canOpenURL(url);
@@ -1049,9 +1049,6 @@ const ShopOwnerDashboardScreen = () => {
                                             {customer.name}
                                             {customer.nickname ? ` (${customer.nickname})` : ''}
                                         </Text>
-                                        {customer.is_verified && (
-                                            <Ionicons name="checkmark-circle" size={16} color="#10B981" style={{ marginLeft: 6 }} />
-                                        )}
                                     </View>
                                     <Text style={styles.customerPhone}>+91 {customer.phone}</Text>
                                     <View style={styles.customerBalance}>
@@ -1714,8 +1711,12 @@ const ShopOwnerDashboardScreen = () => {
                 onClose={() => setShowAddTransactionModal(false)}
                 shopId={(() => {
                     const sid = user?.shop_id || (shops.length > 0 ? shops[0].id : null);
-                    console.log('Dashboard: Passing shopId to AddTransactionModal', sid);
                     return sid;
+                })()}
+                shopName={(() => {
+                    const sid = user?.shop_id || (shops.length > 0 ? shops[0].id : null);
+                    const currentShop = shops.find(s => s.id === sid);
+                    return currentShop?.name || 'our store';
                 })()}
                 onSuccess={() => {
                     const shopId = user?.shop_id || (shops.length > 0 ? shops[0].id : null);

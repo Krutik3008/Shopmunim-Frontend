@@ -11,7 +11,8 @@ import {
     Keyboard,
     useWindowDimensions,
     Animated,
-    ActivityIndicator
+    ActivityIndicator,
+    Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -27,7 +28,7 @@ const safeEntries = (obj) => {
     return Object.entries(obj);
 };
 
-const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedCustomer }) => {
+const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedCustomer, shopName = 'our store' }) => {
     const [loading, setLoading] = useState(false);
     const [pageLoading, setPageLoading] = useState(false);
 
@@ -278,7 +279,7 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedC
             const link = response.data?.verification_link;
 
             if (link) {
-                const message = `Hello ${selectedCustomer.name},\n\nWelcome to our shop! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
+                const message = `Hello ${selectedCustomer.name},\n\nWelcome to Shop ${shopName}! We've added you to our digital ledger on ShopMunim.\n\nPlease click the link below to verify your number and activate your account:\n${link}\n\nThank you!`;
                 const url = `whatsapp://send?phone=91${selectedCustomer.phone}&text=${encodeURIComponent(message)}`;
                 const canOpen = await Linking.canOpenURL(url);
                 if (canOpen) {
@@ -405,10 +406,10 @@ const AddTransactionModal = ({ visible, onClose, shopId, onSuccess, preselectedC
                                 {sendingVerification ? (
                                     <ActivityIndicator size="small" color="#2563EB" />
                                 ) : (
-                                    <>
-                                        <Ionicons name="logo-whatsapp" size={16} color="#2563EB" />
+                                    <View style={styles.sendBtnContent}>
+                                        <Ionicons name="logo-whatsapp" size={18} color="#2563EB" />
                                         <Text style={styles.sendVerificationLinkText}>Send Verification Link</Text>
-                                    </>
+                                    </View>
                                 )}
                             </TouchableOpacity>
                         </View>
@@ -813,6 +814,10 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     sendVerificationLinkBtn: {
+        marginTop: 4,
+        alignSelf: 'flex-start',
+    },
+    sendBtnContent: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
