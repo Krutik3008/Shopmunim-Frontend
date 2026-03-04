@@ -22,7 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { customerAPI, transactionAPI, productAPI, shopAPI } from '../../api';
+import { customerAPI, transactionAPI, productAPI, shopAPI, getAPIErrorMessage } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import { Skeleton } from '../../components/ui';
 import ShopHeader from '../../components/shopowner/ShopHeader';
@@ -542,7 +542,7 @@ const CustomerDetailScreen = ({ route, navigation }) => {
             }
             // loadData(); // Optional, but local update is faster
         } catch (error) {
-            showToast('Failed to update customer', error);
+            showToast(getAPIErrorMessage(error) || 'Failed to update customer', 'error');
         } finally {
             setUpdatingCustomer(false);
         }
