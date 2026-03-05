@@ -28,7 +28,6 @@ const SignUpScreen = ({ navigation }) => {
     const [name, setName] = useState('');
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
-    const [mockOtp, setMockOtp] = useState('');
     const [termsAccepted, setTermsAccepted] = useState(true);
 
     // Toast notification state
@@ -74,8 +73,6 @@ const SignUpScreen = ({ navigation }) => {
             console.log('Sending OTP to:', phone);
             const response = await authAPI.sendOTP(phone, name, false, termsAccepted);
             console.log('OTP Response:', response.data);
-            const otpCode = response.data.mock_otp || '123456';
-            setMockOtp(otpCode);
             showToast('OTP Sent Successfully');
             setStep('otp');
         } catch (error) {
@@ -219,9 +216,6 @@ const SignUpScreen = ({ navigation }) => {
                                     required
                                     style={styles.input}
                                 />
-                                {mockOtp && (
-                                    <Text style={styles.mockOtp}>Mock OTP: {mockOtp}</Text>
-                                )}
                                 <Button
                                     title="Verify & Join"
                                     onPress={handleVerifyOTP}
@@ -237,7 +231,6 @@ const SignUpScreen = ({ navigation }) => {
                                     onPress={() => {
                                         setStep('phone');
                                         setOtp('');
-                                        setMockOtp('');
                                     }}
                                     style={styles.backButton}
                                 />
@@ -368,12 +361,6 @@ const styles = StyleSheet.create({
     },
     backButton: {
         marginTop: 8,
-    },
-    mockOtp: {
-        fontSize: 12,
-        color: '#3B82F6',
-        textAlign: 'center',
-        marginBottom: 8,
     },
     features: {
         flexDirection: 'row',

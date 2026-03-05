@@ -4,68 +4,84 @@ A full-featured mobile application for managing shop-customer relationships — 
 
 ---
 
-## ⚙️ Tech Stack
+## 🛠️ Tech Stack & Dependencies
 
-- **React Native** (Expo SDK 54)
-- **React Navigation** (Tab + Stack navigation)
-- **Expo Print / Sharing / FileSystem** (PDF & Excel exports)
-- **XLSX** (Excel spreadsheet generation)
-- **DateTimePicker** (Date range filters)
-- **QR Code** (react-native-qrcode-svg)
-- **Expo Clipboard** (Copy links)
+### Core Framework
+- **React Native** (v0.81.5)
+- **Expo SDK 54** (Managed Workflow)
+- **React Navigation**: Multi-role navigation (Tabs & Stacks).
+
+### Data & Networking
+- **Axios**: HTTP client for backend REST API communication.
+- **AsyncStorage**: Local persistent storage for JWT tokens and user preferences.
+
+### Reporting & Media
+- **Expo Print / Sharing / FileSystem**: PDF generation and file sharing.
+- **XLSX**: Excel spreadsheet generation for reports.
+- **react-native-view-shot**: Capture UI components as images (used for QR sharing).
+- **react-native-qrcode-svg**: Dynamic QR code generation for shops.
+- **Expo Image Picker / Manipulator**: Profile photo uploads and compression.
+
+### UI & UX
+- **Expo Linear Gradient**: Modern premium aesthetics.
+- **DateTimePicker**: Native date pickers for filtering reports.
+- **React Native SVG**: Vector graphics support.
+- **Expo Haptics**: Micro-interactions and feedback.
+
+### Push & Messaging
+- **Expo Notifications / Device**: Firebase Cloud Messaging (FCM) integration for real-time alerts.
+
+---
+
+## 🏗️ Project Architecture
+
+```text
+Shopmunim-Frontend/
+├── src/
+│   ├── api/          # Axios instance & API endpoint definitions
+│   ├── components/   # Reusable UI atoms (Buttons, Cards, Modals)
+│   ├── context/      # Global state (AuthContext, ThemeContext)
+│   ├── navigation/    # Role-based Tab & Stack configurations
+│   ├── screens/      # Feature-specific pages (Admin, Owner, Customer)
+│   ├── theme/        # Style tokens (Colors, Typography, Spacing)
+│   └── utils/        # Helper functions (Formatters, Validators)
+├── assets/           # Static images & fonts
+├── app.json          # Expo configuration
+└── eas.json          # Android/iOS build profiles
+```
 
 ---
 
 ## 📦 Prerequisites
 
 - **Node.js** (v18+) - [Download](https://nodejs.org/)
-- **Android Studio** with Emulator - [Download](https://developer.android.com/studio)
-- **Expo Go App** (for physical device) - Download from Play Store
+- **Node Package Manager (npm)**
+- **Android Studio** (for Emulator) or **Expo Go** (for Physical Device)
 
 ---
 
-## 🚀 Installation
+## 🚀 Installation & Setup
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ShopMunimApp.git
 cd Shopmunim-Frontend
 
-# Install dependencies
+# 1. Install Dependencies
 npm install
-```
 
----
+# 2. Run the Application
+# For Android:
+npm run android
 
-## 📱 Run on Android
-
-### Option 1: Android Emulator
-
-```bash
-npx expo start --android
-```
-
-### Option 2: Physical Android Device
-
-1. Download **Expo Go** from Play Store
-2. Connect phone to same WiFi as computer
-3. Run:
-```bash
+# For Physical Device (Scan QR):
 npx expo start
-```
-4. Scan QR code with Expo Go app
-
-### Option 3: Tunnel Mode (Different Network)
-
-```bash
-npx expo start --tunnel
 ```
 
 ---
 
 ## 🌟 Features
 
-### � Authentication
+### 🔐 Authentication
 - Phone number + OTP based login
 - Phone validation & OTP verification
 - Role-based navigation (auto-redirects to Customer / Shop Owner / Admin)
@@ -94,10 +110,10 @@ npx expo start --tunnel
 #### 👤 Account Tab
 - View profile info (name, phone, role)
 - **Privacy & Security**:
-  - **Security Health**: Dynamic score based on account verification and setup
-  - **Active Sessions**: View and manage all devices logged into your account
-  - **Data Export**: Request a PDF export of all your personal transaction data
-  - **Governance**: End-to-end secure connection with 256-bit AES encryption
+  - **Security Health**: Dynamic score based on account verification and setup.
+  - **Active Sessions**: View and logout all devices connected to your account.
+  - **Data Export**: Request a signed PDF of all your transaction data.
+  - **Notification Controls**: Toggle Push/Payment alerts individually.
 - Role switch button (switch to Shop Owner / Admin if eligible)
 
 ---
@@ -146,7 +162,8 @@ npx expo start --tunnel
 - Share QR code image
 - Download QR code
 - Copy shop link to clipboard
-- Share via WhatsApp / other apps
+- Share via WhatsApp / QR Code image
+- **Customer Verification**: Generate and send deep links for identity verification.
 
 #### 👤 Account Tab
 - Shop info & owner details
@@ -244,6 +261,17 @@ npm install
 ### Connection Failed
 - Ensure phone and computer on same WiFi
 - Try: `npx expo start --tunnel`
+
+---
+
+## 📡 Backend Integration
+
+The app connects to the **ShopMunim Backend** (FastAPI) for all data operations.
+
+### Configuration
+Update the API base URL in `src/api/index.js` (or equivalent) to point to your backend:
+- **Development**: `http://10.0.2.2:8000` (for Android Emulator)
+- **Production**: `https://shopmunim-backend.onrender.com`
 
 ---
 

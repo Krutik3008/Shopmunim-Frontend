@@ -28,7 +28,6 @@ const LoginScreen = ({ navigation }) => {
     const [name, setName] = useState('');
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
-    const [mockOtp, setMockOtp] = useState('');
 
     // Toast notification state
     const [toastMessage, setToastMessage] = useState('');
@@ -78,8 +77,6 @@ const LoginScreen = ({ navigation }) => {
             console.log('Sending OTP to:', phone);
             const response = await authAPI.sendOTP(phone, name, true);
             console.log('OTP Response:', response.data);
-            const otpCode = response.data.mock_otp || '123456';
-            setMockOtp(otpCode);
             showToast('OTP Sent Successfully');
             setStep('otp');
         } catch (error) {
@@ -206,9 +203,6 @@ const LoginScreen = ({ navigation }) => {
                                     required
                                     style={styles.input}
                                 />
-                                {mockOtp && (
-                                    <Text style={styles.mockOtp}>Mock OTP: {mockOtp}</Text>
-                                )}
                                 <Button
                                     title="Verify & Continue"
                                     onPress={handleVerifyOTP}
@@ -224,7 +218,6 @@ const LoginScreen = ({ navigation }) => {
                                     onPress={() => {
                                         setStep('phone');
                                         setOtp('');
-                                        setMockOtp('');
                                     }}
                                     style={styles.backButton}
                                 />
@@ -359,12 +352,6 @@ const styles = StyleSheet.create({
     },
     backButton: {
         marginTop: 8,
-    },
-    mockOtp: {
-        fontSize: 12,
-        color: '#3B82F6',
-        textAlign: 'center',
-        marginBottom: 8,
     },
     features: {
         flexDirection: 'row',
