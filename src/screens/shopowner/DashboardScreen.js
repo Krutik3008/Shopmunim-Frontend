@@ -603,11 +603,13 @@ const ShopOwnerDashboardScreen = () => {
             const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
             const shopName = currentShop?.name || 'Shop';
             const shopCode = currentShop?.shop_code || '';
+            const shopCategory = currentShop?.category || '';
 
             const html = `<html><head><meta charset="UTF-8"></head>
             <body style="margin:0;padding:60px 40px;font-family:sans-serif;text-align:center;">
                 <div style="max-width:400px;margin:0 auto;border:2px solid #E5E7EB;border-radius:20px;padding:40px 30px;">
                     <h1 style="color:#111827;font-size:26px;margin:0 0 4px;">Shop ${shopName}</h1>
+                    ${shopCategory ? `<div style="margin:8px auto 16px;"><span style="background:#EEF2FF;color:#6366F1;font-size:12px;padding:4px 14px;border-radius:20px;">${shopCategory}</span></div>` : ''}
                     <p style="color:#6B7280;font-size:14px;margin:0 0 24px;">Scan QR Code to connect with our shop</p>
                     <div style="background:#F9FAFB;border-radius:16px;padding:24px;display:inline-block;">
                         <img src="data:image/jpeg;base64,${base64Img}" style="width:220px;height:220px;" />
@@ -630,9 +632,7 @@ const ShopOwnerDashboardScreen = () => {
             // Save to device with notification (same as PDF download)
             const fileName = `QR_Shop_${shopName.replace(/\s+/g, '_')}.pdf`;
             const result = await saveFileToDevice(fileName, pdfBase64, 'application/pdf');
-            if (result.success) {
-                showToast('✓ QR Code PDF downloaded!');
-            } else {
+            if (!result.success) {
                 showToast('Download cancelled');
             }
         } catch (error) {
@@ -658,11 +658,13 @@ const ShopOwnerDashboardScreen = () => {
             const currentShop = shops.find(s => s.id === user?.shop_id) || shops[0];
             const shopName = currentShop?.name || 'Shop';
             const shopCode = currentShop?.shop_code || '';
+            const shopCategory = currentShop?.category || '';
 
             const html = `<html><head><meta charset="UTF-8"></head>
             <body style="margin:0;padding:60px 40px;font-family:sans-serif;text-align:center;">
                 <div style="max-width:400px;margin:0 auto;border:2px solid #E5E7EB;border-radius:20px;padding:40px 30px;">
                     <h1 style="color:#111827;font-size:26px;margin:0 0 4px;">Shop ${shopName}</h1>
+                    ${shopCategory ? `<div style="margin:8px auto 16px;"><span style="background:#EEF2FF;color:#6366F1;font-size:12px;padding:4px 14px;border-radius:20px;">${shopCategory}</span></div>` : ''}
                     <p style="color:#6B7280;font-size:14px;margin:0 0 24px;">Scan QR Code to connect with our shop</p>
                     <div style="background:#F9FAFB;border-radius:16px;padding:24px;display:inline-block;">
                         <img src="data:image/jpeg;base64,${base64}" style="width:220px;height:220px;" />
