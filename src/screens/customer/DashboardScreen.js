@@ -30,6 +30,7 @@ import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 import ShopLedgerDetailScreen from './ShopLedgerDetailScreen';
 import { colors, shadows } from '../../theme';
+import Constants from 'expo-constants';
 import { saveFileToDevice } from '../../utils/downloadHelper';
 
 // Shared saveFileToDevice removed - now using utils/downloadHelper.js
@@ -1121,7 +1122,7 @@ const CustomerDashboardScreen = () => {
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>ShopMunim</Text>
-                    <Text style={styles.footerVersion}>Version 1.2.4</Text>
+                    <Text style={styles.footerVersion}>Version {Constants.expoConfig?.version || '1.0.0'}</Text>
                     <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
                     <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 

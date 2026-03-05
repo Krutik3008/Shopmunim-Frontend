@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, shadows } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 const AboutScreen = () => {
     const navigation = useNavigation();
@@ -46,7 +47,7 @@ const AboutScreen = () => {
                     <View style={styles.statusHeader}>
                         <View style={styles.statusInfo}>
                             <Text style={styles.statusLabel}>ShopMunim Platform</Text>
-                            <Text style={[styles.statusValue, { color: colors.primary.blue }]}>v1.2.4 Production</Text>
+                            <Text style={[styles.statusValue, { color: colors.primary.blue }]}>v{Constants.expoConfig?.version || '1.0.0'} Production</Text>
                         </View>
                         <View style={styles.logoBadge}>
                             <Text style={styles.logoText}>SM</Text>
@@ -117,7 +118,7 @@ const AboutScreen = () => {
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
+                    <Text style={styles.versionText}>ShopMunim Production v{Constants.expoConfig?.version || '1.0.0'}</Text>
                     <View style={styles.secureConnection}>
                         <Ionicons name="shield-checkmark" size={14} color="#10B981" />
                         <Text style={styles.secureText}>End-to-End Secure Connection</Text>

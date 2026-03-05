@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, gradients, spacing, borderRadius, fontSize, shadows } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../../context/AuthContext';
+import Constants from 'expo-constants';
 import { authAPI } from '../../../api';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -339,7 +340,7 @@ const PrivacySecurityScreen = () => {
 
 
                 <View style={styles.footer}>
-                    <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
+                    <Text style={styles.versionText}>ShopMunim Production v{Constants.expoConfig?.version || '1.0.0'}</Text>
                     <View style={styles.secureConnection}>
                         <Ionicons name="shield-checkmark" size={12} color={colors.success} style={{ marginRight: 4 }} />
                         <Text style={styles.secureText}>End-to-End Secure Connection</Text>

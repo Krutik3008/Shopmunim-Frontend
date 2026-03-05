@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, gradients, spacing, borderRadius, fontSize, shadows } from '../../../theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 // LayoutAnimation is natively handled in newer architectures
 
@@ -152,7 +153,7 @@ const HelpSupportScreen = () => {
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.versionText}>ShopMunim Production v1.2.4</Text>
+                    <Text style={styles.versionText}>ShopMunim Production v{Constants.expoConfig?.version || '1.0.0'}</Text>
                     <View style={styles.secureConnection}>
                         <Ionicons name="shield-checkmark" size={12} color={colors.success} style={{ marginRight: 4 }} />
                         <Text style={styles.secureText}>Official Support Channel</Text>

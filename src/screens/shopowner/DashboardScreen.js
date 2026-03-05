@@ -42,6 +42,7 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { saveFileToDevice } from '../../utils/downloadHelper';
 
 import { colors, shadows } from '../../theme';
+import Constants from 'expo-constants';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const STAT_CARD_WIDTH = (SCREEN_WIDTH - 32 - 12) / 2; // 32 = padding (16*2), 12 = gap
@@ -1617,7 +1618,7 @@ const ShopOwnerDashboardScreen = () => {
                 {/* Footer */}
                 <View style={styles.footer}>
                     <Text style={styles.footerBrand}>ShopMunim</Text>
-                    <Text style={styles.footerVersion}>Version 1.2.4</Text>
+                    <Text style={styles.footerVersion}>Version {Constants.expoConfig?.version || '1.0.0'}</Text>
                     <Text style={styles.footerTagline}>Digital Credit & Payment Ledger</Text>
                     <Text style={styles.footerCopyright}>©2026 DEC24 INNOVATIONS PVT LTD. All Rights Reserved.</Text>
 

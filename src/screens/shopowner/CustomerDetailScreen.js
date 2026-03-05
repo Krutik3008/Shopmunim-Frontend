@@ -679,46 +679,62 @@ const CustomerDetailScreen = ({ route, navigation }) => {
                         </View>
 
                         {/* Customer Info Card */}
-                        <View style={styles.customerCard}>
-                            <View style={styles.customerLeft}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                                    <Text style={[styles.customerName, { flexShrink: 1, marginRight: 10 }]}>
-                                        {customer?.name || 'Unknown'}
-                                        {customer?.nickname ? ` (${customer.nickname})` : ''}
-                                    </Text>
-                                    {customer?.is_verified ? (
-                                        <View style={styles.verifiedBadgeName}>
-                                            <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-                                            <Text style={[styles.badgeTextName, { color: '#10B981' }]}>Verified</Text>
-                                        </View>
-                                    ) : (
-                                        <TouchableOpacity
-                                            style={styles.unverifiedBadgeName}
-                                            onPress={() => handleSendVerification(customer.shop_id, customer.id, customer.phone, customer.name)}
-                                        >
-                                            <Ionicons name="alert-circle" size={12} color="#EF4444" />
-                                            <Text style={[styles.badgeTextName, { color: '#EF4444' }]}>Unverified</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                                <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
-                                <View style={styles.customerBalanceRow}>
-                                    <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
-                                        <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
-                                            {getBalanceLabel()}
-                                        </Text>
+                        {loading && !refreshing ? (
+                            <View style={styles.customerCard}>
+                                <View style={styles.customerLeft}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <Skeleton width="40%" height={20} />
+                                        <Skeleton width={80} height={22} borderRadius={12} />
                                     </View>
-                                    <Text
-                                        style={[styles.balanceAmount, { color: getBalanceColor() }]}
-                                        numberOfLines={1}
-                                        adjustsFontSizeToFit={true}
-                                        minimumFontScale={0.5}
-                                    >
-                                        {customer?.balance !== 0 ? (customer?.balance > 0 ? '+' : '-') : ''}{formatCurrency(Math.abs(customer?.balance || 0))}
-                                    </Text>
+                                    <Skeleton width="50%" height={16} style={{ marginBottom: 8 }} />
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                        <Skeleton width={50} height={24} borderRadius={12} />
+                                        <Skeleton width={100} height={22} />
+                                    </View>
                                 </View>
                             </View>
-                        </View>
+                        ) : (
+                            <View style={styles.customerCard}>
+                                <View style={styles.customerLeft}>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                                        <Text style={[styles.customerName, { flexShrink: 1, marginRight: 10 }]}>
+                                            {customer?.name || 'Unknown'}
+                                            {customer?.nickname ? ` (${customer.nickname})` : ''}
+                                        </Text>
+                                        {customer?.is_verified ? (
+                                            <View style={styles.verifiedBadgeName}>
+                                                <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                                                <Text style={[styles.badgeTextName, { color: '#10B981' }]}>Verified</Text>
+                                            </View>
+                                        ) : (
+                                            <TouchableOpacity
+                                                style={styles.unverifiedBadgeName}
+                                                onPress={() => handleSendVerification(customer.shop_id, customer.id, customer.phone, customer.name)}
+                                            >
+                                                <Ionicons name="alert-circle" size={12} color="#EF4444" />
+                                                <Text style={[styles.badgeTextName, { color: '#EF4444' }]}>Unverified</Text>
+                                            </TouchableOpacity>
+                                        )}
+                                    </View>
+                                    <Text style={styles.customerPhone}>+91 {customer?.phone || 'N/A'}</Text>
+                                    <View style={styles.customerBalanceRow}>
+                                        <View style={[styles.balanceBadge, { backgroundColor: getBalanceBgColor() }]}>
+                                            <Text style={[styles.balanceBadgeText, { color: getBalanceTextColor() }]}>
+                                                {getBalanceLabel()}
+                                            </Text>
+                                        </View>
+                                        <Text
+                                            style={[styles.balanceAmount, { color: getBalanceColor() }]}
+                                            numberOfLines={1}
+                                            adjustsFontSizeToFit={true}
+                                            minimumFontScale={0.5}
+                                        >
+                                            {customer?.balance !== 0 ? (customer?.balance > 0 ? '+' : '-') : ''}{formatCurrency(Math.abs(customer?.balance || 0))}
+                                        </Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
 
                         {/* Add Transaction Button */}
                         <TouchableOpacity
