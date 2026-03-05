@@ -39,6 +39,7 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import * as Print from 'expo-print';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
+import { saveFileToDevice } from '../../utils/downloadHelper';
 
 import { colors, shadows } from '../../theme';
 
@@ -626,19 +627,13 @@ const ShopOwnerDashboardScreen = () => {
                 encoding: LegacyFileSystem.EncodingType.Base64,
             });
 
-            // Save directly to Downloads folder
-            const permissions = await LegacyFileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-            if (permissions.granted) {
-                const fileName = `QR_Shop_${shopName.replace(/\s+/g, '_')}.pdf`;
-                const newFileUri = await LegacyFileSystem.StorageAccessFramework.createFileAsync(
-                    permissions.directoryUri,
-                    fileName,
-                    'application/pdf'
-                );
-                await LegacyFileSystem.writeAsStringAsync(newFileUri, pdfBase64, {
-                    encoding: LegacyFileSystem.EncodingType.Base64,
-                });
+            // Save to device with notification (same as PDF download)
+            const fileName = `QR_Shop_${shopName.replace(/\s+/g, '_')}.pdf`;
+            const result = await saveFileToDevice(fileName, pdfBase64, 'application/pdf');
+            if (result.success) {
                 showToast('✓ QR Code PDF downloaded!');
+            } else {
+                showToast('Download cancelled');
             }
         } catch (error) {
             console.log('Download error:', error);
