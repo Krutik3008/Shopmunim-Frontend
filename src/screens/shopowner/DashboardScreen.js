@@ -702,7 +702,17 @@ const ShopOwnerDashboardScreen = () => {
         const link = `https://shopmunim.com/connect/${shopName}/${shopCode}`;
         const message = `Check out my shop "${currentShop?.name || 'Shop'}" on ShopMunim! Code: ${shopCode}\nLink: ${link}`;
         try {
-            await Share.share({ message });
+            if (type === 'whatsapp') {
+                const waUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+                const canOpen = await Linking.canOpenURL(waUrl);
+                if (canOpen) {
+                    await Linking.openURL(waUrl);
+                } else {
+                    await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+                }
+            } else {
+                await Share.share({ message });
+            }
         } catch (error) {
             showToast('Failed to share link', 'error');
         }
